@@ -22,22 +22,28 @@ class DashboardViewModel(
     private val _uiState = MutableStateFlow<DashboardUiState>(DashboardUiState.Loading)
     val uiState: StateFlow<DashboardUiState> = _uiState.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         loadDashboardData()
     }
 
-    fun loadDashboardData() {
+    fun loadDashboardData(isPullToRefresh: Boolean = false) {
         viewModelScope.launch {
-            // Only show full screen loading if there's no data yet (initial load)
-            // This prevents UI flickering / blinking on screen resume
-            if (_uiState.value !is DashboardUiState.Success) {
+            if (isPullToRefresh) {
+                _isRefreshing.value = true
+            } else if (_uiState.value !is DashboardUiState.Success) {
                 _uiState.value = DashboardUiState.Loading
             }
+
             repository.getDashboardSummary()
                 .onSuccess { summary ->
                     _uiState.value = DashboardUiState.Success(summary)
+                    _isRefreshing.value = false
                 }
                 .onFailure { error ->
+                    _isRefreshing.value = false
                     if (_uiState.value !is DashboardUiState.Success) {
                         _uiState.value = DashboardUiState.Error(error.localizedMessage ?: "Failed to load dashboard data")
                     }

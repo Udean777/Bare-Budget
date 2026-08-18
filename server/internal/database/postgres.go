@@ -27,6 +27,7 @@ func Connect(databaseURL string) (*gorm.DB, error) {
 		&models.Transaction{},
 		&models.DueBill{},
 		&models.Budget{},
+		&models.Goal{},
 	)
 	if err != nil {
 		log.Printf("AutoMigrate error: %v", err)

@@ -7,6 +7,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,13 +26,18 @@ import com.ssajudn.barebudget.ui.theme.*
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
 
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import com.ssajudn.barebudget.ui.components.CustomDialog
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DueBillsScreen(
-    onNavigateBack: () -> Unit,
+    onNavigateBack: (() -> Unit)? = null,
     viewModel: DueBillsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -45,8 +52,10 @@ fun DueBillsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    if (onNavigateBack != null) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
                     }
                 },
                 actions = {
@@ -61,7 +70,9 @@ fun DueBillsScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.loadDueBills(isPullToRefresh = true) },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -133,7 +144,7 @@ fun DueBillsScreen(
                                 .fillMaxSize()
                                 .padding(horizontal = 20.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(top = 12.dp, bottom = 32.dp)
+                            contentPadding = PaddingValues(top = 12.dp, bottom = 100.dp)
                         ) {
                             items(state.bills) { bill ->
                                 DueBillItem(
@@ -151,8 +162,8 @@ fun DueBillsScreen(
     if (showAddDialog) {
         AddDueBillDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { provider, amount, dueDate, notes ->
-                viewModel.addDueBill(provider, amount, dueDate, notes)
+            onConfirm = { provider, amount, dueDate, isRecurring, interval, notes ->
+                viewModel.addDueBill(provider, amount, dueDate, isRecurring, interval, notes)
                 showAddDialog = false
             }
         )
@@ -210,14 +221,33 @@ fun DueBillItem(
             Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = bill.providerName,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        textDecoration = if (isPaid) androidx.compose.ui.text.style.TextDecoration.LineThrough else null
-                    ),
-                    color = if (isPaid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = bill.providerName,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            textDecoration = if (isPaid) androidx.compose.ui.text.style.TextDecoration.LineThrough else null
+                        ),
+                        color = if (isPaid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                    )
+                    if (bill.isRecurring) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                        ) {
+                            Text(
+                                text = "🔁 ${bill.recurringInterval.displayName}",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Due ${DateUtils.formatDisplayDate(bill.dueDate)} • ${DateUtils.getDueStatusMessage(bill.dueDate)}",
@@ -239,75 +269,139 @@ fun DueBillItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddDueBillDialog(
     onDismiss: () -> Unit,
-    onConfirm: (provider: String, amount: Long, dueDate: String, notes: String) -> Unit
+    onConfirm: (
+        provider: String,
+        amount: Long,
+        dueDate: String,
+        isRecurring: Boolean,
+        recurringInterval: com.ssajudn.barebudget.data.model.RecurringInterval,
+        notes: String
+    ) -> Unit
 ) {
     var provider by remember { mutableStateOf("") }
     var rawAmount by remember { mutableStateOf("") }
     var dueDate by remember { mutableStateOf(DateUtils.getCurrentDateISO()) }
+    var isRecurring by remember { mutableStateOf(false) }
+    var recurringInterval by remember { mutableStateOf(com.ssajudn.barebudget.data.model.RecurringInterval.MONTHLY) }
     var notes by remember { mutableStateOf("") }
 
-    AlertDialog(
+    val amount = rawAmount.toLongOrNull() ?: 0L
+    val isValid = provider.isNotBlank() && amount > 0
+
+    CustomDialog(
+        title = "Add Due Bill",
+        icon = Icons.AutoMirrored.Filled.ReceiptLong,
+        iconTint = PastelCoralLight,
+        confirmButtonText = "Save Bill",
+        isConfirmEnabled = isValid,
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Add Due Bill",
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = provider,
-                    onValueChange = { provider = it },
-                    label = { Text("Provider / Bill Name") },
-                    placeholder = { Text("e.g. Shopee PayLater, Electricity") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+        onConfirm = {
+            if (isValid) {
+                onConfirm(
+                    provider,
+                    amount,
+                    dueDate,
+                    isRecurring,
+                    if (isRecurring) recurringInterval else com.ssajudn.barebudget.data.model.RecurringInterval.NONE,
+                    notes
                 )
-
-                OutlinedTextField(
-                    value = rawAmount,
-                    onValueChange = { input ->
-                        rawAmount = input.filter { it.isDigit() }.take(12)
-                    },
-                    label = { Text("Amount") },
-                    placeholder = { Text("Rp 0") },
-                    visualTransformation = com.ssajudn.barebudget.utils.CurrencyVisualTransformation(),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = dueDate,
-                    onValueChange = { dueDate = it },
-                    label = { Text("Due Date (YYYY-MM-DD)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val amount = rawAmount.toLongOrNull() ?: 0L
-                    if (provider.isNotBlank() && amount > 0) {
-                        onConfirm(provider, amount, dueDate, notes)
-                    }
-                }
-            ) {
-                Text("Add Bill")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
             }
         }
-    )
+    ) {
+        OutlinedTextField(
+            value = provider,
+            onValueChange = { provider = it },
+            label = { Text("Provider / Bill Name") },
+            placeholder = { Text("e.g. Shopee PayLater, Netflix, WiFi") },
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedTextField(
+            value = rawAmount,
+            onValueChange = { input ->
+                rawAmount = input.filter { it.isDigit() }.take(12)
+            },
+            label = { Text("Amount") },
+            placeholder = { Text("Rp 0") },
+            visualTransformation = com.ssajudn.barebudget.utils.CurrencyVisualTransformation(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+            ),
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedTextField(
+            value = dueDate,
+            onValueChange = { dueDate = it },
+            label = { Text("Due Date (YYYY-MM-DD)") },
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Recurring Toggle
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                .clickable { isRecurring = !isRecurring }
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Recurring Subscription",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
+                Text(
+                    text = "Auto renew when paid",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = isRecurring,
+                onCheckedChange = { isRecurring = it }
+            )
+        }
+
+        // Recurring Interval Selection
+        if (isRecurring) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf(
+                    com.ssajudn.barebudget.data.model.RecurringInterval.WEEKLY,
+                    com.ssajudn.barebudget.data.model.RecurringInterval.MONTHLY,
+                    com.ssajudn.barebudget.data.model.RecurringInterval.YEARLY
+                ).forEach { interval ->
+                    val isSelected = recurringInterval == interval
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { recurringInterval = interval },
+                        label = { Text(interval.displayName, fontSize = 12.sp) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
 }

@@ -59,8 +59,9 @@ func main() {
 	api := app.Group("/api/v1")
 	api.Use(middleware.AuthMiddleware())
 
-	// Auth / User Sync
+	// Auth / User Sync & Migration
 	api.Post("/auth/sync", h.SyncUser)
+	api.Post("/auth/migrate-guest", h.MigrateGuestData)
 
 	// Dashboard & Financial Runway
 	api.Get("/dashboard/summary", h.GetDashboardSummary)
@@ -76,6 +77,12 @@ func main() {
 	api.Post("/due-bills", h.CreateDueBill)
 	api.Patch("/due-bills/:id/status", h.UpdateDueBillStatus)
 	api.Delete("/due-bills/:id", h.DeleteDueBill)
+
+	// Savings Goals Tracker
+	api.Get("/goals", h.GetGoals)
+	api.Post("/goals", h.CreateGoal)
+	api.Post("/goals/:id/deposit", h.DepositToGoal)
+	api.Delete("/goals/:id", h.DeleteGoal)
 
 	log.Printf("Bare Budget server starting on port %s in [%s] mode...", cfg.Port, cfg.Environment)
 	log.Fatal(app.Listen(":" + cfg.Port))

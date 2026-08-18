@@ -22,6 +22,10 @@ func (s *Service) SyncUser(user *models.User) error {
 	return s.repo.UpsertUser(user)
 }
 
+func (s *Service) MigrateGuestData(guestUserID, targetUserID string) error {
+	return s.repo.MigrateGuestData(guestUserID, targetUserID)
+}
+
 // Transaction Services
 func (s *Service) CreateTransaction(t *models.Transaction) error {
 	return s.repo.CreateTransaction(t)
@@ -59,19 +63,36 @@ func (s *Service) DeleteDueBill(userID string, id uuid.UUID) error {
 	return s.repo.DeleteDueBill(userID, id)
 }
 
+// Goal Services
+func (s *Service) CreateGoal(g *models.Goal) error {
+	return s.repo.CreateGoal(g)
+}
+
+func (s *Service) GetGoals(userID string) ([]models.Goal, error) {
+	return s.repo.GetGoalsByUserID(userID)
+}
+
+func (s *Service) DepositToGoal(userID string, id uuid.UUID, amount int64) error {
+	return s.repo.UpdateGoalAmount(userID, id, amount)
+}
+
+func (s *Service) DeleteGoal(userID string, id uuid.UUID) error {
+	return s.repo.DeleteGoal(userID, id)
+}
+
 // Budget & Dashboard Runway Services
 type DashboardSummary struct {
-	MonthlyBudget      int64                         `json:"monthly_budget"`
-	TotalSpent         int64                         `json:"total_spent"`
-	RemainingBudget    int64                         `json:"remaining_budget"`
-	DaysPassed         int                           `json:"days_passed"`
-	DaysInMonth        int                           `json:"days_in_month"`
-	AverageDailySpend  int64                         `json:"average_daily_spend"`
-	EstimatedDeathDay  int                           `json:"estimated_death_day"`
-	RunwayMessage      string                        `json:"runway_message"`
-	TopCategories      []repository.CategorySummary  `json:"top_categories"`
-	UnpaidDueBillsSum  int64                         `json:"unpaid_due_bills_sum"`
-	RecentTransactions []models.Transaction          `json:"recent_transactions"`
+	MonthlyBudget      int64                        `json:"monthly_budget"`
+	TotalSpent         int64                        `json:"total_spent"`
+	RemainingBudget    int64                        `json:"remaining_budget"`
+	DaysPassed         int                          `json:"days_passed"`
+	DaysInMonth        int                          `json:"days_in_month"`
+	AverageDailySpend  int64                        `json:"average_daily_spend"`
+	EstimatedDeathDay  int                          `json:"estimated_death_day"`
+	RunwayMessage      string                       `json:"runway_message"`
+	TopCategories      []repository.CategorySummary `json:"top_categories"`
+	UnpaidDueBillsSum  int64                        `json:"unpaid_due_bills_sum"`
+	RecentTransactions []models.Transaction         `json:"recent_transactions"`
 }
 
 func (s *Service) SetBudget(userID string, limit int64, monthYear string) error {

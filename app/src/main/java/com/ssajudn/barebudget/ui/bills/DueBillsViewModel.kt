@@ -25,29 +25,50 @@ class DueBillsViewModel(
     private val _uiState = MutableStateFlow<DueBillsUiState>(DueBillsUiState.Loading)
     val uiState: StateFlow<DueBillsUiState> = _uiState.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         loadDueBills()
     }
 
-    fun loadDueBills() {
+    fun loadDueBills(isPullToRefresh: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = DueBillsUiState.Loading
+            if (isPullToRefresh) {
+                _isRefreshing.value = true
+            } else if (_uiState.value !is DueBillsUiState.Success) {
+                _uiState.value = DueBillsUiState.Loading
+            }
+
             repository.getDueBills()
                 .onSuccess { bills ->
                     _uiState.value = DueBillsUiState.Success(bills)
+                    _isRefreshing.value = false
                 }
                 .onFailure { error ->
-                    _uiState.value = DueBillsUiState.Error(error.localizedMessage ?: "Failed to fetch due bills")
+                    _isRefreshing.value = false
+                    if (_uiState.value !is DueBillsUiState.Success) {
+                        _uiState.value = DueBillsUiState.Error(error.localizedMessage ?: "Failed to fetch due bills")
+                    }
                 }
         }
     }
 
-    fun addDueBill(providerName: String, totalAmount: Long, dueDate: String, notes: String = "") {
+    fun addDueBill(
+        providerName: String,
+        totalAmount: Long,
+        dueDate: String,
+        isRecurring: Boolean = false,
+        recurringInterval: com.ssajudn.barebudget.data.model.RecurringInterval = com.ssajudn.barebudget.data.model.RecurringInterval.NONE,
+        notes: String = ""
+    ) {
         viewModelScope.launch {
             val request = CreateDueBillRequest(
                 providerName = providerName,
                 totalAmount = totalAmount,
                 dueDate = dueDate,
+                isRecurring = isRecurring,
+                recurringInterval = recurringInterval,
                 notes = notes
             )
             repository.createDueBill(request)
@@ -63,6 +84,19 @@ class DueBillsViewModel(
             if (bill.id != null) {
                 repository.updateDueBillStatus(bill.id, nextStatus)
                     .onSuccess {
+                        // Auto-rollover: If marked as PAID and it's a recurring bill, create the next period's bill automatically
+                        if (nextStatus == DueBillStatus.PAID && bill.isRecurring && bill.recurringInterval != com.ssajudn.barebudget.data.model.RecurringInterval.NONE) {
+                            val nextDueDate = DateUtils.calculateNextDueDate(bill.dueDate, bill.recurringInterval.name)
+                            val nextBillRequest = CreateDueBillRequest(
+                                providerName = bill.providerName,
+                                totalAmount = bill.totalAmount,
+                                dueDate = nextDueDate,
+                                isRecurring = true,
+                                recurringInterval = bill.recurringInterval,
+                                notes = bill.notes ?: ""
+                            )
+                            repository.createDueBill(nextBillRequest)
+                        }
                         loadDueBills()
                     }
             }

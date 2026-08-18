@@ -128,3 +128,89 @@ func (r *Repository) GetBudget(userID string, monthYear string) (*models.Budget,
 	}
 	return &b, nil
 }
+
+// Data Migration (Guest -> Authenticated User)
+func (r *Repository) MigrateGuestData(guestUserID, targetUserID string) error {
+	if guestUserID == "" || targetUserID == "" || guestUserID == targetUserID {
+		return nil
+	}
+
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Migrate Transactions
+		if err := tx.Model(&models.Transaction{}).
+			Where("user_id = ?", guestUserID).
+			Update("user_id", targetUserID).Error; err != nil {
+			return err
+		}
+
+		// 2. Migrate Due Bills
+		if err := tx.Model(&models.DueBill{}).
+			Where("user_id = ?", guestUserID).
+			Update("user_id", targetUserID).Error; err != nil {
+			return err
+		}
+
+		// 3. Migrate Budgets (Update existing or rename user_id)
+		var guestBudgets []models.Budget
+		if err := tx.Where("user_id = ?", guestUserID).Find(&guestBudgets).Error; err != nil {
+			return err
+		}
+
+		for _, gb := range guestBudgets {
+			var targetBudget models.Budget
+			err := tx.Where("user_id = ? AND month_year = ?", targetUserID, gb.MonthYear).First(&targetBudget).Error
+			if err != nil {
+				if err == gorm.ErrRecordNotFound {
+					// Simply reassign user_id
+					if err := tx.Model(&models.Budget{}).Where("id = ?", gb.ID).Update("user_id", targetUserID).Error; err != nil {
+						return err
+					}
+				} else {
+					return err
+				}
+			} else {
+				// Target already has a budget for this month, delete guest duplicate or keep target
+				tx.Where("id = ?", gb.ID).Delete(&models.Budget{})
+			}
+		}
+
+		// 4. Migrate Goals
+		if err := tx.Model(&models.Goal{}).
+			Where("user_id = ?", guestUserID).
+			Update("user_id", targetUserID).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
+// Goal Repo
+func (r *Repository) CreateGoal(g *models.Goal) error {
+	return r.db.Create(g).Error
+}
+
+func (r *Repository) GetGoalsByUserID(userID string) ([]models.Goal, error) {
+	var list []models.Goal
+	err := r.db.Where("user_id = ?", userID).Order("created_at desc").Find(&list).Error
+	return list, err
+}
+
+func (r *Repository) GetGoalByID(userID string, id uuid.UUID) (*models.Goal, error) {
+	var g models.Goal
+	err := r.db.Where("id = ? AND user_id = ?", id, userID).First(&g).Error
+	if err != nil {
+		return nil, err
+	}
+	return &g, nil
+}
+
+func (r *Repository) UpdateGoalAmount(userID string, id uuid.UUID, addedAmount int64) error {
+	return r.db.Model(&models.Goal{}).
+		Where("id = ? AND user_id = ?", id, userID).
+		Update("current_amount", gorm.Expr("current_amount + ?", addedAmount)).Error
+}
+
+func (r *Repository) DeleteGoal(userID string, id uuid.UUID) error {
+	return r.db.Where("id = ? AND user_id = ?", id, userID).Delete(&models.Goal{}).Error
+}

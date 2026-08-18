@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -30,13 +31,17 @@ func main() {
 
 	app := fiber.New(fiber.Config{
 		AppName: "Bare Budget API v1",
+		// In production, disable verbose banners
+		DisableStartupMessage: cfg.IsProduction,
 	})
 
 	// Middlewares
-	app.Use(logger.New())
+	if !cfg.IsProduction {
+		app.Use(logger.New())
+	}
 	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
-		AllowOrigins: "*",
+		AllowOrigins: strings.Join(cfg.CORSAllowedOrigins, ", "),
 		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-User-Email",
 		AllowMethods: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
 	}))
@@ -46,6 +51,7 @@ func main() {
 		return c.JSON(fiber.Map{
 			"status": "ok",
 			"app":    "Bare Budget API",
+			"env":    cfg.Environment,
 		})
 	})
 
@@ -56,7 +62,7 @@ func main() {
 	// Auth / User Sync
 	api.Post("/auth/sync", h.SyncUser)
 
-	// Dashboard & Sisa Napas
+	// Dashboard & Financial Runway
 	api.Get("/dashboard/summary", h.GetDashboardSummary)
 	api.Post("/budget", h.SetBudget)
 
@@ -65,12 +71,12 @@ func main() {
 	api.Post("/transactions", h.CreateTransaction)
 	api.Delete("/transactions/:id", h.DeleteTransaction)
 
-	// PayLater Tracker
-	api.Get("/paylaters", h.GetPayLaters)
-	api.Post("/paylaters", h.CreatePayLater)
-	api.Patch("/paylaters/:id/status", h.UpdatePayLaterStatus)
-	api.Delete("/paylaters/:id", h.DeletePayLater)
+	// Due Bills Tracker
+	api.Get("/due-bills", h.GetDueBills)
+	api.Post("/due-bills", h.CreateDueBill)
+	api.Patch("/due-bills/:id/status", h.UpdateDueBillStatus)
+	api.Delete("/due-bills/:id", h.DeleteDueBill)
 
-	log.Printf("Bare Budget server starting on port %s in %s mode...", cfg.Port, cfg.Environment)
+	log.Printf("Bare Budget server starting on port %s in [%s] mode...", cfg.Port, cfg.Environment)
 	log.Fatal(app.Listen(":" + cfg.Port))
 }

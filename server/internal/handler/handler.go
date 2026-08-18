@@ -140,12 +140,12 @@ func (h *Handler) DeleteTransaction(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"status": "deleted"})
 }
 
-// PayLater Handlers
-func (h *Handler) CreatePayLater(c *fiber.Ctx) error {
+// DueBill Handlers
+func (h *Handler) CreateDueBill(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
 	var req struct {
-		PlatformName string `json:"platform_name"`
-		TotalBill    int64  `json:"total_bill"`
+		ProviderName string `json:"provider_name"`
+		TotalAmount  int64  `json:"total_amount"`
 		DueDate      string `json:"due_date"` // "2006-01-02"
 		Notes        string `json:"notes"`
 	}
@@ -158,27 +158,27 @@ func (h *Handler) CreatePayLater(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "due_date format must be YYYY-MM-DD"})
 	}
 
-	p := &models.PayLater{
+	d := &models.DueBill{
 		UserID:       userID,
-		PlatformName: req.PlatformName,
-		TotalBill:    req.TotalBill,
+		ProviderName: req.ProviderName,
+		TotalAmount:  req.TotalAmount,
 		DueDate:      dueDate,
-		Status:       models.PayLaterUnpaid,
+		Status:       models.DueBillUnpaid,
 		Notes:        req.Notes,
 	}
 
-	if err := h.svc.CreatePayLater(p); err != nil {
+	if err := h.svc.CreateDueBill(d); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(p)
+	return c.Status(fiber.StatusCreated).JSON(d)
 }
 
-func (h *Handler) GetPayLaters(c *fiber.Ctx) error {
+func (h *Handler) GetDueBills(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
 	status := c.Query("status")
 
-	list, err := h.svc.GetPayLaters(userID, status)
+	list, err := h.svc.GetDueBills(userID, status)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
@@ -186,37 +186,37 @@ func (h *Handler) GetPayLaters(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"data": list})
 }
 
-func (h *Handler) UpdatePayLaterStatus(c *fiber.Ctx) error {
+func (h *Handler) UpdateDueBillStatus(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
 	idStr := c.Params("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid paylater id"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid bill id"})
 	}
 
 	var req struct {
-		Status models.PayLaterStatus `json:"status"`
+		Status models.DueBillStatus `json:"status"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
 	}
 
-	if err := h.svc.UpdatePayLaterStatus(userID, id, req.Status); err != nil {
+	if err := h.svc.UpdateDueBillStatus(userID, id, req.Status); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	return c.JSON(fiber.Map{"status": "updated"})
 }
 
-func (h *Handler) DeletePayLater(c *fiber.Ctx) error {
+func (h *Handler) DeleteDueBill(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
 	idStr := c.Params("id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid paylater id"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid bill id"})
 	}
 
-	if err := h.svc.DeletePayLater(userID, id); err != nil {
+	if err := h.svc.DeleteDueBill(userID, id); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 

@@ -20,27 +20,27 @@ type User struct {
 type TransactionCategory string
 
 const (
-	CategoryFood          TransactionCategory = "FOOD"          // GoFood, Grab, Dine-in
-	CategoryTransport     TransactionCategory = "TRANSPORT"     // Gojek, Grab, Bensin, KRL
-	CategoryBills         TransactionCategory = "BILLS"         // Pulsa, Listrik, WiFi
-	CategoryShopping      TransactionCategory = "SHOPPING"      // Belanja, Supermarket
-	CategoryEntertainment TransactionCategory = "ENTERTAINMENT" // Bioskop, Game, Netflix
-	CategorySocial        TransactionCategory = "SOCIAL"        // Arisan, Kondangan
+	CategoryFood          TransactionCategory = "FOOD"
+	CategoryTransport     TransactionCategory = "TRANSPORT"
+	CategoryBills         TransactionCategory = "BILLS"
+	CategoryShopping      TransactionCategory = "SHOPPING"
+	CategoryEntertainment TransactionCategory = "ENTERTAINMENT"
+	CategorySocial        TransactionCategory = "SOCIAL"
 	CategoryOther         TransactionCategory = "OTHER"
 )
 
 type Transaction struct {
-	ID         uuid.UUID           `gorm:"type:uuid;primaryKey" json:"id"`
-	UserID     string              `gorm:"type:varchar(128);index;not null" json:"user_id"`
-	Amount     int64               `gorm:"not null" json:"amount"` // in IDR (rupiah)
-	Category   TransactionCategory `gorm:"type:varchar(50);not null" json:"category"`
-	Merchant   string              `gorm:"type:varchar(255)" json:"merchant"`
-	Date       time.Time           `gorm:"not null;index" json:"date"`
-	Notes      string              `gorm:"type:text" json:"notes"`
-	ReceiptURL string              `gorm:"type:text" json:"receipt_url,omitempty"`
-	CreatedAt  time.Time           `json:"created_at"`
-	UpdatedAt  time.Time           `json:"updated_at"`
-	DeletedAt  gorm.DeletedAt      `gorm:"index" json:"-"`
+	ID          uuid.UUID           `gorm:"type:uuid;primaryKey" json:"id"`
+	UserID      string              `gorm:"type:varchar(128);index;not null" json:"user_id"`
+	Amount      int64               `gorm:"not null" json:"amount"`
+	Category    TransactionCategory `gorm:"type:varchar(50);not null" json:"category"`
+	Merchant    string              `gorm:"type:varchar(255)" json:"merchant"`
+	Date        time.Time           `gorm:"not null;index" json:"date"`
+	Notes       string              `gorm:"type:text" json:"notes"`
+	ReceiptURL  string              `gorm:"type:text" json:"receipt_url,omitempty"`
+	CreatedAt   time.Time           `json:"created_at"`
+	UpdatedAt   time.Time           `json:"updated_at"`
+	DeletedAt   gorm.DeletedAt      `gorm:"index" json:"-"`
 }
 
 func (t *Transaction) BeforeCreate(tx *gorm.DB) (err error) {
@@ -50,29 +50,29 @@ func (t *Transaction) BeforeCreate(tx *gorm.DB) (err error) {
 	return
 }
 
-type PayLaterStatus string
+type DueBillStatus string
 
 const (
-	PayLaterUnpaid PayLaterStatus = "UNPAID"
-	PayLaterPaid   PayLaterStatus = "PAID"
+	DueBillUnpaid DueBillStatus = "UNPAID"
+	DueBillPaid   DueBillStatus = "PAID"
 )
 
-type PayLater struct {
-	ID           uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
-	UserID       string         `gorm:"type:varchar(128);index;not null" json:"user_id"`
-	PlatformName string         `gorm:"type:varchar(100);not null" json:"platform_name"` // e.g. "Shopee PayLater", "GoPay Later", "Kredivo"
-	TotalBill    int64          `gorm:"not null" json:"total_bill"`
-	DueDate      time.Time      `gorm:"not null" json:"due_date"`
-	Status       PayLaterStatus `gorm:"type:varchar(20);default:'UNPAID'" json:"status"`
-	Notes        string         `gorm:"type:text" json:"notes"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
+type DueBill struct {
+	ID           uuid.UUID     `gorm:"type:uuid;primaryKey" json:"id"`
+	UserID       string        `gorm:"type:varchar(128);index;not null" json:"user_id"`
+	ProviderName string        `gorm:"type:varchar(100);not null" json:"provider_name"` // e.g. "Shopee", "Electricity", "Kredivo"
+	TotalAmount  int64         `gorm:"not null" json:"total_amount"`
+	DueDate      time.Time     `gorm:"not null" json:"due_date"`
+	Status       DueBillStatus `gorm:"type:varchar(20);default:'UNPAID'" json:"status"`
+	Notes        string        `gorm:"type:text" json:"notes"`
+	CreatedAt    time.Time     `json:"created_at"`
+	UpdatedAt    time.Time     `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
-func (p *PayLater) BeforeCreate(tx *gorm.DB) (err error) {
-	if p.ID == uuid.Nil {
-		p.ID = uuid.New()
+func (d *DueBill) BeforeCreate(tx *gorm.DB) (err error) {
+	if d.ID == uuid.Nil {
+		d.ID = uuid.New()
 	}
 	return
 }
@@ -81,7 +81,7 @@ type Budget struct {
 	ID           uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
 	UserID       string         `gorm:"type:varchar(128);index;not null" json:"user_id"`
 	MonthlyLimit int64          `gorm:"not null" json:"monthly_limit"`
-	MonthYear    string         `gorm:"type:varchar(7);not null;index" json:"month_year"` // Format: "YYYY-MM", e.g. "2026-08"
+	MonthYear    string         `gorm:"type:varchar(7);not null;index" json:"month_year"` // "YYYY-MM"
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    time.Time      `json:"updated_at"`
 	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`

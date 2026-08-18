@@ -84,13 +84,13 @@ func (r *Repository) GetMonthlyCategoryBreakdown(userID string, startOfMonth, en
 	return result, err
 }
 
-// PayLater Repo
-func (r *Repository) CreatePayLater(p *models.PayLater) error {
-	return r.db.Create(p).Error
+// DueBill Repo
+func (r *Repository) CreateDueBill(d *models.DueBill) error {
+	return r.db.Create(d).Error
 }
 
-func (r *Repository) GetPayLatersByUserID(userID string, status string) ([]models.PayLater, error) {
-	var list []models.PayLater
+func (r *Repository) GetDueBillsByUserID(userID string, status string) ([]models.DueBill, error) {
+	var list []models.DueBill
 	query := r.db.Where("user_id = ?", userID)
 	if status != "" {
 		query = query.Where("status = ?", status)
@@ -99,12 +99,12 @@ func (r *Repository) GetPayLatersByUserID(userID string, status string) ([]model
 	return list, err
 }
 
-func (r *Repository) UpdatePayLaterStatus(userID string, id uuid.UUID, status models.PayLaterStatus) error {
-	return r.db.Model(&models.PayLater{}).Where("id = ? AND user_id = ?", id, userID).Update("status", status).Error
+func (r *Repository) UpdateDueBillStatus(userID string, id uuid.UUID, status models.DueBillStatus) error {
+	return r.db.Model(&models.DueBill{}).Where("id = ? AND user_id = ?", id, userID).Update("status", status).Error
 }
 
-func (r *Repository) DeletePayLater(userID string, id uuid.UUID) error {
-	return r.db.Where("id = ? AND user_id = ?", id, userID).Delete(&models.PayLater{}).Error
+func (r *Repository) DeleteDueBill(userID string, id uuid.UUID) error {
+	return r.db.Where("id = ? AND user_id = ?", id, userID).Delete(&models.DueBill{}).Error
 }
 
 // Budget Repo

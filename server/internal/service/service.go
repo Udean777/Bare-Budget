@@ -42,24 +42,24 @@ func (s *Service) DeleteTransaction(userID string, id uuid.UUID) error {
 	return s.repo.DeleteTransaction(userID, id)
 }
 
-// PayLater Services
-func (s *Service) CreatePayLater(p *models.PayLater) error {
-	return s.repo.CreatePayLater(p)
+// DueBill Services
+func (s *Service) CreateDueBill(d *models.DueBill) error {
+	return s.repo.CreateDueBill(d)
 }
 
-func (s *Service) GetPayLaters(userID string, status string) ([]models.PayLater, error) {
-	return s.repo.GetPayLatersByUserID(userID, status)
+func (s *Service) GetDueBills(userID string, status string) ([]models.DueBill, error) {
+	return s.repo.GetDueBillsByUserID(userID, status)
 }
 
-func (s *Service) UpdatePayLaterStatus(userID string, id uuid.UUID, status models.PayLaterStatus) error {
-	return s.repo.UpdatePayLaterStatus(userID, id, status)
+func (s *Service) UpdateDueBillStatus(userID string, id uuid.UUID, status models.DueBillStatus) error {
+	return s.repo.UpdateDueBillStatus(userID, id, status)
 }
 
-func (s *Service) DeletePayLater(userID string, id uuid.UUID) error {
-	return s.repo.DeletePayLater(userID, id)
+func (s *Service) DeleteDueBill(userID string, id uuid.UUID) error {
+	return s.repo.DeleteDueBill(userID, id)
 }
 
-// Budget & Dashboard "Sisa Napas" Services
+// Budget & Dashboard Runway Services
 type DashboardSummary struct {
 	MonthlyBudget      int64                         `json:"monthly_budget"`
 	TotalSpent         int64                         `json:"total_spent"`
@@ -67,10 +67,10 @@ type DashboardSummary struct {
 	DaysPassed         int                           `json:"days_passed"`
 	DaysInMonth        int                           `json:"days_in_month"`
 	AverageDailySpend  int64                         `json:"average_daily_spend"`
-	EstimatedDeathDay  int                           `json:"estimated_death_day"` // Sisa Napas (Day of month when budget runs out)
-	SisaNapasMessage   string                        `json:"sisa_napas_message"`
+	EstimatedDeathDay  int                           `json:"estimated_death_day"`
+	RunwayMessage      string                        `json:"runway_message"`
 	TopCategories      []repository.CategorySummary  `json:"top_categories"`
-	UnpaidPayLaterSum  int64                         `json:"unpaid_paylater_sum"`
+	UnpaidDueBillsSum  int64                         `json:"unpaid_due_bills_sum"`
 	RecentTransactions []models.Transaction          `json:"recent_transactions"`
 }
 
@@ -85,8 +85,9 @@ func (s *Service) SetBudget(userID string, limit int64, monthYear string) error 
 
 func (s *Service) GetDashboardSummary(userID string, now time.Time) (*DashboardSummary, error) {
 	monthYear := now.Format("2006-01")
-	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
-	endOfMonth := startOfMonth.AddDate(0, 1, -1).Add(time.Hour*23 + time.Minute*59 + time.Second*59)
+	// Start from beginning of current month (00:00:00) to the end of the month (23:59:59)
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
+	endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Nanosecond)
 	daysInMonth := endOfMonth.Day()
 	daysPassed := now.Day()
 
@@ -97,13 +98,13 @@ func (s *Service) GetDashboardSummary(userID string, now time.Time) (*DashboardS
 		monthlyBudget = budget.MonthlyLimit
 	}
 
-	// 2. Get Total Spent
-	totalSpent, err := s.repo.GetMonthlySpent(userID, startOfMonth, now)
+	// 2. Get Total Spent for entire month up to endOfMonth
+	totalSpent, err := s.repo.GetMonthlySpent(userID, startOfMonth, endOfMonth)
 	if err != nil {
 		return nil, err
 	}
 
-	// 3. Calculate Sisa Napas
+	// 3. Calculate Financial Runway
 	remainingBudget := monthlyBudget - totalSpent
 	var avgDailySpend int64 = 0
 	if daysPassed > 0 {
@@ -111,39 +112,39 @@ func (s *Service) GetDashboardSummary(userID string, now time.Time) (*DashboardS
 	}
 
 	var estimatedDeathDay int = daysInMonth
-	var sisaNapasMsg string
+	var runwayMsg string
 
 	if monthlyBudget <= 0 {
-		sisaNapasMsg = "Budget bulanan belum di-set. Yuk atur budget biar keuanganmu aman!"
+		runwayMsg = "Monthly budget is not set yet. Set your budget to track your financial runway!"
 	} else if remainingBudget <= 0 {
 		estimatedDeathDay = daysPassed
-		sisaNapasMsg = fmt.Sprintf("Napasmu sudah habis! Budget jebol sejak tanggal %d.", daysPassed)
+		runwayMsg = fmt.Sprintf("Runway exhausted! Your budget was exceeded on day %d.", daysPassed)
 	} else if avgDailySpend > 0 {
 		daysLeft := int(remainingBudget / avgDailySpend)
 		projectedDay := daysPassed + daysLeft
 		if projectedDay < daysInMonth {
 			estimatedDeathDay = projectedDay
-			sisaNapasMsg = fmt.Sprintf("Dengan kecepatan jajanmu (Rp %s/hari), napasmu bakal habis tanggal %d!", formatRupiah(avgDailySpend), projectedDay)
+			runwayMsg = fmt.Sprintf("At your current spending rate (Rp %s/day), your budget will run out on day %d!", formatCurrency(avgDailySpend), projectedDay)
 		} else {
 			estimatedDeathDay = daysInMonth
-			sisaNapasMsg = "Napasmu masih aman sampai akhir bulan. Pertahankan!"
+			runwayMsg = "Your financial runway is safe until the end of the month. Keep it up!"
 		}
 	} else {
-		sisaNapasMsg = "Belum ada pengeluaran bulan ini. Dompetmu masih utuh!"
+		runwayMsg = "No expenses recorded this month yet. Your budget is untouched!"
 	}
 
 	// 4. Get Category Breakdown
-	categories, err := s.repo.GetMonthlyCategoryBreakdown(userID, startOfMonth, now)
+	categories, err := s.repo.GetMonthlyCategoryBreakdown(userID, startOfMonth, endOfMonth)
 	if err != nil {
 		return nil, err
 	}
 
-	// 5. Get Unpaid PayLater Sum
-	paylaters, err := s.repo.GetPayLatersByUserID(userID, string(models.PayLaterUnpaid))
+	// 5. Get Unpaid DueBills Sum
+	bills, err := s.repo.GetDueBillsByUserID(userID, string(models.DueBillUnpaid))
 	var unpaidSum int64 = 0
 	if err == nil {
-		for _, p := range paylaters {
-			unpaidSum += p.TotalBill
+		for _, b := range bills {
+			unpaidSum += b.TotalAmount
 		}
 	}
 
@@ -158,14 +159,14 @@ func (s *Service) GetDashboardSummary(userID string, now time.Time) (*DashboardS
 		DaysInMonth:        daysInMonth,
 		AverageDailySpend:  avgDailySpend,
 		EstimatedDeathDay:  estimatedDeathDay,
-		SisaNapasMessage:   sisaNapasMsg,
+		RunwayMessage:      runwayMsg,
 		TopCategories:      categories,
-		UnpaidPayLaterSum:  unpaidSum,
+		UnpaidDueBillsSum:  unpaidSum,
 		RecentTransactions: recentTxs,
 	}, nil
 }
 
-func formatRupiah(amount int64) string {
+func formatCurrency(amount int64) string {
 	str := fmt.Sprintf("%d", amount)
 	n := len(str)
 	if n <= 3 {

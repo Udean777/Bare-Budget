@@ -1,0 +1,15 @@
+# Binaries
+/tmp/
+/bin/
+main
+barebudget-api
+
+# Environment variables
+.env
+
+# Logs
+*.log
+build-errors.log
+
+# OS
+.DS_Store

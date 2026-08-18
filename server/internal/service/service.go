@@ -1,0 +1,182 @@
+package service
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/ssajudn/barebudget-server/internal/models"
+	"github.com/ssajudn/barebudget-server/internal/repository"
+)
+
+type Service struct {
+	repo *repository.Repository
+}
+
+func NewService(repo *repository.Repository) *Service {
+	return &Service{repo: repo}
+}
+
+// User Services
+func (s *Service) SyncUser(user *models.User) error {
+	return s.repo.UpsertUser(user)
+}
+
+// Transaction Services
+func (s *Service) CreateTransaction(t *models.Transaction) error {
+	return s.repo.CreateTransaction(t)
+}
+
+func (s *Service) GetTransactions(userID string, startDate, endDate time.Time, category string, page, limit int) ([]models.Transaction, int64, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	if page <= 0 {
+		page = 1
+	}
+	offset := (page - 1) * limit
+	return s.repo.GetTransactionsByUserID(userID, startDate, endDate, category, limit, offset)
+}
+
+func (s *Service) DeleteTransaction(userID string, id uuid.UUID) error {
+	return s.repo.DeleteTransaction(userID, id)
+}
+
+// PayLater Services
+func (s *Service) CreatePayLater(p *models.PayLater) error {
+	return s.repo.CreatePayLater(p)
+}
+
+func (s *Service) GetPayLaters(userID string, status string) ([]models.PayLater, error) {
+	return s.repo.GetPayLatersByUserID(userID, status)
+}
+
+func (s *Service) UpdatePayLaterStatus(userID string, id uuid.UUID, status models.PayLaterStatus) error {
+	return s.repo.UpdatePayLaterStatus(userID, id, status)
+}
+
+func (s *Service) DeletePayLater(userID string, id uuid.UUID) error {
+	return s.repo.DeletePayLater(userID, id)
+}
+
+// Budget & Dashboard "Sisa Napas" Services
+type DashboardSummary struct {
+	MonthlyBudget      int64                         `json:"monthly_budget"`
+	TotalSpent         int64                         `json:"total_spent"`
+	RemainingBudget    int64                         `json:"remaining_budget"`
+	DaysPassed         int                           `json:"days_passed"`
+	DaysInMonth        int                           `json:"days_in_month"`
+	AverageDailySpend  int64                         `json:"average_daily_spend"`
+	EstimatedDeathDay  int                           `json:"estimated_death_day"` // Sisa Napas (Day of month when budget runs out)
+	SisaNapasMessage   string                        `json:"sisa_napas_message"`
+	TopCategories      []repository.CategorySummary  `json:"top_categories"`
+	UnpaidPayLaterSum  int64                         `json:"unpaid_paylater_sum"`
+	RecentTransactions []models.Transaction          `json:"recent_transactions"`
+}
+
+func (s *Service) SetBudget(userID string, limit int64, monthYear string) error {
+	b := &models.Budget{
+		UserID:       userID,
+		MonthlyLimit: limit,
+		MonthYear:    monthYear,
+	}
+	return s.repo.UpsertBudget(b)
+}
+
+func (s *Service) GetDashboardSummary(userID string, now time.Time) (*DashboardSummary, error) {
+	monthYear := now.Format("2006-01")
+	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	endOfMonth := startOfMonth.AddDate(0, 1, -1).Add(time.Hour*23 + time.Minute*59 + time.Second*59)
+	daysInMonth := endOfMonth.Day()
+	daysPassed := now.Day()
+
+	// 1. Get Monthly Budget
+	budget, _ := s.repo.GetBudget(userID, monthYear)
+	var monthlyBudget int64 = 0
+	if budget != nil {
+		monthlyBudget = budget.MonthlyLimit
+	}
+
+	// 2. Get Total Spent
+	totalSpent, err := s.repo.GetMonthlySpent(userID, startOfMonth, now)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Calculate Sisa Napas
+	remainingBudget := monthlyBudget - totalSpent
+	var avgDailySpend int64 = 0
+	if daysPassed > 0 {
+		avgDailySpend = totalSpent / int64(daysPassed)
+	}
+
+	var estimatedDeathDay int = daysInMonth
+	var sisaNapasMsg string
+
+	if monthlyBudget <= 0 {
+		sisaNapasMsg = "Budget bulanan belum di-set. Yuk atur budget biar keuanganmu aman!"
+	} else if remainingBudget <= 0 {
+		estimatedDeathDay = daysPassed
+		sisaNapasMsg = fmt.Sprintf("Napasmu sudah habis! Budget jebol sejak tanggal %d.", daysPassed)
+	} else if avgDailySpend > 0 {
+		daysLeft := int(remainingBudget / avgDailySpend)
+		projectedDay := daysPassed + daysLeft
+		if projectedDay < daysInMonth {
+			estimatedDeathDay = projectedDay
+			sisaNapasMsg = fmt.Sprintf("Dengan kecepatan jajanmu (Rp %s/hari), napasmu bakal habis tanggal %d!", formatRupiah(avgDailySpend), projectedDay)
+		} else {
+			estimatedDeathDay = daysInMonth
+			sisaNapasMsg = "Napasmu masih aman sampai akhir bulan. Pertahankan!"
+		}
+	} else {
+		sisaNapasMsg = "Belum ada pengeluaran bulan ini. Dompetmu masih utuh!"
+	}
+
+	// 4. Get Category Breakdown
+	categories, err := s.repo.GetMonthlyCategoryBreakdown(userID, startOfMonth, now)
+	if err != nil {
+		return nil, err
+	}
+
+	// 5. Get Unpaid PayLater Sum
+	paylaters, err := s.repo.GetPayLatersByUserID(userID, string(models.PayLaterUnpaid))
+	var unpaidSum int64 = 0
+	if err == nil {
+		for _, p := range paylaters {
+			unpaidSum += p.TotalBill
+		}
+	}
+
+	// 6. Get Recent 5 Transactions
+	recentTxs, _, _ := s.repo.GetTransactionsByUserID(userID, time.Time{}, time.Time{}, "", 5, 0)
+
+	return &DashboardSummary{
+		MonthlyBudget:      monthlyBudget,
+		TotalSpent:         totalSpent,
+		RemainingBudget:    remainingBudget,
+		DaysPassed:         daysPassed,
+		DaysInMonth:        daysInMonth,
+		AverageDailySpend:  avgDailySpend,
+		EstimatedDeathDay:  estimatedDeathDay,
+		SisaNapasMessage:   sisaNapasMsg,
+		TopCategories:      categories,
+		UnpaidPayLaterSum:  unpaidSum,
+		RecentTransactions: recentTxs,
+	}, nil
+}
+
+func formatRupiah(amount int64) string {
+	str := fmt.Sprintf("%d", amount)
+	n := len(str)
+	if n <= 3 {
+		return str
+	}
+	var res string
+	for i, c := range str {
+		if (n-i)%3 == 0 && i != 0 {
+			res += "."
+		}
+		res += string(c)
+	}
+	return res
+}

@@ -49,6 +49,34 @@ func (h *Handler) SyncUser(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"status": "success", "user": user})
 }
 
+func (h *Handler) MigrateGuestData(c *fiber.Ctx) error {
+	targetUserID := middleware.GetUserID(c)
+	if targetUserID == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
+	}
+
+	var req struct {
+		GuestUserID string `json:"guest_user_id"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+
+	if req.GuestUserID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "guest_user_id is required"})
+	}
+
+	if err := h.svc.MigrateGuestData(req.GuestUserID, targetUserID); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{
+		"status":         "success",
+		"message":        "guest data migrated successfully",
+		"target_user_id": targetUserID,
+	})
+}
+
 // Transaction Handlers
 func (h *Handler) CreateTransaction(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)

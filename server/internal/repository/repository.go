@@ -128,3 +128,52 @@ func (r *Repository) GetBudget(userID string, monthYear string) (*models.Budget,
 	}
 	return &b, nil
 }
+
+// Data Migration (Guest -> Authenticated User)
+func (r *Repository) MigrateGuestData(guestUserID, targetUserID string) error {
+	if guestUserID == "" || targetUserID == "" || guestUserID == targetUserID {
+		return nil
+	}
+
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		// 1. Migrate Transactions
+		if err := tx.Model(&models.Transaction{}).
+			Where("user_id = ?", guestUserID).
+			Update("user_id", targetUserID).Error; err != nil {
+			return err
+		}
+
+		// 2. Migrate Due Bills
+		if err := tx.Model(&models.DueBill{}).
+			Where("user_id = ?", guestUserID).
+			Update("user_id", targetUserID).Error; err != nil {
+			return err
+		}
+
+		// 3. Migrate Budgets (Update existing or rename user_id)
+		var guestBudgets []models.Budget
+		if err := tx.Where("user_id = ?", guestUserID).Find(&guestBudgets).Error; err != nil {
+			return err
+		}
+
+		for _, gb := range guestBudgets {
+			var targetBudget models.Budget
+			err := tx.Where("user_id = ? AND month_year = ?", targetUserID, gb.MonthYear).First(&targetBudget).Error
+			if err != nil {
+				if err == gorm.ErrRecordNotFound {
+					// Simply reassign user_id
+					if err := tx.Model(&models.Budget{}).Where("id = ?", gb.ID).Update("user_id", targetUserID).Error; err != nil {
+						return err
+					}
+				} else {
+					return err
+				}
+			} else {
+				// Target already has a budget for this month, delete guest duplicate or keep target
+				tx.Where("id = ?", gb.ID).Delete(&models.Budget{})
+			}
+		}
+
+		return nil
+	})
+}

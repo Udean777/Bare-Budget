@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import com.ssajudn.barebudget.data.network.ApiClient
 import java.util.UUID
+import androidx.core.content.edit
 
 class UserSessionManager(context: Context) {
 
@@ -20,29 +21,29 @@ class UserSessionManager(context: Context) {
 
     var isOnboardingCompleted: Boolean
         get() = prefs.getBoolean(KEY_ONBOARDING_COMPLETED, false)
-        set(value) = prefs.edit().putBoolean(KEY_ONBOARDING_COMPLETED, value).apply()
+        set(value) = prefs.edit { putBoolean(KEY_ONBOARDING_COMPLETED, value) }
 
     var isGuestMode: Boolean
         get() = prefs.getBoolean(KEY_IS_GUEST, false)
-        set(value) = prefs.edit().putBoolean(KEY_IS_GUEST, value).apply()
+        set(value) = prefs.edit { putBoolean(KEY_IS_GUEST, value) }
 
     var userId: String
         get() = prefs.getString(KEY_USER_ID, "") ?: ""
         set(value) {
-            prefs.edit().putString(KEY_USER_ID, value).apply()
+            prefs.edit { putString(KEY_USER_ID, value) }
             ApiClient.authToken = value
         }
 
     var userEmail: String
         get() = prefs.getString(KEY_USER_EMAIL, "") ?: ""
         set(value) {
-            prefs.edit().putString(KEY_USER_EMAIL, value).apply()
+            prefs.edit { putString(KEY_USER_EMAIL, value) }
             ApiClient.userEmail = value
         }
 
     var userName: String
         get() = prefs.getString(KEY_USER_NAME, "") ?: ""
-        set(value) = prefs.edit().putString(KEY_USER_NAME, value).apply()
+        set(value) = prefs.edit { putString(KEY_USER_NAME, value) }
 
     fun startGuestSession() {
         val guestId = "guest_" + UUID.randomUUID().toString().take(12)
@@ -73,9 +74,13 @@ class UserSessionManager(context: Context) {
         }
     }
 
-    fun clearSession() {
-        prefs.edit().clear().apply()
-        ApiClient.authToken = "dev-user-123"
-        ApiClient.userEmail = "user@barebudget.app"
+    fun clearSession(preserveOnboarding: Boolean = true) {
+        val onboardingDone = if (preserveOnboarding) isOnboardingCompleted else false
+        prefs.edit { clear() }
+        if (onboardingDone) {
+            isOnboardingCompleted = true
+        }
+        ApiClient.authToken = ""
+        ApiClient.userEmail = ""
     }
 }

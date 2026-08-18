@@ -12,10 +12,12 @@ import com.ssajudn.barebudget.ui.transaction.AddTransactionScreen
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.ssajudn.barebudget.data.local.UserSessionManager
+import com.ssajudn.barebudget.ui.onboarding.AuthScreen
 import com.ssajudn.barebudget.ui.onboarding.OnboardingScreen
 
 sealed class Screen(val route: String) {
     object Onboarding : Screen("onboarding")
+    object Auth : Screen("auth")
     object Dashboard : Screen("dashboard")
     object AddTransaction : Screen("add_transaction")
     object AllTransactions : Screen("all_transactions")
@@ -36,10 +38,15 @@ fun AppNavigation(
     val sessionManager = remember { 
         UserSessionManager(context).apply { initSession() } 
     }
-    val startDestination = if (sessionManager.isOnboardingCompleted) {
-        Screen.Dashboard.route
-    } else {
-        Screen.Onboarding.route
+    
+    // Dynamic entry point:
+    // 1. If never onboarded -> Onboarding
+    // 2. If logged in (has userId) -> Dashboard
+    // 3. If signed out but onboarded -> Auth Screen
+    val startDestination = when {
+        !sessionManager.isOnboardingCompleted -> Screen.Onboarding.route
+        sessionManager.userId.isNotBlank() -> Screen.Dashboard.route
+        else -> Screen.Auth.route
     }
 
     NavHost(
@@ -51,6 +58,16 @@ fun AppNavigation(
                 onFinishOnboarding = {
                     navController.navigate(Screen.Dashboard.route) {
                         popUpTo(Screen.Onboarding.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        composable(Screen.Auth.route) {
+            AuthScreen(
+                onAuthSuccess = {
+                    navController.navigate(Screen.Dashboard.route) {
+                        popUpTo(Screen.Auth.route) { inclusive = true }
                     }
                 }
             )
@@ -88,7 +105,7 @@ fun AppNavigation(
                     navController.popBackStack()
                 },
                 onSignOutSuccess = {
-                    navController.navigate(Screen.Onboarding.route) {
+                    navController.navigate(Screen.Auth.route) {
                         popUpTo(0) { inclusive = true }
                     }
                 }

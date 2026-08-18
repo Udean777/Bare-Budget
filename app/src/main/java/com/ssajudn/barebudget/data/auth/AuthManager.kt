@@ -61,8 +61,22 @@ class AuthManager(
 
                 // Authenticate to Firebase with Google IdToken
                 val authCredential = GoogleAuthProvider.getCredential(idToken, null)
-                val authResult = firebaseAuth.signInWithCredential(authCredential).await()
-                val firebaseUser = authResult.user
+                val activeUser = firebaseAuth.currentUser
+
+                val firebaseUser: FirebaseUser? = if (activeUser != null && activeUser.isAnonymous) {
+                    try {
+                        // Directly upgrade/link anonymous session to Google credentials
+                        val linkResult = activeUser.linkWithCredential(authCredential).await()
+                        linkResult.user
+                    } catch (e: Exception) {
+                        // If Google account already exists as a separate user, sign in to it
+                        val authResult = firebaseAuth.signInWithCredential(authCredential).await()
+                        authResult.user
+                    }
+                } else {
+                    val authResult = firebaseAuth.signInWithCredential(authCredential).await()
+                    authResult.user
+                }
 
                 if (firebaseUser != null) {
                     sessionManager.startUserSession(
@@ -82,7 +96,7 @@ class AuthManager(
         } catch (e: GetCredentialException) {
             AuthResult.Error(e.localizedMessage ?: "Credential retrieval error")
         } catch (e: Exception) {
-            AuthResult.Error(e.localizedMessage ?: "Authentication failed")
+            AuthResult.Error(e.localizedMessage ?: "Authentication failed: ${e.message}")
         }
     }
 

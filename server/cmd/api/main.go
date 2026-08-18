@@ -59,8 +59,9 @@ func main() {
 	api := app.Group("/api/v1")
 	api.Use(middleware.AuthMiddleware())
 
-	// Auth / User Sync
+	// Auth / User Sync & Migration
 	api.Post("/auth/sync", h.SyncUser)
+	api.Post("/auth/migrate-guest", h.MigrateGuestData)
 
 	// Dashboard & Financial Runway
 	api.Get("/dashboard/summary", h.GetDashboardSummary)

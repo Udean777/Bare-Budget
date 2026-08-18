@@ -42,7 +42,8 @@ fun OnboardingScreen(
     val context = LocalContext.current
     val authManager = remember { AuthManager(context) }
     val coroutineScope = rememberCoroutineScope()
-    var isLoading by remember { mutableStateOf(false) }
+    var isGoogleLoading by remember { mutableStateOf(false) }
+    var isGuestLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -135,12 +136,13 @@ fun OnboardingScreen(
                 if (pageIndex == pages.size - 1) {
                     // Final Choice Page (Google Sign In vs Guest Mode)
                     FinalAuthChoiceStep(
-                        isLoading = isLoading,
+                        isGoogleLoading = isGoogleLoading,
+                        isGuestLoading = isGuestLoading,
                         onSignInClick = {
                             coroutineScope.launch {
-                                isLoading = true
+                                isGoogleLoading = true
                                 val result = authManager.signInWithGoogle()
-                                isLoading = false
+                                isGoogleLoading = false
                                 when (result) {
                                     is AuthResult.Success -> onFinishOnboarding()
                                     is AuthResult.Error -> errorMessage = result.message
@@ -150,9 +152,9 @@ fun OnboardingScreen(
                         },
                         onGuestClick = {
                             coroutineScope.launch {
-                                isLoading = true
+                                isGuestLoading = true
                                 authManager.signInAnonymously()
-                                isLoading = false
+                                isGuestLoading = false
                                 onFinishOnboarding()
                             }
                         }
@@ -269,10 +271,13 @@ fun OnboardingSlide(data: OnboardingPageData) {
 
 @Composable
 fun FinalAuthChoiceStep(
-    isLoading: Boolean,
+    isGoogleLoading: Boolean,
+    isGuestLoading: Boolean,
     onSignInClick: () -> Unit,
     onGuestClick: () -> Unit
 ) {
+    val anyLoading = isGoogleLoading || isGuestLoading
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -344,7 +349,7 @@ fun FinalAuthChoiceStep(
 
                 Button(
                     onClick = onSignInClick,
-                    enabled = !isLoading,
+                    enabled = !anyLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
@@ -354,7 +359,7 @@ fun FinalAuthChoiceStep(
                         contentColor = MaterialTheme.colorScheme.onPrimary
                     )
                 ) {
-                    if (isLoading) {
+                    if (isGoogleLoading) {
                         CircularProgressIndicator(
                             color = MaterialTheme.colorScheme.onPrimary,
                             modifier = Modifier.size(20.dp)
@@ -412,13 +417,20 @@ fun FinalAuthChoiceStep(
 
                 OutlinedButton(
                     onClick = onGuestClick,
-                    enabled = !isLoading,
+                    enabled = !anyLoading,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
                     shape = RoundedCornerShape(12.dp)
                 ) {
-                    Text("Continue as Guest", fontWeight = FontWeight.SemiBold)
+                    if (isGuestLoading) {
+                        CircularProgressIndicator(
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    } else {
+                        Text("Continue as Guest", fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }

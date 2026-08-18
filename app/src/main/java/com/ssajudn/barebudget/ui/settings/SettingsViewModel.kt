@@ -26,7 +26,8 @@ data class SettingsUiState(
 class SettingsViewModel(
     context: Context,
     private val authManager: AuthManager = AuthManager(context),
-    private val sessionManager: UserSessionManager = UserSessionManager(context)
+    private val sessionManager: UserSessionManager = UserSessionManager(context),
+    private val repository: com.ssajudn.barebudget.data.repository.BudgetRepository = com.ssajudn.barebudget.data.repository.BudgetRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -53,20 +54,26 @@ class SettingsViewModel(
 
     fun linkWithGoogle() {
         viewModelScope.launch {
+            val previousGuestUserId = sessionManager.userId
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-            val result = authManager.signInWithGoogle()
-            _uiState.value = _uiState.value.copy(isLoading = false)
-            when (result) {
+            when (val result = authManager.signInWithGoogle()) {
                 is AuthResult.Success -> {
+                    // Automatically migrate all guest data (transactions, bills, budgets) to Google Account UID
+                    if (previousGuestUserId.isNotBlank() && previousGuestUserId != result.user.uid) {
+                        repository.migrateGuestData(previousGuestUserId)
+                    }
+                    _uiState.value = _uiState.value.copy(isLoading = false)
                     loadUserProfile()
                     _uiState.value = _uiState.value.copy(
-                        successMessage = "Successfully connected with Google account!"
+                        successMessage = "Successfully connected! All previous transactions were migrated to your Google account."
                     )
                 }
                 is AuthResult.Error -> {
-                    _uiState.value = _uiState.value.copy(errorMessage = result.message)
+                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = result.message)
                 }
-                is AuthResult.Cancelled -> { /* User cancelled */ }
+                is AuthResult.Cancelled -> {
+                    _uiState.value = _uiState.value.copy(isLoading = false)
+                }
             }
         }
     }

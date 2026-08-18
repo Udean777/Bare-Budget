@@ -44,4 +44,8 @@ interface ApiService {
 
     @DELETE("api/v1/due-bills/{id}")
     suspend fun deleteDueBill(@Path("id") id: String): Response<Map<String, String>>
+
+    // Account Migration (Guest -> Google Account)
+    @POST("api/v1/auth/migrate-guest")
+    suspend fun migrateGuestData(@Body request: Map<String, String>): Response<Map<String, Any>>
 }

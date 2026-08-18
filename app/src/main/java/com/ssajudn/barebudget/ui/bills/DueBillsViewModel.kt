@@ -54,12 +54,21 @@ class DueBillsViewModel(
         }
     }
 
-    fun addDueBill(providerName: String, totalAmount: Long, dueDate: String, notes: String = "") {
+    fun addDueBill(
+        providerName: String,
+        totalAmount: Long,
+        dueDate: String,
+        isRecurring: Boolean = false,
+        recurringInterval: com.ssajudn.barebudget.data.model.RecurringInterval = com.ssajudn.barebudget.data.model.RecurringInterval.NONE,
+        notes: String = ""
+    ) {
         viewModelScope.launch {
             val request = CreateDueBillRequest(
                 providerName = providerName,
                 totalAmount = totalAmount,
                 dueDate = dueDate,
+                isRecurring = isRecurring,
+                recurringInterval = recurringInterval,
                 notes = notes
             )
             repository.createDueBill(request)
@@ -75,6 +84,19 @@ class DueBillsViewModel(
             if (bill.id != null) {
                 repository.updateDueBillStatus(bill.id, nextStatus)
                     .onSuccess {
+                        // Auto-rollover: If marked as PAID and it's a recurring bill, create the next period's bill automatically
+                        if (nextStatus == DueBillStatus.PAID && bill.isRecurring && bill.recurringInterval != com.ssajudn.barebudget.data.model.RecurringInterval.NONE) {
+                            val nextDueDate = DateUtils.calculateNextDueDate(bill.dueDate, bill.recurringInterval.name)
+                            val nextBillRequest = CreateDueBillRequest(
+                                providerName = bill.providerName,
+                                totalAmount = bill.totalAmount,
+                                dueDate = nextDueDate,
+                                isRecurring = true,
+                                recurringInterval = bill.recurringInterval,
+                                notes = bill.notes ?: ""
+                            )
+                            repository.createDueBill(nextBillRequest)
+                        }
                         loadDueBills()
                     }
             }

@@ -54,6 +54,20 @@ enum class DueBillStatus {
     PAID
 }
 
+enum class RecurringInterval(val displayName: String) {
+    @SerializedName("NONE")
+    NONE("One-time"),
+
+    @SerializedName("WEEKLY")
+    WEEKLY("Weekly"),
+
+    @SerializedName("MONTHLY")
+    MONTHLY("Monthly"),
+
+    @SerializedName("YEARLY")
+    YEARLY("Yearly")
+}
+
 data class DueBill(
     @SerializedName("id") val id: String? = null,
     @SerializedName("user_id") val userId: String? = null,
@@ -61,6 +75,8 @@ data class DueBill(
     @SerializedName("total_amount") val totalAmount: Long,
     @SerializedName("due_date") val dueDate: String,
     @SerializedName("status") val status: DueBillStatus = DueBillStatus.UNPAID,
+    @SerializedName("is_recurring") val isRecurring: Boolean = false,
+    @SerializedName("recurring_interval") val recurringInterval: RecurringInterval = RecurringInterval.NONE,
     @SerializedName("notes") val notes: String? = null,
     @SerializedName("created_at") val createdAt: String? = null
 )
@@ -69,6 +85,8 @@ data class CreateDueBillRequest(
     @SerializedName("provider_name") val providerName: String,
     @SerializedName("total_amount") val totalAmount: Long,
     @SerializedName("due_date") val dueDate: String,
+    @SerializedName("is_recurring") val isRecurring: Boolean = false,
+    @SerializedName("recurring_interval") val recurringInterval: RecurringInterval = RecurringInterval.NONE,
     @SerializedName("notes") val notes: String = ""
 )
 

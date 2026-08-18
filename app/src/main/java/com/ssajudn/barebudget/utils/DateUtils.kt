@@ -69,4 +69,26 @@ object DateUtils {
             else -> "Terlewat ${Math.abs(days)} hari"
         }
     }
+
+    /**
+     * Calculates the next due date based on recurring interval
+     */
+    fun calculateNextDueDate(currentDueDateStr: String, interval: String): String {
+        return try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            val date = sdf.parse(currentDueDateStr.substring(0, 10)) ?: Date()
+            val cal = Calendar.getInstance().apply { time = date }
+
+            when (interval.uppercase()) {
+                "WEEKLY" -> cal.add(Calendar.WEEK_OF_YEAR, 1)
+                "MONTHLY" -> cal.add(Calendar.MONTH, 1)
+                "YEARLY" -> cal.add(Calendar.YEAR, 1)
+                else -> return currentDueDateStr
+            }
+
+            sdf.format(cal.time)
+        } catch (e: Exception) {
+            currentDueDateStr
+        }
+    }
 }

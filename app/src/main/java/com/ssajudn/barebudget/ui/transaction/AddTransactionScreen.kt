@@ -37,6 +37,7 @@ fun AddTransactionScreen(
     viewModel: AddTransactionViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showSplitBottomSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -151,6 +152,18 @@ fun AddTransactionScreen(
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    // Quick Split Bill Trigger Button
+                    if (uiState.parsedAmount > 0) {
+                        Spacer(modifier = Modifier.height(10.dp))
+                        OutlinedButton(
+                            onClick = { showSplitBottomSheet = true },
+                            shape = RoundedCornerShape(12.dp),
+                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                        ) {
+                            Text("👥 Smart Split Bill (Patungan)", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold))
+                        }
+                    }
                 }
             }
 
@@ -255,5 +268,20 @@ fun AddTransactionScreen(
 
             Spacer(modifier = Modifier.height(20.dp))
         }
+    }
+
+    if (showSplitBottomSheet) {
+        SplitBillBottomSheet(
+            totalBillAmount = uiState.parsedAmount,
+            merchantName = uiState.merchant,
+            onDismiss = { showSplitBottomSheet = false },
+            onApplyMyPortion = { myPortion ->
+                viewModel.onAmountChange(myPortion.toString())
+                if (uiState.notes.isBlank()) {
+                    viewModel.onNotesChange("Split bill (Porsi saya dari total ${com.ssajudn.barebudget.utils.CurrencyFormatter.formatRupiah(uiState.parsedAmount)})")
+                }
+                showSplitBottomSheet = false
+            }
+        )
     }
 }

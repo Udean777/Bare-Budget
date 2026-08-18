@@ -57,17 +57,28 @@ const (
 	DueBillPaid   DueBillStatus = "PAID"
 )
 
+type RecurringInterval string
+
+const (
+	RecurringNone    RecurringInterval = "NONE"
+	RecurringWeekly  RecurringInterval = "WEEKLY"
+	RecurringMonthly RecurringInterval = "MONTHLY"
+	RecurringYearly  RecurringInterval = "YEARLY"
+)
+
 type DueBill struct {
-	ID           uuid.UUID     `gorm:"type:uuid;primaryKey" json:"id"`
-	UserID       string        `gorm:"type:varchar(128);index;not null" json:"user_id"`
-	ProviderName string        `gorm:"type:varchar(100);not null" json:"provider_name"` // e.g. "Shopee", "Electricity", "Kredivo"
-	TotalAmount  int64         `gorm:"not null" json:"total_amount"`
-	DueDate      time.Time     `gorm:"not null" json:"due_date"`
-	Status       DueBillStatus `gorm:"type:varchar(20);default:'UNPAID'" json:"status"`
-	Notes        string        `gorm:"type:text" json:"notes"`
-	CreatedAt    time.Time     `json:"created_at"`
-	UpdatedAt    time.Time     `json:"updated_at"`
-	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
+	ID                uuid.UUID         `gorm:"type:uuid;primaryKey" json:"id"`
+	UserID            string            `gorm:"type:varchar(128);index;not null" json:"user_id"`
+	ProviderName      string            `gorm:"type:varchar(100);not null" json:"provider_name"` // e.g. "Shopee", "Electricity", "Kredivo"
+	TotalAmount       int64             `gorm:"not null" json:"total_amount"`
+	DueDate           time.Time         `gorm:"not null" json:"due_date"`
+	Status            DueBillStatus     `gorm:"type:varchar(20);default:'UNPAID'" json:"status"`
+	IsRecurring       bool              `gorm:"default:false" json:"is_recurring"`
+	RecurringInterval RecurringInterval `gorm:"type:varchar(20);default:'NONE'" json:"recurring_interval"`
+	Notes             string            `gorm:"type:text" json:"notes"`
+	CreatedAt         time.Time         `json:"created_at"`
+	UpdatedAt         time.Time         `json:"updated_at"`
+	DeletedAt         gorm.DeletedAt    `gorm:"index" json:"-"`
 }
 
 func (d *DueBill) BeforeCreate(tx *gorm.DB) (err error) {

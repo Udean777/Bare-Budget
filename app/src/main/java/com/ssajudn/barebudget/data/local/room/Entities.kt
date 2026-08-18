@@ -59,6 +59,8 @@ data class LocalDueBillEntity(
     val totalAmount: Long,
     val dueDate: String,
     val status: String,
+    val isRecurring: Boolean = false,
+    val recurringInterval: String = "NONE",
     val notes: String?,
     val isSynced: Boolean = false
 ) {
@@ -68,12 +70,19 @@ data class LocalDueBillEntity(
         } catch (e: Exception) {
             DueBillStatus.UNPAID
         }
+        val interval = try {
+            com.ssajudn.barebudget.data.model.RecurringInterval.valueOf(recurringInterval)
+        } catch (e: Exception) {
+            com.ssajudn.barebudget.data.model.RecurringInterval.NONE
+        }
         return DueBill(
             id = id,
             providerName = providerName,
             totalAmount = totalAmount,
             dueDate = dueDate,
             status = s,
+            isRecurring = isRecurring,
+            recurringInterval = interval,
             notes = notes
         )
     }
@@ -86,6 +95,8 @@ data class LocalDueBillEntity(
                 totalAmount = bill.totalAmount,
                 dueDate = bill.dueDate,
                 status = bill.status.name,
+                isRecurring = bill.isRecurring,
+                recurringInterval = bill.recurringInterval.name,
                 notes = bill.notes,
                 isSynced = isSynced
             )

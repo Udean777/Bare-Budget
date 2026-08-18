@@ -158,8 +158,8 @@ fun DueBillsScreen(
     if (showAddDialog) {
         AddDueBillDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { provider, amount, dueDate, notes ->
-                viewModel.addDueBill(provider, amount, dueDate, notes)
+            onConfirm = { provider, amount, dueDate, isRecurring, interval, notes ->
+                viewModel.addDueBill(provider, amount, dueDate, isRecurring, interval, notes)
                 showAddDialog = false
             }
         )
@@ -217,14 +217,33 @@ fun DueBillItem(
             Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = bill.providerName,
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
-                        textDecoration = if (isPaid) androidx.compose.ui.text.style.TextDecoration.LineThrough else null
-                    ),
-                    color = if (isPaid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = bill.providerName,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.SemiBold,
+                            textDecoration = if (isPaid) androidx.compose.ui.text.style.TextDecoration.LineThrough else null
+                        ),
+                        color = if (isPaid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                    )
+                    if (bill.isRecurring) {
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            shape = RoundedCornerShape(6.dp),
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                        ) {
+                            Text(
+                                text = "🔁 ${bill.recurringInterval.displayName}",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 10.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
+                        }
+                    }
+                }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = "Due ${DateUtils.formatDisplayDate(bill.dueDate)} • ${DateUtils.getDueStatusMessage(bill.dueDate)}",
@@ -246,14 +265,24 @@ fun DueBillItem(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddDueBillDialog(
     onDismiss: () -> Unit,
-    onConfirm: (provider: String, amount: Long, dueDate: String, notes: String) -> Unit
+    onConfirm: (
+        provider: String,
+        amount: Long,
+        dueDate: String,
+        isRecurring: Boolean,
+        recurringInterval: com.ssajudn.barebudget.data.model.RecurringInterval,
+        notes: String
+    ) -> Unit
 ) {
     var provider by remember { mutableStateOf("") }
     var rawAmount by remember { mutableStateOf("") }
     var dueDate by remember { mutableStateOf(DateUtils.getCurrentDateISO()) }
+    var isRecurring by remember { mutableStateOf(false) }
+    var recurringInterval by remember { mutableStateOf(com.ssajudn.barebudget.data.model.RecurringInterval.MONTHLY) }
     var notes by remember { mutableStateOf("") }
 
     AlertDialog(
@@ -270,7 +299,7 @@ fun AddDueBillDialog(
                     value = provider,
                     onValueChange = { provider = it },
                     label = { Text("Provider / Bill Name") },
-                    placeholder = { Text("e.g. Shopee PayLater, Electricity") },
+                    placeholder = { Text("e.g. Shopee PayLater, Netflix, WiFi") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -297,6 +326,55 @@ fun AddDueBillDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                // Recurring Toggle
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(10.dp))
+                        .clickable { isRecurring = !isRecurring }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Text(
+                            text = "Recurring Subscription",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                        )
+                        Text(
+                            text = "Auto renew to next period when paid",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = isRecurring,
+                        onCheckedChange = { isRecurring = it }
+                    )
+                }
+
+                // Recurring Interval Selection
+                if (isRecurring) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(
+                            com.ssajudn.barebudget.data.model.RecurringInterval.WEEKLY,
+                            com.ssajudn.barebudget.data.model.RecurringInterval.MONTHLY,
+                            com.ssajudn.barebudget.data.model.RecurringInterval.YEARLY
+                        ).forEach { interval ->
+                            val isSelected = recurringInterval == interval
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { recurringInterval = interval },
+                                label = { Text(interval.displayName, fontSize = 12.sp) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+                }
             }
         },
         confirmButton = {
@@ -304,7 +382,14 @@ fun AddDueBillDialog(
                 onClick = {
                     val amount = rawAmount.toLongOrNull() ?: 0L
                     if (provider.isNotBlank() && amount > 0) {
-                        onConfirm(provider, amount, dueDate, notes)
+                        onConfirm(
+                            provider,
+                            amount,
+                            dueDate,
+                            isRecurring,
+                            if (isRecurring) recurringInterval else com.ssajudn.barebudget.data.model.RecurringInterval.NONE,
+                            notes
+                        )
                     }
                 }
             ) {

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.services)
 }
 
 android {
@@ -22,9 +23,19 @@ android {
     buildTypes {
         debug {
             buildConfigField("String", "BASE_URL", "\"http://10.0.2.2:8080/\"")
+            buildConfigField(
+                "String",
+                "WEB_CLIENT_ID",
+                "\"234922787074-fnm37va5028brlr45jmc9gvfp1ksgr17.apps.googleusercontent.com\""
+            )
         }
         release {
             buildConfigField("String", "BASE_URL", "\"https://api.barebudget.app/\"")
+            buildConfigField(
+                "String",
+                "WEB_CLIENT_ID",
+                "\"234922787074-fnm37va5028brlr45jmc9gvfp1ksgr17.apps.googleusercontent.com\""
+            )
             optimization {
                 enable = false
             }
@@ -67,6 +78,14 @@ dependencies {
     implementation(libs.androidx.camera.lifecycle)
     implementation(libs.androidx.camera.view)
     implementation(libs.google.mlkit.text.recognition)
+
+    // Firebase Authentication & Google Credentials
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.auth)
+    implementation(libs.play.services.auth)
+    implementation(libs.androidx.credentials)
+    implementation(libs.androidx.credentials.play.services.auth)
+    implementation(libs.googleid)
 
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

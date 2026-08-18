@@ -20,4 +20,7 @@ object AppConfig {
     // Feature Flags / Environment Specific Options
     val enableHttpLogging: Boolean
         get() = isDebug
+
+    val webClientId: String
+        get() = BuildConfig.WEB_CLIENT_ID
 }

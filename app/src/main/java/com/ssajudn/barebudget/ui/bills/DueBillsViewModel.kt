@@ -25,19 +25,31 @@ class DueBillsViewModel(
     private val _uiState = MutableStateFlow<DueBillsUiState>(DueBillsUiState.Loading)
     val uiState: StateFlow<DueBillsUiState> = _uiState.asStateFlow()
 
+    private val _isRefreshing = MutableStateFlow(false)
+    val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
     init {
         loadDueBills()
     }
 
-    fun loadDueBills() {
+    fun loadDueBills(isPullToRefresh: Boolean = false) {
         viewModelScope.launch {
-            _uiState.value = DueBillsUiState.Loading
+            if (isPullToRefresh) {
+                _isRefreshing.value = true
+            } else if (_uiState.value !is DueBillsUiState.Success) {
+                _uiState.value = DueBillsUiState.Loading
+            }
+
             repository.getDueBills()
                 .onSuccess { bills ->
                     _uiState.value = DueBillsUiState.Success(bills)
+                    _isRefreshing.value = false
                 }
                 .onFailure { error ->
-                    _uiState.value = DueBillsUiState.Error(error.localizedMessage ?: "Failed to fetch due bills")
+                    _isRefreshing.value = false
+                    if (_uiState.value !is DueBillsUiState.Success) {
+                        _uiState.value = DueBillsUiState.Error(error.localizedMessage ?: "Failed to fetch due bills")
+                    }
                 }
         }
     }

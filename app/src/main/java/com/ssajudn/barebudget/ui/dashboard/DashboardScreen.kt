@@ -28,6 +28,9 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.platform.LocalLifecycleOwner
 
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DashboardScreen(
@@ -35,9 +38,13 @@ fun DashboardScreen(
     onNavigateToDueBills: () -> Unit,
     onNavigateToBudget: () -> Unit,
     onNavigateToTransactionDetail: (String) -> Unit,
+    onNavigateToAllTransactions: () -> Unit,
+    onNavigateToAnalytics: () -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: DashboardViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val isRefreshing by viewModel.isRefreshing.collectAsState()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // Auto-refresh dashboard data whenever returning back to this screen
@@ -72,8 +79,8 @@ fun DashboardScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { viewModel.loadDashboardData() }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh")
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Default.Settings, contentDescription = "Settings")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -105,7 +112,9 @@ fun DashboardScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Box(
+        PullToRefreshBox(
+            isRefreshing = isRefreshing,
+            onRefresh = { viewModel.loadDashboardData(isPullToRefresh = true) },
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
@@ -147,7 +156,9 @@ fun DashboardScreen(
                         onSetBudgetClick = onNavigateToBudget,
                         onAddManualClick = onNavigateToAddManual,
                         onDueBillsClick = onNavigateToDueBills,
-                        onTransactionClick = onNavigateToTransactionDetail
+                        onTransactionClick = onNavigateToTransactionDetail,
+                        onSeeAllTransactionsClick = onNavigateToAllTransactions,
+                        onAnalyticsClick = onNavigateToAnalytics
                     )
                 }
             }
@@ -161,7 +172,9 @@ fun DashboardContent(
     onSetBudgetClick: () -> Unit,
     onAddManualClick: () -> Unit,
     onDueBillsClick: () -> Unit,
-    onTransactionClick: (String) -> Unit
+    onTransactionClick: (String) -> Unit,
+    onSeeAllTransactionsClick: () -> Unit,
+    onAnalyticsClick: () -> Unit
 ) {
     LazyColumn(
         modifier = Modifier
@@ -187,7 +200,7 @@ fun DashboardContent(
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 QuickActionCard(
                     title = "Quick Log",
@@ -209,6 +222,16 @@ fun DashboardContent(
                     tintColor = PastelCoralLight,
                     modifier = Modifier.weight(1f),
                     onClick = onDueBillsClick
+                )
+
+                QuickActionCard(
+                    title = "Analytics",
+                    subtitle = "Breakdown",
+                    icon = Icons.Default.TrendingUp,
+                    bgColor = PastelLavenderLight.copy(alpha = 0.2f),
+                    tintColor = PastelLavenderLight,
+                    modifier = Modifier.weight(1f),
+                    onClick = onAnalyticsClick
                 )
             }
         }
@@ -261,7 +284,7 @@ fun DashboardContent(
             }
         }
 
-        // 4. RECENT TRANSACTIONS
+        // 4. RECENT TRANSACTIONS HEADER
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -274,6 +297,18 @@ fun DashboardContent(
                         fontWeight = FontWeight.Bold
                     ),
                     color = MaterialTheme.colorScheme.onSurface
+                )
+
+                Text(
+                    text = "See All",
+                    style = MaterialTheme.typography.labelLarge.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    ),
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .clickable { onSeeAllTransactionsClick() }
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
             }
         }
@@ -322,19 +357,23 @@ fun QuickActionCard(
 ) {
     Surface(
         modifier = modifier
-            .clip(RoundedCornerShape(16.dp))
+            .clip(RoundedCornerShape(18.dp))
             .clickable { onClick() },
-        color = bgColor
+        color = bgColor,
+        shape = RoundedCornerShape(18.dp)
     ) {
-        Row(
-            modifier = Modifier.padding(16.dp),
-            verticalAlignment = Alignment.CenterVertically
+        Column(
+            modifier = Modifier
+                .padding(horizontal = 14.dp, vertical = 16.dp)
+                .fillMaxWidth(),
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(tintColor.copy(alpha = 0.15f)),
+                    .size(42.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(tintColor.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -345,23 +384,27 @@ fun QuickActionCard(
                 )
             }
 
-            Spacer(modifier = Modifier.width(12.dp))
+            Spacer(modifier = Modifier.height(14.dp))
 
             Column {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold,
+                        fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     ),
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 12.sp
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Medium
                     ),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
                 )
             }
         }

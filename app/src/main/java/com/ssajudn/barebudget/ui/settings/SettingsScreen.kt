@@ -19,6 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ssajudn.barebudget.ui.components.CustomConfirmDeleteDialog
 import com.ssajudn.barebudget.ui.theme.*
 import com.ssajudn.barebudget.utils.AppConfig
 
@@ -279,38 +280,17 @@ fun SettingsScreen(
     }
 
     if (showSignOutConfirmDialog) {
-        AlertDialog(
+        CustomConfirmDeleteDialog(
+            title = if (uiState.isGuestMode) "Reset Guest Session?" else "Sign Out?",
+            message = if (uiState.isGuestMode) {
+                "Are you sure you want to exit? Since you are in Guest Mode, your local transactions and records will be cleared."
+            } else {
+                "Are you sure you want to sign out from your Google account on this device?"
+            },
             onDismissRequest = { showSignOutConfirmDialog = false },
-            title = {
-                Text(
-                    text = if (uiState.isGuestMode) "Reset Guest Session?" else "Sign Out?",
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text(
-                    if (uiState.isGuestMode) {
-                        "Are you sure you want to exit? Since you are in Guest Mode, your local transactions will be cleared."
-                    } else {
-                        "Are you sure you want to sign out from your account?"
-                    }
-                )
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showSignOutConfirmDialog = false
-                        viewModel.signOut()
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = PastelCoralLight)
-                ) {
-                    Text("Confirm")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSignOutConfirmDialog = false }) {
-                    Text("Cancel")
-                }
+            onConfirmDelete = {
+                showSignOutConfirmDialog = false
+                viewModel.signOut()
             }
         )
     }

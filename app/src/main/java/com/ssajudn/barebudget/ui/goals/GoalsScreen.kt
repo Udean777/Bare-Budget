@@ -13,6 +13,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
@@ -25,6 +26,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ssajudn.barebudget.data.model.Goal
+import com.ssajudn.barebudget.ui.components.CustomConfirmDeleteDialog
+import com.ssajudn.barebudget.ui.components.CustomDialog
 import com.ssajudn.barebudget.ui.theme.*
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
@@ -39,6 +42,7 @@ fun GoalsScreen(
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
     var selectedGoalForDeposit by remember { mutableStateOf<Goal?>(null) }
+    var goalToDelete by remember { mutableStateOf<Goal?>(null) }
 
     Scaffold(
         topBar = {
@@ -84,6 +88,7 @@ fun GoalsScreen(
                         color = MaterialTheme.colorScheme.primary
                     )
                 }
+
                 is GoalsUiState.Error -> {
                     Column(
                         modifier = Modifier
@@ -108,6 +113,7 @@ fun GoalsScreen(
                         }
                     }
                 }
+
                 is GoalsUiState.Success -> {
                     if (state.goals.isEmpty()) {
                         Box(
@@ -154,11 +160,7 @@ fun GoalsScreen(
                                 GoalCard(
                                     goal = goal,
                                     onDepositClick = { selectedGoalForDeposit = goal },
-                                    onDeleteClick = {
-                                        if (goal.id != null) {
-                                            viewModel.deleteGoal(goal.id)
-                                        }
-                                    }
+                                    onDeleteClick = { goalToDelete = goal }
                                 )
                             }
                         }
@@ -187,6 +189,18 @@ fun GoalsScreen(
                     viewModel.depositToGoal(goalId, amount)
                 }
                 selectedGoalForDeposit = null
+            }
+        )
+    }
+
+    if (goalToDelete != null) {
+        CustomConfirmDeleteDialog(
+            title = "Delete Savings Goal?",
+            message = "Are you sure you want to delete '${goalToDelete?.name}'? Your saved progress will be permanently removed.",
+            onDismissRequest = { goalToDelete = null },
+            onConfirmDelete = {
+                goalToDelete?.id?.let { viewModel.deleteGoal(it) }
+                goalToDelete = null
             }
         )
     }
@@ -346,68 +360,62 @@ fun AddGoalDialog(
     var targetDate by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
 
-    AlertDialog(
+    val amount = rawAmount.toLongOrNull() ?: 0L
+    val isValid = name.isNotBlank() && amount > 0
+
+    CustomDialog(
+        title = "New Savings Goal",
+        icon = Icons.Default.Payments,
+        iconTint = PastelMintLight,
+        confirmButtonText = "Create Goal",
+        isConfirmEnabled = isValid,
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "New Savings Goal",
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Goal Name") },
-                    placeholder = { Text("e.g. Dana Darurat, Liburan Bali") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = rawAmount,
-                    onValueChange = { input ->
-                        rawAmount = input.filter { it.isDigit() }.take(12)
-                    },
-                    label = { Text("Target Amount") },
-                    placeholder = { Text("Rp 0") },
-                    visualTransformation = com.ssajudn.barebudget.utils.CurrencyVisualTransformation(),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = targetDate,
-                    onValueChange = { targetDate = it },
-                    label = { Text("Target Date (Optional: YYYY-MM-DD)") },
-                    placeholder = { Text("2026-12-31") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val amount = rawAmount.toLongOrNull() ?: 0L
-                    if (name.isNotBlank() && amount > 0) {
-                        onConfirm(name, amount, targetDate, "#4E73DF", notes)
-                    }
-                }
-            ) {
-                Text("Create Goal")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
+        onConfirm = {
+            if (isValid) {
+                onConfirm(name, amount, targetDate, "#4E73DF", notes)
             }
         }
-    )
+    ) {
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Goal Name") },
+            placeholder = { Text("e.g. Dana Darurat, Liburan Bali") },
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedTextField(
+            value = rawAmount,
+            onValueChange = { input ->
+                rawAmount = input.filter { it.isDigit() }.take(12)
+            },
+            label = { Text("Target Amount") },
+            placeholder = { Text("Rp 0") },
+            visualTransformation = com.ssajudn.barebudget.utils.CurrencyVisualTransformation(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+            ),
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedTextField(
+            value = targetDate,
+            onValueChange = { targetDate = it },
+            label = { Text("Target Date (Optional: YYYY-MM-DD)") },
+            placeholder = { Text("2026-12-31") },
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
 
 @Composable
@@ -419,67 +427,58 @@ fun DepositGoalDialog(
     var rawAmount by remember { mutableStateOf("") }
     var isWithdraw by remember { mutableStateOf(false) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "${if (isWithdraw) "Tarik dari" else "Setor ke"} ${goal.name}",
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    FilterChip(
-                        selected = !isWithdraw,
-                        onClick = { isWithdraw = false },
-                        label = { Text("➕ Setor (Deposit)") },
-                        modifier = Modifier.weight(1f)
-                    )
-                    FilterChip(
-                        selected = isWithdraw,
-                        onClick = { isWithdraw = true },
-                        label = { Text("➖ Tarik (Withdraw)") },
-                        modifier = Modifier.weight(1f)
-                    )
-                }
+    val amount = rawAmount.toLongOrNull() ?: 0L
+    val isValid = amount > 0
 
-                OutlinedTextField(
-                    value = rawAmount,
-                    onValueChange = { input ->
-                        rawAmount = input.filter { it.isDigit() }.take(12)
-                    },
-                    label = { Text("Nominal") },
-                    placeholder = { Text("Rp 0") },
-                    visualTransformation = com.ssajudn.barebudget.utils.CurrencyVisualTransformation(),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val amount = rawAmount.toLongOrNull() ?: 0L
-                    if (amount > 0) {
-                        val finalAmount = if (isWithdraw) -amount else amount
-                        onConfirm(finalAmount)
-                    }
-                }
-            ) {
-                Text(if (isWithdraw) "Tarik" else "Setor")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
+    CustomDialog(
+        title = if (isWithdraw) "Tarik Tabungan" else "Setor Tabungan",
+        icon = if (isWithdraw) Icons.Default.Payments else Icons.Default.Savings,
+        iconTint = if (isWithdraw) PastelCoralLight else PastelMintLight,
+        confirmButtonText = if (isWithdraw) "Tarik Dana" else "Setor Sekarang",
+        confirmButtonColor = if (isWithdraw) PastelCoralLight else MaterialTheme.colorScheme.primary,
+        isConfirmEnabled = isValid,
+        onDismissRequest = onDismiss,
+        onConfirm = {
+            if (isValid) {
+                val finalAmount = if (isWithdraw) -amount else amount
+                onConfirm(finalAmount)
             }
         }
-    )
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = !isWithdraw,
+                onClick = { isWithdraw = false },
+                label = { Text("➕ Setor (Deposit)") },
+                modifier = Modifier.weight(1f)
+            )
+            FilterChip(
+                selected = isWithdraw,
+                onClick = { isWithdraw = true },
+                label = { Text("➖ Tarik (Withdraw)") },
+                modifier = Modifier.weight(1f)
+            )
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        OutlinedTextField(
+            value = rawAmount,
+            onValueChange = { input ->
+                rawAmount = input.filter { it.isDigit() }.take(12)
+            },
+            label = { Text("Nominal") },
+            placeholder = { Text("Rp 0") },
+            visualTransformation = com.ssajudn.barebudget.utils.CurrencyVisualTransformation(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+            ),
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }

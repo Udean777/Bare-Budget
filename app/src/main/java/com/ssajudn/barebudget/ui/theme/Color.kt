@@ -8,6 +8,7 @@ val PastelMintLightBg = Color(0xFFE8F5E9)     // Mint Container
 val PastelCoralLight = Color(0xFFE57373)      // Danger / Deficit (Soft Coral Red)
 val PastelCoralLightBg = Color(0xFFFFEBEE)    // Coral Container
 val PastelYellowLight = Color(0xFFFFB74D)     // Warning / PayLater (Soft Ochre)
+val PastelYellowLightBg = Color(0xFFFFF8E1)   // Soft Ochre / Yellow Container
 val PastelBlueLight = Color(0xFF64B5F6)       // Info / Social (Soft Sky Blue)
 val PastelLavenderLight = Color(0xFF9575CD)   // Accent / Entertainment (Soft Lavender)
 
@@ -24,6 +25,7 @@ val PastelMintDarkBg = Color(0xFF1B2E24)      // Deep Mint Container
 val PastelCoralDark = Color(0xFFEF9A9A)       // Softer Coral Red
 val PastelCoralDarkBg = Color(0xFF3B1E22)     // Deep Coral Container
 val PastelYellowDark = Color(0xFFFFCC80)      // Soft Ochre / Orange
+val PastelYellowDarkBg = Color(0xFF3E2723)    // Dark Yellow/Amber Container
 val PastelBlueDark = Color(0xFF90CAF9)        // Soft Pastel Blue
 val PastelLavenderDark = Color(0xFFB39DDB)    // Soft Lavender Dark
 

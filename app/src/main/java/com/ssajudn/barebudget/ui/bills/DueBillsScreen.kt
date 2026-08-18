@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,6 +28,7 @@ import com.ssajudn.barebudget.utils.DateUtils
 
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import com.ssajudn.barebudget.ui.components.CustomDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -287,121 +289,119 @@ fun AddDueBillDialog(
     var recurringInterval by remember { mutableStateOf(com.ssajudn.barebudget.data.model.RecurringInterval.MONTHLY) }
     var notes by remember { mutableStateOf("") }
 
-    AlertDialog(
+    val amount = rawAmount.toLongOrNull() ?: 0L
+    val isValid = provider.isNotBlank() && amount > 0
+
+    CustomDialog(
+        title = "Add Due Bill",
+        icon = Icons.AutoMirrored.Filled.ReceiptLong,
+        iconTint = PastelCoralLight,
+        confirmButtonText = "Save Bill",
+        isConfirmEnabled = isValid,
         onDismissRequest = onDismiss,
-        title = {
-            Text(
-                text = "Add Due Bill",
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = provider,
-                    onValueChange = { provider = it },
-                    label = { Text("Provider / Bill Name") },
-                    placeholder = { Text("e.g. Shopee PayLater, Netflix, WiFi") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
+        onConfirm = {
+            if (isValid) {
+                onConfirm(
+                    provider,
+                    amount,
+                    dueDate,
+                    isRecurring,
+                    if (isRecurring) recurringInterval else com.ssajudn.barebudget.data.model.RecurringInterval.NONE,
+                    notes
                 )
-
-                OutlinedTextField(
-                    value = rawAmount,
-                    onValueChange = { input ->
-                        rawAmount = input.filter { it.isDigit() }.take(12)
-                    },
-                    label = { Text("Amount") },
-                    placeholder = { Text("Rp 0") },
-                    visualTransformation = com.ssajudn.barebudget.utils.CurrencyVisualTransformation(),
-                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                        keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-                    ),
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                OutlinedTextField(
-                    value = dueDate,
-                    onValueChange = { dueDate = it },
-                    label = { Text("Due Date (YYYY-MM-DD)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                // Recurring Toggle
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable { isRecurring = !isRecurring }
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Column {
-                        Text(
-                            text = "Recurring Subscription",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
-                        )
-                        Text(
-                            text = "Auto renew to next period when paid",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = isRecurring,
-                        onCheckedChange = { isRecurring = it }
-                    )
-                }
-
-                // Recurring Interval Selection
-                if (isRecurring) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        listOf(
-                            com.ssajudn.barebudget.data.model.RecurringInterval.WEEKLY,
-                            com.ssajudn.barebudget.data.model.RecurringInterval.MONTHLY,
-                            com.ssajudn.barebudget.data.model.RecurringInterval.YEARLY
-                        ).forEach { interval ->
-                            val isSelected = recurringInterval == interval
-                            FilterChip(
-                                selected = isSelected,
-                                onClick = { recurringInterval = interval },
-                                label = { Text(interval.displayName, fontSize = 12.sp) },
-                                modifier = Modifier.weight(1f)
-                            )
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val amount = rawAmount.toLongOrNull() ?: 0L
-                    if (provider.isNotBlank() && amount > 0) {
-                        onConfirm(
-                            provider,
-                            amount,
-                            dueDate,
-                            isRecurring,
-                            if (isRecurring) recurringInterval else com.ssajudn.barebudget.data.model.RecurringInterval.NONE,
-                            notes
-                        )
-                    }
-                }
-            ) {
-                Text("Add Bill")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
             }
         }
-    )
+    ) {
+        OutlinedTextField(
+            value = provider,
+            onValueChange = { provider = it },
+            label = { Text("Provider / Bill Name") },
+            placeholder = { Text("e.g. Shopee PayLater, Netflix, WiFi") },
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedTextField(
+            value = rawAmount,
+            onValueChange = { input ->
+                rawAmount = input.filter { it.isDigit() }.take(12)
+            },
+            label = { Text("Amount") },
+            placeholder = { Text("Rp 0") },
+            visualTransformation = com.ssajudn.barebudget.utils.CurrencyVisualTransformation(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
+            ),
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedTextField(
+            value = dueDate,
+            onValueChange = { dueDate = it },
+            label = { Text("Due Date (YYYY-MM-DD)") },
+            singleLine = true,
+            shape = RoundedCornerShape(14.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Recurring Toggle
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(12.dp))
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                .clickable { isRecurring = !isRecurring }
+                .padding(horizontal = 14.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Recurring Subscription",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
+                Text(
+                    text = "Auto renew when paid",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = isRecurring,
+                onCheckedChange = { isRecurring = it }
+            )
+        }
+
+        // Recurring Interval Selection
+        if (isRecurring) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                listOf(
+                    com.ssajudn.barebudget.data.model.RecurringInterval.WEEKLY,
+                    com.ssajudn.barebudget.data.model.RecurringInterval.MONTHLY,
+                    com.ssajudn.barebudget.data.model.RecurringInterval.YEARLY
+                ).forEach { interval ->
+                    val isSelected = recurringInterval == interval
+                    FilterChip(
+                        selected = isSelected,
+                        onClick = { recurringInterval = interval },
+                        label = { Text(interval.displayName, fontSize = 12.sp) },
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+        }
+    }
 }

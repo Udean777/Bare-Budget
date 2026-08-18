@@ -174,6 +174,43 @@ func (r *Repository) MigrateGuestData(guestUserID, targetUserID string) error {
 			}
 		}
 
+		// 4. Migrate Goals
+		if err := tx.Model(&models.Goal{}).
+			Where("user_id = ?", guestUserID).
+			Update("user_id", targetUserID).Error; err != nil {
+			return err
+		}
+
 		return nil
 	})
+}
+
+// Goal Repo
+func (r *Repository) CreateGoal(g *models.Goal) error {
+	return r.db.Create(g).Error
+}
+
+func (r *Repository) GetGoalsByUserID(userID string) ([]models.Goal, error) {
+	var list []models.Goal
+	err := r.db.Where("user_id = ?", userID).Order("created_at desc").Find(&list).Error
+	return list, err
+}
+
+func (r *Repository) GetGoalByID(userID string, id uuid.UUID) (*models.Goal, error) {
+	var g models.Goal
+	err := r.db.Where("id = ? AND user_id = ?", id, userID).First(&g).Error
+	if err != nil {
+		return nil, err
+	}
+	return &g, nil
+}
+
+func (r *Repository) UpdateGoalAmount(userID string, id uuid.UUID, addedAmount int64) error {
+	return r.db.Model(&models.Goal{}).
+		Where("id = ? AND user_id = ?", id, userID).
+		Update("current_amount", gorm.Expr("current_amount + ?", addedAmount)).Error
+}
+
+func (r *Repository) DeleteGoal(userID string, id uuid.UUID) error {
+	return r.db.Where("id = ? AND user_id = ?", id, userID).Delete(&models.Goal{}).Error
 }

@@ -31,7 +31,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DueBillsScreen(
-    onNavigateBack: () -> Unit,
+    onNavigateBack: (() -> Unit)? = null,
     viewModel: DueBillsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -50,8 +50,10 @@ fun DueBillsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    if (onNavigateBack != null) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
                     }
                 },
                 actions = {
@@ -140,7 +142,7 @@ fun DueBillsScreen(
                                 .fillMaxSize()
                                 .padding(horizontal = 20.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(top = 12.dp, bottom = 32.dp)
+                            contentPadding = PaddingValues(top = 12.dp, bottom = 100.dp)
                         ) {
                             items(state.bills) { bill ->
                                 DueBillItem(

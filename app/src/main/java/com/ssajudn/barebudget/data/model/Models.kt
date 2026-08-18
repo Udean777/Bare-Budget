@@ -129,3 +129,37 @@ data class TransactionListResponse(
 data class DueBillListResponse(
     @SerializedName("data") val data: List<DueBill>
 )
+
+data class Goal(
+    @SerializedName("id") val id: String? = null,
+    @SerializedName("user_id") val userId: String? = null,
+    @SerializedName("name") val name: String,
+    @SerializedName("target_amount") val targetAmount: Long,
+    @SerializedName("current_amount") val currentAmount: Long = 0L,
+    @SerializedName("target_date") val targetDate: String? = null,
+    @SerializedName("color_hex") val colorHex: String = "#4E73DF",
+    @SerializedName("notes") val notes: String? = null,
+    @SerializedName("created_at") val createdAt: String? = null
+) {
+    val progressPercentage: Float
+        get() = if (targetAmount > 0) (currentAmount.toFloat() / targetAmount.toFloat()).coerceIn(0f, 1f) else 0f
+
+    val remainingAmount: Long
+        get() = (targetAmount - currentAmount).coerceAtLeast(0L)
+}
+
+data class CreateGoalRequest(
+    @SerializedName("name") val name: String,
+    @SerializedName("target_amount") val targetAmount: Long,
+    @SerializedName("target_date") val targetDate: String = "",
+    @SerializedName("color_hex") val colorHex: String = "#4E73DF",
+    @SerializedName("notes") val notes: String = ""
+)
+
+data class DepositGoalRequest(
+    @SerializedName("amount") val amount: Long
+)
+
+data class GoalListResponse(
+    @SerializedName("data") val data: List<Goal>
+)

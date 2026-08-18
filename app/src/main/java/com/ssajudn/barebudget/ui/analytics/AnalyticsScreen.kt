@@ -36,7 +36,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(
-    onNavigateBack: () -> Unit,
+    onNavigateBack: (() -> Unit)? = null,
     viewModel: AnalyticsViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -67,8 +67,10 @@ fun AnalyticsScreen(
                     )
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                    if (onNavigateBack != null) {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -131,7 +133,7 @@ fun AnalyticsContent(state: AnalyticsUiState.Success) {
             .fillMaxSize()
             .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp)
+        contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp)
     ) {
         // 1. SAVAGE STREAK BANNER (Gamification Badge)
         item {

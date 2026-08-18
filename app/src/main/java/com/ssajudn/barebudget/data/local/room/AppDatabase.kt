@@ -9,9 +9,10 @@ import androidx.room.RoomDatabase
     entities = [
         LocalTransactionEntity::class,
         LocalDueBillEntity::class,
-        LocalBudgetEntity::class
+        LocalBudgetEntity::class,
+        LocalGoalEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -19,6 +20,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun transactionDao(): TransactionDao
     abstract fun dueBillDao(): DueBillDao
     abstract fun budgetDao(): BudgetDao
+    abstract fun goalDao(): GoalDao
 
     companion object {
         @Volatile

@@ -282,3 +282,93 @@ func (h *Handler) GetDashboardSummary(c *fiber.Ctx) error {
 
 	return c.JSON(summary)
 }
+
+// Goals Handlers
+func (h *Handler) CreateGoal(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	var req struct {
+		Name         string `json:"name"`
+		TargetAmount int64  `json:"target_amount"`
+		TargetDate   string `json:"target_date"` // YYYY-MM-DD
+		ColorHex     string `json:"color_hex"`
+		Notes        string `json:"notes"`
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+
+	if req.Name == "" || req.TargetAmount <= 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "name and target_amount are required"})
+	}
+
+	targetDate, _ := time.Parse("2006-01-02", req.TargetDate)
+	if req.ColorHex == "" {
+		req.ColorHex = "#4E73DF"
+	}
+
+	goal := models.Goal{
+		UserID:       userID,
+		Name:         req.Name,
+		TargetAmount: req.TargetAmount,
+		TargetDate:   targetDate,
+		ColorHex:     req.ColorHex,
+		Notes:        req.Notes,
+	}
+
+	if err := h.svc.CreateGoal(&goal); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(goal)
+}
+
+func (h *Handler) GetGoals(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	goals, err := h.svc.GetGoals(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"data": goals})
+}
+
+func (h *Handler) DepositToGoal(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	idStr := c.Params("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid goal id"})
+	}
+
+	var req struct {
+		Amount int64 `json:"amount"` // Can be positive (deposit) or negative (withdraw)
+	}
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+
+	if req.Amount == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "amount cannot be zero"})
+	}
+
+	if err := h.svc.DepositToGoal(userID, id, req.Amount); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"status": "success", "message": "deposit updated successfully"})
+}
+
+func (h *Handler) DeleteGoal(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	idStr := c.Params("id")
+	id, err := uuid.Parse(idStr)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid goal id"})
+	}
+
+	if err := h.svc.DeleteGoal(userID, id); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return c.JSON(fiber.Map{"status": "deleted"})
+}

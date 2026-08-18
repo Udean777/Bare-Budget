@@ -5,6 +5,7 @@ import com.ssajudn.barebudget.data.local.UserSessionManager
 import com.ssajudn.barebudget.data.local.room.AppDatabase
 import com.ssajudn.barebudget.data.local.room.LocalBudgetEntity
 import com.ssajudn.barebudget.data.local.room.LocalDueBillEntity
+import com.ssajudn.barebudget.data.local.room.LocalGoalEntity
 import com.ssajudn.barebudget.data.local.room.LocalTransactionEntity
 import com.ssajudn.barebudget.data.model.*
 import com.ssajudn.barebudget.data.network.ApiClient
@@ -46,7 +47,7 @@ class BudgetRepository(
                 val totalSpent = currentMonthTx.sumOf { it.amount }
 
                 val remainingBudget = monthlyBudget - totalSpent
-                val avgDaily = if (daysPassed > 0) totalSpent / daysPassed else 0L
+                val avgDaily = totalSpent / daysPassed
 
                 var estimatedDeathDay = daysInMonth
                 var runwayMsg: String
@@ -321,7 +322,107 @@ class BudgetRepository(
     }
 
     // ==========================================
-    // 5. SMART MERGE (MIGRATE LOCAL ROOM -> CLOUD)
+    // 5. SAVINGS GOALS (OFFLINE-FIRST)
+    // ==========================================
+    suspend fun getGoals(): Result<List<Goal>> = withContext(Dispatchers.IO) {
+        try {
+            if (isGuest) {
+                val local = db.goalDao().getAllGoals().map { it.toGoal() }
+                return@withContext Result.success(local)
+            }
+
+            val response = api.getGoals()
+            if (response.isSuccessful && response.body() != null) {
+                val remoteList = response.body()!!.data
+                // Cache into Room
+                db.goalDao().clearAll()
+                db.goalDao().insertGoals(remoteList.map { LocalGoalEntity.fromGoal(it, isSynced = true) })
+                Result.success(remoteList)
+            } else {
+                val cached = db.goalDao().getAllGoals().map { it.toGoal() }
+                Result.success(cached)
+            }
+        } catch (e: Exception) {
+            val fallback = db.goalDao().getAllGoals().map { it.toGoal() }
+            if (fallback.isNotEmpty()) {
+                Result.success(fallback)
+            } else {
+                Result.failure(e)
+            }
+        }
+    }
+
+    suspend fun createGoal(request: CreateGoalRequest): Result<Goal> = withContext(Dispatchers.IO) {
+        val tempId = UUID.randomUUID().toString()
+        val localGoal = Goal(
+            id = tempId,
+            name = request.name,
+            targetAmount = request.targetAmount,
+            currentAmount = 0L,
+            targetDate = request.targetDate,
+            colorHex = request.colorHex,
+            notes = request.notes
+        )
+
+        // Optimistic local insert
+        db.goalDao().insertGoal(LocalGoalEntity.fromGoal(localGoal, isSynced = false))
+
+        if (isGuest) {
+            return@withContext Result.success(localGoal)
+        }
+
+        try {
+            val response = api.createGoal(request)
+            if (response.isSuccessful && response.body() != null) {
+                val created = response.body()!!
+                db.goalDao().deleteGoal(tempId)
+                db.goalDao().insertGoal(LocalGoalEntity.fromGoal(created, isSynced = true))
+                Result.success(created)
+            } else {
+                Result.success(localGoal)
+            }
+        } catch (e: Exception) {
+            Result.success(localGoal) // return optimistic fallback
+        }
+    }
+
+    suspend fun depositToGoal(id: String, amount: Long): Result<Boolean> = withContext(Dispatchers.IO) {
+        // Optimistic local update
+        db.goalDao().depositToGoal(id, amount)
+
+        if (isGuest) {
+            return@withContext Result.success(true)
+        }
+
+        try {
+            val response = api.depositGoal(id, DepositGoalRequest(amount))
+            if (response.isSuccessful) {
+                Result.success(true)
+            } else {
+                Result.success(true) // local already updated
+            }
+        } catch (e: Exception) {
+            Result.success(true)
+        }
+    }
+
+    suspend fun deleteGoal(id: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        db.goalDao().deleteGoal(id)
+
+        if (isGuest) {
+            return@withContext Result.success(true)
+        }
+
+        try {
+            api.deleteGoal(id)
+            Result.success(true)
+        } catch (e: Exception) {
+            Result.success(true)
+        }
+    }
+
+    // ==========================================
+    // 6. SMART MERGE (MIGRATE LOCAL ROOM -> CLOUD)
     // ==========================================
     suspend fun migrateGuestData(guestUserId: String): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
@@ -353,14 +454,31 @@ class BudgetRepository(
                 )
             }
 
-            // 3. Sync local budget to Cloud
+            // 3. Sync local goals to Cloud
+            val localGoals = db.goalDao().getAllGoals()
+            for (g in localGoals) {
+                val created = api.createGoal(
+                    CreateGoalRequest(
+                        name = g.name,
+                        targetAmount = g.targetAmount,
+                        targetDate = g.targetDate ?: "",
+                        colorHex = g.colorHex,
+                        notes = g.notes ?: ""
+                    )
+                )
+                if (created.isSuccessful && created.body()?.id != null && g.currentAmount > 0) {
+                    api.depositGoal(created.body()!!.id!!, DepositGoalRequest(g.currentAmount))
+                }
+            }
+
+            // 4. Sync local budget to Cloud
             val monthYear = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Date())
             val localBudget = db.budgetDao().getBudget(monthYear)
             if (localBudget != null && localBudget.monthlyLimit > 0) {
                 api.setBudget(SetBudgetRequest(localBudget.monthlyLimit, monthYear))
             }
 
-            // 4. Trigger backend DB migration endpoint as secondary safety
+            // 5. Trigger backend DB migration endpoint as secondary safety
             api.migrateGuestData(mapOf("guest_user_id" to guestUserId))
 
             Result.success(true)

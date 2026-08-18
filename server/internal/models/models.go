@@ -104,3 +104,25 @@ func (b *Budget) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	return
 }
+
+type Goal struct {
+	ID           uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
+	UserID       string         `gorm:"type:varchar(128);index;not null" json:"user_id"`
+	Name         string         `gorm:"type:varchar(150);not null" json:"name"`
+	TargetAmount int64          `gorm:"not null" json:"target_amount"`
+	CurrentAmount int64         `gorm:"default:0" json:"current_amount"`
+	TargetDate   time.Time      `json:"target_date"`
+	ColorHex     string         `gorm:"type:varchar(20);default:'#4E73DF'" json:"color_hex"`
+	Notes        string         `gorm:"type:text" json:"notes"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+func (g *Goal) BeforeCreate(tx *gorm.DB) (err error) {
+	if g.ID == uuid.Nil {
+		g.ID = uuid.New()
+	}
+	return
+}
+

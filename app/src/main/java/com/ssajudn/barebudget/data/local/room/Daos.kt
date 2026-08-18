@@ -70,3 +70,30 @@ interface BudgetDao {
     @Query("DELETE FROM local_budgets")
     fun clearAll()
 }
+
+@Dao
+interface GoalDao {
+    @Query("SELECT * FROM local_goals")
+    fun getAllGoals(): List<LocalGoalEntity>
+
+    @Query("SELECT * FROM local_goals WHERE id = :id LIMIT 1")
+    fun getGoalById(id: String): LocalGoalEntity?
+
+    @Query("SELECT * FROM local_goals WHERE isSynced = 0")
+    fun getUnsyncedGoals(): List<LocalGoalEntity>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertGoal(goal: LocalGoalEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertGoals(goals: List<LocalGoalEntity>)
+
+    @Query("UPDATE local_goals SET currentAmount = currentAmount + :amount, isSynced = 0 WHERE id = :id")
+    fun depositToGoal(id: String, amount: Long)
+
+    @Query("DELETE FROM local_goals WHERE id = :id")
+    fun deleteGoal(id: String)
+
+    @Query("DELETE FROM local_goals")
+    fun clearAll()
+}

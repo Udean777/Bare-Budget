@@ -36,6 +36,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 fun DashboardScreen(
     onNavigateToAddManual: () -> Unit,
     onNavigateToDueBills: () -> Unit,
+    onNavigateToGoals: () -> Unit,
     onNavigateToBudget: () -> Unit,
     onNavigateToTransactionDetail: (String) -> Unit,
     onNavigateToAllTransactions: () -> Unit,
@@ -88,28 +89,6 @@ fun DashboardScreen(
                 )
             )
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                onClick = onNavigateToAddManual,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                shape = RoundedCornerShape(18.dp)
-            ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = "Add Expense")
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Add Expense",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                }
-            }
-        },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
         PullToRefreshBox(
@@ -156,6 +135,7 @@ fun DashboardScreen(
                         onSetBudgetClick = onNavigateToBudget,
                         onAddManualClick = onNavigateToAddManual,
                         onDueBillsClick = onNavigateToDueBills,
+                        onGoalsClick = onNavigateToGoals,
                         onTransactionClick = onNavigateToTransactionDetail,
                         onSeeAllTransactionsClick = onNavigateToAllTransactions,
                         onAnalyticsClick = onNavigateToAnalytics
@@ -172,6 +152,7 @@ fun DashboardContent(
     onSetBudgetClick: () -> Unit,
     onAddManualClick: () -> Unit,
     onDueBillsClick: () -> Unit,
+    onGoalsClick: () -> Unit,
     onTransactionClick: (String) -> Unit,
     onSeeAllTransactionsClick: () -> Unit,
     onAnalyticsClick: () -> Unit
@@ -222,6 +203,16 @@ fun DashboardContent(
                     tintColor = PastelCoralLight,
                     modifier = Modifier.weight(1f),
                     onClick = onDueBillsClick
+                )
+
+                QuickActionCard(
+                    title = "Goals",
+                    subtitle = "Pockets",
+                    icon = Icons.Default.Payments,
+                    bgColor = PastelMintLight.copy(alpha = 0.2f),
+                    tintColor = PastelMintLight,
+                    modifier = Modifier.weight(1f),
+                    onClick = onGoalsClick
                 )
 
                 QuickActionCard(

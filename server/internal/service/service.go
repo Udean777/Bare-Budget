@@ -63,6 +63,23 @@ func (s *Service) DeleteDueBill(userID string, id uuid.UUID) error {
 	return s.repo.DeleteDueBill(userID, id)
 }
 
+// Goal Services
+func (s *Service) CreateGoal(g *models.Goal) error {
+	return s.repo.CreateGoal(g)
+}
+
+func (s *Service) GetGoals(userID string) ([]models.Goal, error) {
+	return s.repo.GetGoalsByUserID(userID)
+}
+
+func (s *Service) DepositToGoal(userID string, id uuid.UUID, amount int64) error {
+	return s.repo.UpdateGoalAmount(userID, id, amount)
+}
+
+func (s *Service) DeleteGoal(userID string, id uuid.UUID) error {
+	return s.repo.DeleteGoal(userID, id)
+}
+
 // Budget & Dashboard Runway Services
 type DashboardSummary struct {
 	MonthlyBudget      int64                        `json:"monthly_budget"`

@@ -110,3 +110,42 @@ data class LocalBudgetEntity(
     val monthlyLimit: Long,
     val isSynced: Boolean = false
 )
+
+@Entity(tableName = "local_goals")
+data class LocalGoalEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val targetAmount: Long,
+    val currentAmount: Long = 0L,
+    val targetDate: String?,
+    val colorHex: String = "#4E73DF",
+    val notes: String?,
+    val isSynced: Boolean = false
+) {
+    fun toGoal(): com.ssajudn.barebudget.data.model.Goal {
+        return com.ssajudn.barebudget.data.model.Goal(
+            id = id,
+            name = name,
+            targetAmount = targetAmount,
+            currentAmount = currentAmount,
+            targetDate = targetDate,
+            colorHex = colorHex,
+            notes = notes
+        )
+    }
+
+    companion object {
+        fun fromGoal(goal: com.ssajudn.barebudget.data.model.Goal, isSynced: Boolean = false): LocalGoalEntity {
+            return LocalGoalEntity(
+                id = goal.id ?: UUID.randomUUID().toString(),
+                name = goal.name,
+                targetAmount = goal.targetAmount,
+                currentAmount = goal.currentAmount,
+                targetDate = goal.targetDate,
+                colorHex = goal.colorHex,
+                notes = goal.notes,
+                isSynced = isSynced
+            )
+        }
+    }
+}

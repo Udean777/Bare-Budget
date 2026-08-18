@@ -48,4 +48,20 @@ interface ApiService {
     // Account Migration (Guest -> Google Account)
     @POST("api/v1/auth/migrate-guest")
     suspend fun migrateGuestData(@Body request: Map<String, String>): Response<Map<String, Any>>
+
+    // Savings Goals Tracker
+    @GET("api/v1/goals")
+    suspend fun getGoals(): Response<GoalListResponse>
+
+    @POST("api/v1/goals")
+    suspend fun createGoal(@Body request: CreateGoalRequest): Response<Goal>
+
+    @POST("api/v1/goals/{id}/deposit")
+    suspend fun depositGoal(
+        @Path("id") id: String,
+        @Body request: DepositGoalRequest
+    ): Response<Map<String, String>>
+
+    @DELETE("api/v1/goals/{id}")
+    suspend fun deleteGoal(@Path("id") id: String): Response<Map<String, String>>
 }

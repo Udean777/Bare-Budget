@@ -31,6 +31,15 @@ import com.ssajudn.barebudget.utils.DateUtils
 import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
 
+enum class GoalFilter(val label: String) {
+    ALL("Semua"),
+    ACTIVE("Aktif"),
+    COMPLETED("Tercapai")
+}
+
+val presetGoalColors = listOf(
+    "#4E73DF", "#2ECC71", "#E74C3C", "#F39C12", "#9B59B6", "#1ABC9C"
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,8 +49,31 @@ fun GoalsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val wallets by viewModel.wallets.collectAsState()
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+
+    // Auto-refresh data dompet & target tabungan setiap kali pengguna kembali ke layar ini
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                viewModel.loadGoals()
+                viewModel.loadWallets()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+
+    var selectedFilter by remember { mutableStateOf(GoalFilter.ALL) }
+
     var showAddDialog by remember { mutableStateOf(false) }
-    var selectedGoalForDeposit by remember { mutableStateOf<Goal?>(null) }
+    var editingGoal by remember { mutableStateOf<Goal?>(null) }
+    var actionSheetGoal by remember { mutableStateOf<Goal?>(null) }
+
+    var depositGoalTarget by remember { mutableStateOf<Goal?>(null) }
+    var initialIsWithdraw by remember { mutableStateOf(false) }
     var goalToDelete by remember { mutableStateOf<Goal?>(null) }
 
     Scaffold(
@@ -63,7 +95,10 @@ fun GoalsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showAddDialog = true }) {
+                    IconButton(onClick = {
+                        editingGoal = null
+                        showAddDialog = true
+                    }) {
                         Icon(Icons.Default.Add, contentDescription = "Add Goal")
                     }
                 },
@@ -74,94 +109,126 @@ fun GoalsScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = { viewModel.loadGoals(isPullToRefresh = true) },
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (val state = uiState) {
-                is GoalsUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-
-                is GoalsUiState.Error -> {
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+            // 1. FILTER TABS (Semua / Aktif / Tercapai)
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            ) {
+                GoalFilter.entries.forEachIndexed { index, filter ->
+                    SegmentedButton(
+                        selected = selectedFilter == filter,
+                        onClick = { selectedFilter = filter },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = GoalFilter.entries.size)
                     ) {
-                        Text(
-                            text = "Error loading goals",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = state.message,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.loadGoals() }) {
-                            Text("Retry")
-                        }
+                        Text(filter.label)
                     }
                 }
+            }
 
-                is GoalsUiState.Success -> {
-                    if (state.goals.isEmpty()) {
-                        Box(
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.loadGoals(isPullToRefresh = true) },
+                modifier = Modifier.fillMaxSize()
+            ) {
+                when (val state = uiState) {
+                    is GoalsUiState.Loading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+
+                    is GoalsUiState.Error -> {
+                        Column(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
+                                .align(Alignment.Center)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    imageVector = Icons.Default.Payments,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(56.dp)
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = "No Savings Goals Yet",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = "Set up your emergency fund, vacation target, or gadget pockets!",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Button(onClick = { showAddDialog = true }) {
-                                    Text("Create First Goal")
-                                }
+                            Text(
+                                text = "Gagal memuat target tabungan",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = state.message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = { viewModel.loadGoals() }) {
+                                Text("Coba Lagi")
                             }
                         }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 20.dp),
-                            verticalArrangement = Arrangement.spacedBy(14.dp),
-                            contentPadding = PaddingValues(top = Spacing.MediumSmall, bottom = Spacing.FabClearance)
-                        ) {
-                            items(state.goals) { goal ->
-                                GoalCard(
-                                    goal = goal,
-                                    onDepositClick = { selectedGoalForDeposit = goal },
-                                    onDeleteClick = { goalToDelete = goal }
-                                )
+                    }
+
+                    is GoalsUiState.Success -> {
+                        val filteredGoals = state.goals.filter { g ->
+                            val isDone = g.currentAmount >= g.targetAmount
+                            when (selectedFilter) {
+                                GoalFilter.ALL -> true
+                                GoalFilter.ACTIVE -> !isDone
+                                GoalFilter.COMPLETED -> isDone
+                            }
+                        }
+
+                        if (filteredGoals.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        imageVector = Icons.Default.Payments,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(56.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = "Tidak Ada Target Tabungan",
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "Mulai buat target dana darurat, liburan, atau impian gadget Anda!",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Button(onClick = {
+                                        editingGoal = null
+                                        showAddDialog = true
+                                    }) {
+                                        Text("Buat Target Pertama")
+                                    }
+                                }
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 20.dp),
+                                verticalArrangement = Arrangement.spacedBy(14.dp),
+                                contentPadding = PaddingValues(top = Spacing.MediumSmall, bottom = Spacing.FabClearance)
+                            ) {
+                                items(filteredGoals) { goal ->
+                                    GoalCard(
+                                        goal = goal,
+                                        onClick = { actionSheetGoal = goal }
+                                    )
+                                }
                             }
                         }
                     }
@@ -170,36 +237,238 @@ fun GoalsScreen(
         }
     }
 
-    if (showAddDialog) {
-        AddGoalDialog(
-            onDismiss = { showAddDialog = false },
-            onConfirm = { name, targetAmount, targetDate, colorHex, notes ->
-                viewModel.addGoal(name, targetAmount, targetDate, colorHex, notes)
-                showAddDialog = false
-            }
-        )
-    }
+    // 2. QUICK ACTION BOTTOM SHEET
+    if (actionSheetGoal != null) {
+        val targetGoal = actionSheetGoal!!
+        ModalBottomSheet(
+            onDismissRequest = { actionSheetGoal = null },
+            shape = MaterialTheme.shapes.extraLarge,
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                    .navigationBarsPadding(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header Info Card
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        val accentColor = try {
+                            Color(android.graphics.Color.parseColor(targetGoal.colorHex))
+                        } catch (e: Exception) {
+                            MaterialTheme.colorScheme.primary
+                        }
 
-    if (selectedGoalForDeposit != null) {
-        DepositGoalDialog(
-            goal = selectedGoalForDeposit!!,
-            onDismiss = { selectedGoalForDeposit = null },
-            onConfirm = { amount ->
-                selectedGoalForDeposit?.id?.let { goalId ->
-                    viewModel.depositToGoal(goalId, amount)
+                        Surface(
+                            shape = CircleShape,
+                            color = accentColor,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Savings,
+                                    contentDescription = null,
+                                    tint = Color.White,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = targetGoal.name,
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = CurrencyFormatter.formatRupiah(targetGoal.currentAmount),
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                            Text(
+                                text = "Target: ${CurrencyFormatter.formatRupiah(targetGoal.targetAmount)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
-                selectedGoalForDeposit = null
+
+                Text(
+                    text = "Tindakan Cepat",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // Actions Group
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Surface(
+                        onClick = {
+                            val g = targetGoal
+                            actionSheetGoal = null
+                            initialIsWithdraw = false
+                            depositGoalTarget = g
+                        },
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.primaryContainer
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                            Column {
+                                Text("Setor Tabungan (Deposit)", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Text("Alokasikan uang dari dompet ke target", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                            }
+                        }
+                    }
+
+                    Surface(
+                        onClick = {
+                            val g = targetGoal
+                            actionSheetGoal = null
+                            initialIsWithdraw = true
+                            depositGoalTarget = g
+                        },
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.6f)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Icon(Icons.Default.Remove, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
+                            Column {
+                                Text("Tarik Tabungan (Withdraw)", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onErrorContainer)
+                                Text("Kembalikan saldo target ke dompet", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f))
+                            }
+                        }
+                    }
+
+                    Surface(
+                        onClick = {
+                            val g = targetGoal
+                            actionSheetGoal = null
+                            editingGoal = g
+                            showAddDialog = true
+                        },
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
+                            Text("Edit Target Tabungan", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
+                        }
+                    }
+
+                    Surface(
+                        onClick = {
+                            val g = targetGoal
+                            actionSheetGoal = null
+                            goalToDelete = g
+                        },
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            Text("Hapus Target Ini", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = { actionSheetGoal = null },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text("Tutup")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+
+    // 3. ADD / EDIT GOAL DIALOG
+    if (showAddDialog) {
+        GoalFormDialog(
+            initialGoal = editingGoal,
+            onDismiss = {
+                showAddDialog = false
+                editingGoal = null
+            },
+            onConfirm = { name, targetAmount, targetDate, colorHex, notes ->
+                if (editingGoal != null && editingGoal!!.id != null) {
+                    viewModel.updateGoal(editingGoal!!.id!!, name, targetAmount, targetDate, colorHex, notes)
+                } else {
+                    viewModel.addGoal(name, targetAmount, targetDate, colorHex, notes)
+                }
+                showAddDialog = false
+                editingGoal = null
             }
         )
     }
 
+    // 4. DEPOSIT / WITHDRAW DIALOG WITH WALLET SELECTOR
+    if (depositGoalTarget != null) {
+        val g = depositGoalTarget!!
+        DepositGoalDialog(
+            goal = g,
+            wallets = wallets,
+            initialWithdraw = initialIsWithdraw,
+            onDismiss = { depositGoalTarget = null },
+            onConfirm = { amount, walletId ->
+                g.id?.let { goalId ->
+                    viewModel.depositToGoal(goalId, amount, walletId)
+                }
+                depositGoalTarget = null
+            }
+        )
+    }
+
+    // 5. DELETE CONFIRMATION DIALOG
     if (goalToDelete != null) {
+        val target = goalToDelete!!
         AppConfirmDialog(
-            title = "Delete Savings Goal?",
-            message = "Are you sure you want to delete '${goalToDelete?.name}'? Your saved progress will be permanently removed.",
+            title = "Hapus Target Tabungan?",
+            message = "Apakah Anda yakin ingin menghapus target '${target.name}'? Seluruh progres tabungan ini akan dihapus.",
+            confirmButtonText = "Hapus Target",
             onDismissRequest = { goalToDelete = null },
             onConfirm = {
-                goalToDelete?.id?.let { viewModel.deleteGoal(it) }
+                target.id?.let { viewModel.deleteGoal(it) }
                 goalToDelete = null
             }
         )
@@ -209,12 +478,19 @@ fun GoalsScreen(
 @Composable
 fun GoalCard(
     goal: Goal,
-    onDepositClick: () -> Unit,
-    onDeleteClick: () -> Unit
+    onClick: () -> Unit
 ) {
-    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val isCompleted = goal.currentAmount >= goal.targetAmount
     val progressPercentInt = (goal.progressPercentage * 100).toInt()
+
+    val daysLeft = if (!goal.targetDate.isNullOrBlank()) DateUtils.getDaysUntilDue(goal.targetDate) else null
+    val isNearDeadline = daysLeft != null && daysLeft in 0..30 && goal.progressPercentage < 0.8f
+
+    val (badgeBgColor, badgeTextColor, badgeLabel) = when {
+        isCompleted -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, "Tercapai 100%")
+        isNearDeadline -> Triple(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer, "Mendekati Deadline")
+        else -> Triple(MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, "On Track")
+    }
 
     val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
         targetValue = goal.progressPercentage,
@@ -225,63 +501,59 @@ fun GoalCard(
         label = "goalProgress"
     )
 
+    val cardAccentColor = try {
+        Color(android.graphics.Color.parseColor(goal.colorHex))
+    } catch (e: Exception) {
+        MaterialTheme.colorScheme.primary
+    }
+
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = AppShapes.LargeIncreased,
         colors = CardDefaults.elevatedCardColors(
-            containerColor = if (isCompleted) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f) else MaterialTheme.colorScheme.surface
+            containerColor = if (isCompleted) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = if (isCompleted) 1.dp else 2.dp)
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
-            // Top Row: Goal Title & Actions
+            // Top Row: Accent Dot, Title, & Badge
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
+                ) {
                     Box(
                         modifier = Modifier
                             .size(12.dp)
                             .clip(CircleShape)
-                            .background(
-                                if (isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
-                            )
+                            .background(cardAccentColor)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = goal.name,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    if (isCompleted) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Icon(
-                            Icons.Default.CheckCircle,
-                            contentDescription = "Achieved",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
                 }
 
-                IconButton(
-                    onClick = {
-                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
-                        onDeleteClick()
-                    },
-                    // 48dp is the minimum accessible touch target. This was 28dp
-                    // on a destructive action.
-                    modifier = Modifier.size(MinTouchTarget)
+                Surface(
+                    shape = MaterialTheme.shapes.extraSmall,
+                    color = badgeBgColor
                 ) {
-                    Icon(
-                        Icons.Default.DeleteOutline,
-                        contentDescription = "Hapus target",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.size(20.dp)
+                    Text(
+                        text = badgeLabel,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = badgeTextColor
                     )
                 }
             }
@@ -315,7 +587,7 @@ fun GoalCard(
                     )
                     if (!goal.targetDate.isNullOrBlank()) {
                         Text(
-                            text = "Target ${DateUtils.formatDisplayDate(goal.targetDate)}",
+                            text = "s/d ${DateUtils.formatDisplayDate(goal.targetDate)}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                         )
@@ -323,7 +595,7 @@ fun GoalCard(
                 }
             }
 
-            // Smooth Animated Progress Bar
+            // Progress Bar
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 LinearProgressIndicator(
                     progress = { animatedProgress },
@@ -331,7 +603,7 @@ fun GoalCard(
                         .fillMaxWidth()
                         .height(10.dp)
                         .clip(MaterialTheme.shapes.extraSmall),
-                    color = if (isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary,
+                    color = cardAccentColor,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
 
@@ -341,23 +613,14 @@ fun GoalCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     if (isCompleted) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(
-                                imageVector = Icons.Default.CheckCircle,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(14.dp)
-                            )
-                            Spacer(modifier = Modifier.width(4.dp))
-                            Text(
-                                text = "Target Tercapai!",
-                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                                color = MaterialTheme.colorScheme.primary
-                            )
-                        }
+                        Text(
+                            text = "Target Tercapai!",
+                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     } else {
                         Text(
-                            text = "Kurang ${CurrencyFormatter.formatRupiah(goal.remainingAmount)}",
+                            text = "Sisa ${CurrencyFormatter.formatRupiah(goal.remainingAmount)}",
                             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -370,126 +633,203 @@ fun GoalCard(
                 }
             }
 
-            // Quick Deposit/Withdraw Button
-            FilledTonalButton(
-                onClick = {
-                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
-                    onDepositClick()
-                },
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.medium
-            ) {
-                Icon(
-                    imageVector = Icons.Default.SwapHoriz,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "Kelola Dana (Setor / Tarik)",
-                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold)
-                )
+            // Smart Calculator Banner
+            if (!isCompleted && daysLeft != null && daysLeft > 0) {
+                val monthsLeft = kotlin.math.max(1L, daysLeft / 30L)
+                val perMonth = goal.remainingAmount / monthsLeft
+                val perDay = goal.remainingAmount / daysLeft
+
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Rekomendasi: Tabung ${CurrencyFormatter.formatCompact(perMonth)}/bln (${CurrencyFormatter.formatCompact(perDay)}/hari)",
+                            style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
             }
         }
     }
 }
 
 @Composable
-fun AddGoalDialog(
+fun GoalColorRow(
+    selectedColorHex: String,
+    onSelectColor: (String) -> Unit
+) {
+    Column {
+        Text(
+            text = "Warna Aksen",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        Spacer(modifier = Modifier.height(6.dp))
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            presetGoalColors.forEach { colorHex ->
+                val color = try { Color(android.graphics.Color.parseColor(colorHex)) } catch (e: Exception) { Color.Gray }
+                val isSelected = selectedColorHex.equals(colorHex, ignoreCase = true)
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                        .clickable { onSelectColor(colorHex) },
+                    contentAlignment = Alignment.Center
+                ) {
+                    if (isSelected) {
+                        Icon(
+                            imageVector = Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Color.White,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun GoalFormDialog(
+    initialGoal: Goal? = null,
     onDismiss: () -> Unit,
     onConfirm: (name: String, targetAmount: Long, targetDate: String, colorHex: String, notes: String) -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
-    var rawAmount by remember { mutableStateOf("") }
-    var targetDate by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
-
+    var name by remember { mutableStateOf(initialGoal?.name ?: "") }
+    var rawAmount by remember { mutableStateOf(initialGoal?.targetAmount?.toString() ?: "") }
+    var parsedAmount by remember { mutableStateOf(initialGoal?.targetAmount ?: 0L) }
+    var targetDateIso by remember { mutableStateOf(initialGoal?.targetDate ?: "") }
+    var selectedColorHex by remember { mutableStateOf(initialGoal?.colorHex ?: presetGoalColors[0]) }
+    var notes by remember { mutableStateOf(initialGoal?.notes ?: "") }
     var showDatePicker by remember { mutableStateOf(false) }
 
-    val amount = rawAmount.toLongOrNull() ?: 0L
-    val isValid = name.isNotBlank() && amount > 0
+    val isFormValid = name.isNotBlank() && parsedAmount > 0
 
     if (showDatePicker) {
         AppDatePickerDialog(
-            initialDateMillis = if (targetDate.isNotBlank()) DateUtils.parseIsoToMillis(targetDate) else null,
+            initialDateMillis = if (targetDateIso.isNotBlank()) DateUtils.parseIsoToMillis(targetDateIso) else null,
             onDateSelected = { millis ->
-                targetDate = DateUtils.formatMillisToIso(millis)
+                targetDateIso = DateUtils.formatMillisToIso(millis)
+                showDatePicker = false
             },
             onDismiss = { showDatePicker = false }
         )
     }
 
     AppFormDialog(
-        title = "New Savings Goal",
+        title = if (initialGoal != null) "Edit Target Tabungan" else "Target Tabungan Baru",
         icon = Icons.Default.Payments,
         iconTint = MaterialTheme.colorScheme.primary,
-        confirmButtonText = "Create Goal",
-        isConfirmEnabled = isValid,
+        confirmButtonText = if (initialGoal != null) "Simpan Perubahan" else "Buat Target",
+        isConfirmEnabled = isFormValid,
         onDismissRequest = onDismiss,
         onConfirm = {
-            if (isValid) {
-                onConfirm(name, amount, targetDate, "#4E73DF", notes)
-            }
+            onConfirm(name, parsedAmount, targetDateIso, selectedColorHex, notes)
         }
     ) {
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Goal Name") },
-            placeholder = { Text("e.g. Dana Darurat, Liburan Bali") },
+            label = { Text("Nama Target") },
+            placeholder = { Text("e.g. Dana Darurat, Liburan Bali, iPhone 16") },
             singleLine = true,
-            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth()
         )
 
+        Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
             value = rawAmount,
             onValueChange = { input ->
-                rawAmount = input.filter { it.isDigit() }.take(12)
+                val digitsOnly = input.filter { it.isDigit() }.take(12)
+                rawAmount = digitsOnly
+                parsedAmount = digitsOnly.toLongOrNull() ?: 0L
             },
-            label = { Text("Target Amount") },
+            label = { Text("Target Nominal") },
             placeholder = { Text("Rp 0") },
-            visualTransformation = CurrencyVisualTransformation(),
-            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-            ),
             singleLine = true,
-            shape = MaterialTheme.shapes.medium,
+            visualTransformation = CurrencyVisualTransformation(),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
         )
 
+        Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
-            value = if (targetDate.isNotBlank()) DateUtils.formatDisplayDate(targetDate) else "",
-            onValueChange = { },
-            label = { Text("Target Date (Optional)") },
-            placeholder = { Text("Pilih tanggal (opsional)") },
+            value = if (targetDateIso.isNotBlank()) DateUtils.formatDisplayDate(targetDateIso) else "",
+            onValueChange = {},
+            label = { Text("Tanggal Target (Opsional)") },
+            placeholder = { Text("Pilih tanggal target") },
             readOnly = true,
+            trailingIcon = {
+                IconButton(onClick = { showDatePicker = true }) {
+                    Icon(Icons.Default.CalendarToday, contentDescription = "Pilih Tanggal")
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { showDatePicker = true }
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        GoalColorRow(
+            selectedColorHex = selectedColorHex,
+            onSelectColor = { selectedColorHex = it }
+        )
+
+        Spacer(modifier = Modifier.height(10.dp))
+
+        OutlinedTextField(
+            value = notes,
+            onValueChange = { notes = it },
+            label = { Text("Catatan Tambahan (Opsional)") },
             singleLine = true,
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
-            enabled = false,
-            colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledBorderColor = MaterialTheme.colorScheme.outline,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DepositGoalDialog(
     goal: Goal,
+    wallets: List<com.ssajudn.barebudget.data.model.Wallet>,
+    initialWithdraw: Boolean = false,
     onDismiss: () -> Unit,
-    onConfirm: (amount: Long) -> Unit
+    onConfirm: (amount: Long, walletId: String) -> Unit
 ) {
     var rawAmount by remember { mutableStateOf("") }
-    var isWithdraw by remember { mutableStateOf(false) }
+    var parsedAmount by remember { mutableStateOf(0L) }
+    var isWithdraw by remember { mutableStateOf(initialWithdraw) }
+    var selectedWallet by remember(wallets) { mutableStateOf(wallets.firstOrNull()) }
+    var walletDropdownExpanded by remember { mutableStateOf(false) }
 
-    val amount = rawAmount.toLongOrNull() ?: 0L
-    val isValid = amount > 0
+    val walletBalance = selectedWallet?.balance ?: 0L
+    val isAmountValid = parsedAmount > 0
+    val isBalanceValid = if (isWithdraw) parsedAmount <= goal.currentAmount else parsedAmount <= walletBalance
+    val isFormValid = isAmountValid && isBalanceValid && selectedWallet?.id != null
 
     AppFormDialog(
         title = if (isWithdraw) "Tarik Tabungan" else "Setor Tabungan",
@@ -497,12 +837,12 @@ fun DepositGoalDialog(
         iconTint = if (isWithdraw) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
         confirmButtonText = if (isWithdraw) "Tarik Dana" else "Setor Sekarang",
         confirmButtonContainerColor = if (isWithdraw) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-        isConfirmEnabled = isValid,
+        isConfirmEnabled = isFormValid,
         onDismissRequest = onDismiss,
         onConfirm = {
-            if (isValid) {
-                val finalAmount = if (isWithdraw) -amount else amount
-                onConfirm(finalAmount)
+            selectedWallet?.id?.let { wId ->
+                val finalAmount = if (isWithdraw) -parsedAmount else parsedAmount
+                onConfirm(finalAmount, wId)
             }
         }
     ) {
@@ -513,26 +853,14 @@ fun DepositGoalDialog(
             FilterChip(
                 selected = !isWithdraw,
                 onClick = { isWithdraw = false },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                },
+                leadingIcon = { Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp)) },
                 label = { Text("Setor (Deposit)") },
                 modifier = Modifier.weight(1f)
             )
             FilterChip(
                 selected = isWithdraw,
                 onClick = { isWithdraw = true },
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Remove,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                },
+                leadingIcon = { Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp)) },
                 label = { Text("Tarik (Withdraw)") },
                 modifier = Modifier.weight(1f)
             )
@@ -540,20 +868,75 @@ fun DepositGoalDialog(
 
         Spacer(modifier = Modifier.height(12.dp))
 
+        // Wallet Selector Dropdown
+        Text(
+            text = if (isWithdraw) "Tujuan Dompet Penarikan" else "Sumber Dompet Setoran",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        ExposedDropdownMenuBox(
+            expanded = walletDropdownExpanded,
+            onExpandedChange = { walletDropdownExpanded = !walletDropdownExpanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            val selectedText = selectedWallet?.let { "${it.name} (${CurrencyFormatter.formatRupiah(it.balance)})" } ?: "Pilih Dompet"
+            OutlinedTextField(
+                value = selectedText,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Dompet") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = walletDropdownExpanded) },
+                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+            )
+            ExposedDropdownMenu(
+                expanded = walletDropdownExpanded,
+                onDismissRequest = { walletDropdownExpanded = false }
+            ) {
+                wallets.forEach { wallet ->
+                    DropdownMenuItem(
+                        text = {
+                            Column {
+                                Text(wallet.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
+                                Text("Saldo: ${CurrencyFormatter.formatRupiah(wallet.balance)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        },
+                        onClick = {
+                            selectedWallet = wallet
+                            walletDropdownExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
         OutlinedTextField(
             value = rawAmount,
             onValueChange = { input ->
-                rawAmount = input.filter { it.isDigit() }.take(12)
+                val digitsOnly = input.filter { it.isDigit() }.take(12)
+                rawAmount = digitsOnly
+                parsedAmount = digitsOnly.toLongOrNull() ?: 0L
             },
-            label = { Text("Nominal") },
+            label = { Text("Nominal Rp") },
             placeholder = { Text("Rp 0") },
             visualTransformation = CurrencyVisualTransformation(),
-            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-            ),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
             singleLine = true,
-            shape = MaterialTheme.shapes.medium,
+            isError = parsedAmount > 0 && !isBalanceValid,
             modifier = Modifier.fillMaxWidth()
         )
+
+        if (parsedAmount > 0 && !isBalanceValid) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = if (isWithdraw) "Nominal melebihi saldo terkumpul target (${CurrencyFormatter.formatRupiah(goal.currentAmount)})"
+                       else "Nominal melebihi saldo dompet terpilih (${CurrencyFormatter.formatRupiah(walletBalance)})",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
     }
 }

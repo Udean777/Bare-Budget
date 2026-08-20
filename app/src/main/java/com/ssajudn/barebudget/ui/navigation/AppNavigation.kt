@@ -18,6 +18,7 @@ import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material3.FloatingActionButton
@@ -61,6 +62,7 @@ sealed class Screen(val route: String) {
     object Analytics : Screen("analytics")
     object Settings : Screen("settings")
     object DueBills : Screen("due_bills")
+    object Transfer : Screen("transfer")
     object Goals : Screen("goals")
     object Budget : Screen("budget")
     object Wallets : Screen("wallets")
@@ -90,6 +92,12 @@ private val TopLevelDestinations = listOf(
         label = "Tagihan",
         icon = Icons.AutoMirrored.Outlined.ReceiptLong,
         selectedIcon = Icons.AutoMirrored.Filled.ReceiptLong,
+    ),
+    NavigationBarItemData(
+        route = Screen.Transfer.route,
+        label = "Transfer",
+        icon = Icons.Default.SwapHoriz,
+        selectedIcon = Icons.Default.SwapHoriz,
     ),
     NavigationBarItemData(
         route = Screen.Goals.route,
@@ -310,6 +318,16 @@ fun AppNavigation(
 
             composable(Screen.DueBills.route) {
                 DueBillsScreen()
+            }
+
+            composable(Screen.Transfer.route) {
+                com.ssajudn.barebudget.ui.transaction.TransferScreen(
+                    onTransferSuccess = {
+                        navController.navigate(Screen.Dashboard.route) {
+                            popUpTo(Screen.Dashboard.route) { inclusive = true }
+                        }
+                    }
+                )
             }
 
             composable(Screen.Wallets.route) {

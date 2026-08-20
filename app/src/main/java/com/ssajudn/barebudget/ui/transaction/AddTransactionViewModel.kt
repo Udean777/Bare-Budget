@@ -17,6 +17,7 @@ data class AddTransactionUiState(
     val transactionType: TransactionType = TransactionType.EXPENSE,
     val wallets: List<Wallet> = emptyList(),
     val selectedWalletId: String? = null,
+    val selectedToWalletId: String? = null,
     val rawAmount: String = "",
     val parsedAmount: Long = 0L,
     val merchant: String = "",
@@ -45,16 +46,22 @@ class AddTransactionViewModel(
             if (result.isSuccess) {
                 val wallets = result.getOrNull() ?: emptyList()
                 val defaultWallet = wallets.firstOrNull()?.id
+                val defaultToWallet = wallets.getOrNull(1)?.id ?: defaultWallet
                 _uiState.value = _uiState.value.copy(
                     wallets = wallets,
-                    selectedWalletId = defaultWallet
+                    selectedWalletId = defaultWallet,
+                    selectedToWalletId = defaultToWallet
                 )
             }
         }
     }
 
     fun onTransactionTypeChange(type: TransactionType) {
-        val newCategory = if (type == TransactionType.INCOME) TransactionCategory.SALARY else TransactionCategory.FOOD
+        val newCategory = when (type) {
+            TransactionType.INCOME -> TransactionCategory.SALARY
+            TransactionType.TRANSFER -> TransactionCategory.TRANSFER
+            TransactionType.EXPENSE -> TransactionCategory.FOOD
+        }
         _uiState.value = _uiState.value.copy(
             transactionType = type,
             selectedCategory = newCategory
@@ -63,6 +70,10 @@ class AddTransactionViewModel(
 
     fun onWalletChange(walletId: String) {
         _uiState.value = _uiState.value.copy(selectedWalletId = walletId)
+    }
+
+    fun onToWalletChange(walletId: String) {
+        _uiState.value = _uiState.value.copy(selectedToWalletId = walletId)
     }
 
     fun onAmountChange(input: String) {
@@ -101,14 +112,35 @@ class AddTransactionViewModel(
             return
         }
 
+        if (state.transactionType == TransactionType.TRANSFER) {
+            if (state.selectedToWalletId == null) {
+                _uiState.value = state.copy(errorMessage = "Tolong pilih dompet tujuan transfer")
+                return
+            }
+            if (state.selectedWalletId == state.selectedToWalletId) {
+                _uiState.value = state.copy(errorMessage = "Dompet asal dan dompet tujuan tidak boleh sama")
+                return
+            }
+        }
+
         viewModelScope.launch {
             _uiState.value = state.copy(isLoading = true, errorMessage = null)
+            val sourceWalletName = state.wallets.find { it.id == state.selectedWalletId }?.name ?: "Dompet"
+            val targetWalletName = state.wallets.find { it.id == state.selectedToWalletId }?.name ?: "Dompet"
+
+            val defaultMerchant = if (state.transactionType == TransactionType.TRANSFER) {
+                "Transfer $sourceWalletName ke $targetWalletName"
+            } else {
+                state.selectedCategory.displayName
+            }
+
             val request = CreateTransactionRequest(
                 amount = state.parsedAmount,
                 type = state.transactionType,
                 walletId = state.selectedWalletId,
+                toWalletId = if (state.transactionType == TransactionType.TRANSFER) state.selectedToWalletId else null,
                 category = state.selectedCategory,
-                merchant = state.merchant.ifBlank { state.selectedCategory.displayName },
+                merchant = state.merchant.ifBlank { defaultMerchant },
                 date = state.date,
                 notes = state.notes
             )

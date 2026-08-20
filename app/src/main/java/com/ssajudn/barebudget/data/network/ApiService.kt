@@ -59,6 +59,12 @@ interface ApiService {
         @Body request: UpdateDueBillStatusRequest
     ): Response<Map<String, String>>
 
+    @PATCH("api/v1/due-bills/{id}")
+    suspend fun updateDueBill(
+        @Path("id") id: String,
+        @Body request: UpdateDueBillRequest
+    ): Response<Map<String, String>>
+
     @DELETE("api/v1/due-bills/{id}")
     suspend fun deleteDueBill(@Path("id") id: String): Response<Map<String, String>>
 
@@ -77,6 +83,12 @@ interface ApiService {
     suspend fun depositGoal(
         @Path("id") id: String,
         @Body request: DepositGoalRequest
+    ): Response<Map<String, String>>
+
+    @PATCH("api/v1/goals/{id}")
+    suspend fun updateGoal(
+        @Path("id") id: String,
+        @Body request: UpdateGoalRequest
     ): Response<Map<String, String>>
 
     @DELETE("api/v1/goals/{id}")

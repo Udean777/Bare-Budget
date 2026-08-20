@@ -41,6 +41,9 @@ enum class TransactionCategory(val displayName: String, val iconName: String) {
     @SerializedName("INVESTMENT")
     INVESTMENT("Investment Returns", "trending_up"),
 
+    @SerializedName("TRANSFER")
+    TRANSFER("Wallet Transfer", "swap_horiz"),
+
     @SerializedName("OTHER")
     OTHER("Other", "category")
 }
@@ -72,6 +75,7 @@ data class Transaction(
     @SerializedName("notes") val notes: String? = null,
     @SerializedName("receipt_url") val receiptUrl: String? = null,
     @SerializedName("wallet_id") val walletId: String? = null,
+    @SerializedName("to_wallet_id") val toWalletId: String? = null,
     @SerializedName("created_at") val createdAt: String? = null
 )
 
@@ -83,7 +87,8 @@ data class CreateTransactionRequest(
     @SerializedName("date") val date: String,
     @SerializedName("notes") val notes: String = "",
     @SerializedName("receipt_url") val receiptUrl: String = "",
-    @SerializedName("wallet_id") val walletId: String? = null
+    @SerializedName("wallet_id") val walletId: String? = null,
+    @SerializedName("to_wallet_id") val toWalletId: String? = null
 )
 
 enum class DueBillStatus {
@@ -116,6 +121,7 @@ data class DueBill(
     @SerializedName("total_amount") val totalAmount: Long,
     @SerializedName("due_date") val dueDate: String,
     @SerializedName("status") val status: DueBillStatus = DueBillStatus.UNPAID,
+    @SerializedName("paid_wallet_id") val paidWalletId: String? = null,
     @SerializedName("is_recurring") val isRecurring: Boolean = false,
     @SerializedName("recurring_interval") val recurringInterval: RecurringInterval = RecurringInterval.NONE,
     @SerializedName("notes") val notes: String? = null,
@@ -135,6 +141,16 @@ data class CreateDueBillRequest(
 data class UpdateDueBillStatusRequest(
     @SerializedName("status") val status: DueBillStatus,
     @SerializedName("wallet_id") val walletId: String? = null
+)
+
+data class UpdateDueBillRequest(
+    @SerializedName("provider_name") val providerName: String,
+    @SerializedName("provider_icon_url") val providerIconUrl: String? = null,
+    @SerializedName("total_amount") val totalAmount: Long,
+    @SerializedName("due_date") val dueDate: String,
+    @SerializedName("is_recurring") val isRecurring: Boolean = false,
+    @SerializedName("recurring_interval") val recurringInterval: RecurringInterval = RecurringInterval.NONE,
+    @SerializedName("notes") val notes: String = ""
 )
 
 data class SetBudgetRequest(
@@ -202,7 +218,16 @@ data class CreateGoalRequest(
 )
 
 data class DepositGoalRequest(
-    @SerializedName("amount") val amount: Long
+    @SerializedName("amount") val amount: Long,
+    @SerializedName("wallet_id") val walletId: String
+)
+
+data class UpdateGoalRequest(
+    @SerializedName("name") val name: String,
+    @SerializedName("target_amount") val targetAmount: Long,
+    @SerializedName("target_date") val targetDate: String = "",
+    @SerializedName("color_hex") val colorHex: String = "#4E73DF",
+    @SerializedName("notes") val notes: String = ""
 )
 
 data class GoalListResponse(

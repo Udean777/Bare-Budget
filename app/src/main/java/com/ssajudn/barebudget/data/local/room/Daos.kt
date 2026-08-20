@@ -49,8 +49,25 @@ interface DueBillDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertDueBills(bills: List<LocalDueBillEntity>)
 
-    @Query("UPDATE local_due_bills SET status = :status WHERE id = :id")
-    fun updateDueBillStatus(id: String, status: String)
+    @Query("UPDATE local_due_bills SET status = :status, paidWalletId = :paidWalletId WHERE id = :id")
+    fun updateDueBillStatus(id: String, status: String, paidWalletId: String?)
+
+    @Query(
+        "UPDATE local_due_bills SET providerName = :providerName, providerIconUrl = :providerIconUrl, " +
+            "totalAmount = :totalAmount, dueDate = :dueDate, isRecurring = :isRecurring, " +
+            "recurringInterval = :recurringInterval, notes = :notes, isSynced = :isSynced WHERE id = :id"
+    )
+    fun updateDueBill(
+        id: String,
+        providerName: String,
+        providerIconUrl: String?,
+        totalAmount: Long,
+        dueDate: String,
+        isRecurring: Boolean,
+        recurringInterval: String,
+        notes: String,
+        isSynced: Boolean
+    )
 
     @Query("DELETE FROM local_due_bills WHERE id = :id")
     fun deleteDueBill(id: String)
@@ -99,6 +116,9 @@ interface GoalDao {
 
     @Query("UPDATE local_goals SET currentAmount = currentAmount + :amount, isSynced = 0 WHERE id = :id")
     fun depositToGoal(id: String, amount: Long)
+
+    @Query("UPDATE local_goals SET name = :name, targetAmount = :targetAmount, targetDate = :targetDate, colorHex = :colorHex, notes = :notes, isSynced = :isSynced WHERE id = :id")
+    fun updateGoal(id: String, name: String, targetAmount: Long, targetDate: String?, colorHex: String, notes: String?, isSynced: Boolean)
 
     @Query("DELETE FROM local_goals WHERE id = :id")
     fun deleteGoal(id: String)

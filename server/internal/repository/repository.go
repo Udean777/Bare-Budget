@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -159,6 +160,12 @@ func (r *Repository) GetDueBillsByUserID(userID string, status string) ([]models
 	return list, err
 }
 
+func (r *Repository) UpdateDueBill(userID string, id uuid.UUID, fields map[string]interface{}) error {
+	return r.db.Model(&models.DueBill{}).
+		Where("id = ? AND user_id = ?", id, userID).
+		Updates(fields).Error
+}
+
 func (r *Repository) UpdateDueBillStatus(userID string, id uuid.UUID, status models.DueBillStatus, walletID *string) error {
 	return r.db.Transaction(func(tx *gorm.DB) error {
 		var bill models.DueBill
@@ -166,33 +173,84 @@ func (r *Repository) UpdateDueBillStatus(userID string, id uuid.UUID, status mod
 			return err
 		}
 
-		if err := tx.Model(&bill).Update("status", status).Error; err != nil {
-			return err
-		}
-
-		if status == models.DueBillPaid && walletID != nil && *walletID != "" {
-			// 1. Create Transaction
-			transaction := models.Transaction{
-				UserID:   userID,
-				Amount:   bill.TotalAmount,
-				Type:     models.TypeExpense,
-				Category: models.CategoryBills,
-				Merchant: bill.ProviderName,
-				Date:     time.Now(),
-				Notes:    "Pembayaran tagihan: " + bill.ProviderName,
-				WalletID: walletID,
+		if status == models.DueBillPaid {
+			now := time.Now()
+			updates := map[string]interface{}{
+				"status":         status,
+				"paid_at":        now,
+				"paid_wallet_id": walletID,
 			}
-			if err := tx.Create(&transaction).Error; err != nil {
+			if err := tx.Model(&bill).Updates(updates).Error; err != nil {
 				return err
 			}
 
-			// 2. Deduct Wallet Balance
-			var wallet models.Wallet
-			if err := tx.First(&wallet, "id = ?", *walletID).Error; err == nil {
-				wallet.Balance -= bill.TotalAmount
-				if err := tx.Save(&wallet).Error; err != nil {
+			if walletID != nil && *walletID != "" {
+				// 1. Create Transaction
+				transaction := models.Transaction{
+					UserID:   userID,
+					Amount:   bill.TotalAmount,
+					Type:     models.TypeExpense,
+					Category: models.CategoryBills,
+					Merchant: bill.ProviderName,
+					Date:     now,
+					Notes:    "Pembayaran tagihan: " + bill.ProviderName,
+					WalletID: walletID,
+				}
+				if err := tx.Create(&transaction).Error; err != nil {
 					return err
 				}
+
+				// 2. Deduct Wallet Balance
+				var wallet models.Wallet
+				if err := tx.First(&wallet, "id = ?", *walletID).Error; err == nil {
+					wallet.Balance -= bill.TotalAmount
+					if err := tx.Save(&wallet).Error; err != nil {
+						return err
+					}
+				}
+			}
+		} else if status == models.DueBillUnpaid {
+			// If canceling payment for a previously paid bill with recorded paid_wallet_id
+			if bill.Status == models.DueBillPaid && bill.PaidWalletID != nil && *bill.PaidWalletID != "" {
+				refundWalletID := *bill.PaidWalletID
+
+				// 1. Refund Wallet Balance
+				var wallet models.Wallet
+				if err := tx.First(&wallet, "id = ?", refundWalletID).Error; err == nil {
+					wallet.Balance += bill.TotalAmount
+					if err := tx.Save(&wallet).Error; err != nil {
+						return err
+					}
+				}
+
+				// 2. Create Refund Income Transaction
+				refundTx := models.Transaction{
+					UserID:   userID,
+					Amount:   bill.TotalAmount,
+					Type:     models.TypeIncome,
+					Category: models.CategoryBills,
+					Merchant: "Refund: " + bill.ProviderName,
+					Date:     time.Now(),
+					Notes:    "Pembatalan pembayaran tagihan " + bill.ProviderName,
+					WalletID: &refundWalletID,
+				}
+				if err := tx.Create(&refundTx).Error; err != nil {
+					return err
+				}
+			}
+
+			// Clear status and paid_wallet_id
+			updates := map[string]interface{}{
+				"status":         status,
+				"paid_at":        nil,
+				"paid_wallet_id": nil,
+			}
+			if err := tx.Model(&bill).Select("status", "paid_at", "paid_wallet_id").Updates(updates).Error; err != nil {
+				return err
+			}
+		} else {
+			if err := tx.Model(&bill).Update("status", status).Error; err != nil {
+				return err
 			}
 		}
 
@@ -302,10 +360,80 @@ func (r *Repository) GetGoalByID(userID string, id uuid.UUID) (*models.Goal, err
 	return &g, nil
 }
 
-func (r *Repository) UpdateGoalAmount(userID string, id uuid.UUID, addedAmount int64) error {
-	return r.db.Model(&models.Goal{}).
-		Where("id = ? AND user_id = ?", id, userID).
-		Update("current_amount", gorm.Expr("current_amount + ?", addedAmount)).Error
+func (r *Repository) DepositToGoal(userID string, id uuid.UUID, walletID string, amount int64) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var goal models.Goal
+		if err := tx.Where("id = ? AND user_id = ?", id, userID).First(&goal).Error; err != nil {
+			return err
+		}
+
+		newAmount := goal.CurrentAmount + amount
+		if newAmount < 0 {
+			return fmt.Errorf("insufficient goal balance")
+		}
+
+		if err := tx.Model(&goal).Update("current_amount", newAmount).Error; err != nil {
+			return err
+		}
+
+		var wallet models.Wallet
+		if err := tx.Where("id = ? AND user_id = ?", walletID, userID).First(&wallet).Error; err != nil {
+			return fmt.Errorf("wallet not found")
+		}
+
+		now := time.Now()
+		if amount > 0 {
+			// Deposit / Setor (Expense)
+			if wallet.Balance < amount {
+				return fmt.Errorf("insufficient wallet balance")
+			}
+			wallet.Balance -= amount
+			if err := tx.Save(&wallet).Error; err != nil {
+				return err
+			}
+
+			transaction := models.Transaction{
+				UserID:   userID,
+				Amount:   amount,
+				Type:     models.TypeExpense,
+				Category: models.CategoryOther,
+				Merchant: "Tabungan: " + goal.Name,
+				Date:     now,
+				Notes:    "Setor ke tabungan " + goal.Name,
+				WalletID: &walletID,
+			}
+			if err := tx.Create(&transaction).Error; err != nil {
+				return err
+			}
+		} else if amount < 0 {
+			// Withdraw / Tarik (Income)
+			withdrawAmt := -amount
+			wallet.Balance += withdrawAmt
+			if err := tx.Save(&wallet).Error; err != nil {
+				return err
+			}
+
+			transaction := models.Transaction{
+				UserID:   userID,
+				Amount:   withdrawAmt,
+				Type:     models.TypeIncome,
+				Category: models.CategoryOther,
+				Merchant: "Penarikan: " + goal.Name,
+				Date:     now,
+				Notes:    "Penarikan dari tabungan " + goal.Name,
+				WalletID: &walletID,
+			}
+			if err := tx.Create(&transaction).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (r *Repository) UpdateGoal(userID string, id uuid.UUID, fields map[string]interface{}) error {
+	return r.db.Model(&models.Goal{}).Where("id = ? AND user_id = ?", id, userID).Updates(fields).Error
 }
 
 func (r *Repository) DeleteGoal(userID string, id uuid.UUID) error {

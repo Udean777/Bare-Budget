@@ -71,6 +71,10 @@ func (s *Service) GetDueBills(userID string, status string) ([]models.DueBill, e
 	return s.repo.GetDueBillsByUserID(userID, status)
 }
 
+func (s *Service) UpdateDueBill(userID string, id uuid.UUID, fields map[string]interface{}) error {
+	return s.repo.UpdateDueBill(userID, id, fields)
+}
+
 func (s *Service) UpdateDueBillStatus(userID string, id uuid.UUID, status models.DueBillStatus, walletID *string) error {
 	return s.repo.UpdateDueBillStatus(userID, id, status, walletID)
 }
@@ -88,8 +92,12 @@ func (s *Service) GetGoals(userID string) ([]models.Goal, error) {
 	return s.repo.GetGoalsByUserID(userID)
 }
 
-func (s *Service) DepositToGoal(userID string, id uuid.UUID, amount int64) error {
-	return s.repo.UpdateGoalAmount(userID, id, amount)
+func (s *Service) DepositToGoal(userID string, id uuid.UUID, walletID string, amount int64) error {
+	return s.repo.DepositToGoal(userID, id, walletID, amount)
+}
+
+func (s *Service) UpdateGoal(userID string, id uuid.UUID, fields map[string]interface{}) error {
+	return s.repo.UpdateGoal(userID, id, fields)
 }
 
 func (s *Service) DeleteGoal(userID string, id uuid.UUID) error {

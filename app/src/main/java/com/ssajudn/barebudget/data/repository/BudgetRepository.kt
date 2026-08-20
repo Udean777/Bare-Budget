@@ -227,14 +227,26 @@ class BudgetRepository(
                     date = dateStr,
                     notes = request.notes,
                     receiptUrl = request.receiptUrl,
-                    walletId = request.walletId
+                    walletId = request.walletId,
+                    toWalletId = request.toWalletId
                 )
 
-                // Adjust local wallet balance if provided
-                if (request.walletId != null) {
-                    val amountAdj =
-                        if (request.type == com.ssajudn.barebudget.data.model.TransactionType.INCOME) request.amount else -request.amount
-                    db.walletDao().updateBalance(request.walletId, amountAdj)
+                // Adjust local wallet balance
+                if (request.type == com.ssajudn.barebudget.data.model.TransactionType.TRANSFER) {
+                    // Source wallet decrease
+                    if (request.walletId != null) {
+                        db.walletDao().updateBalance(request.walletId, -request.amount)
+                    }
+                    // Destination wallet increase
+                    if (request.toWalletId != null) {
+                        db.walletDao().updateBalance(request.toWalletId, request.amount)
+                    }
+                } else {
+                    if (request.walletId != null) {
+                        val amountAdj =
+                            if (request.type == com.ssajudn.barebudget.data.model.TransactionType.INCOME) request.amount else -request.amount
+                        db.walletDao().updateBalance(request.walletId, amountAdj)
+                    }
                 }
 
                 if (isGuest) {
@@ -264,16 +276,28 @@ class BudgetRepository(
     suspend fun deleteTransaction(id: String): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
             val tx = db.transactionDao().getTransactionById(id)
-            if (tx != null && tx.walletId != null) {
+            if (tx != null) {
                 val txType = try {
                     com.ssajudn.barebudget.data.model.TransactionType.valueOf(tx.type)
                 } catch (e: Exception) {
                     com.ssajudn.barebudget.data.model.TransactionType.EXPENSE
                 }
-                // Reverse the balance
-                val amountAdj =
-                    if (txType == com.ssajudn.barebudget.data.model.TransactionType.INCOME) -tx.amount else tx.amount
-                db.walletDao().updateBalance(tx.walletId, amountAdj)
+
+                if (txType == com.ssajudn.barebudget.data.model.TransactionType.TRANSFER) {
+                    // Revert source wallet (add back)
+                    if (tx.walletId != null) {
+                        db.walletDao().updateBalance(tx.walletId, tx.amount)
+                    }
+                    // Revert destination wallet (subtract)
+                    if (tx.toWalletId != null) {
+                        db.walletDao().updateBalance(tx.toWalletId, -tx.amount)
+                    }
+                } else if (tx.walletId != null) {
+                    // Reverse the balance for regular income/expense
+                    val amountAdj =
+                        if (txType == com.ssajudn.barebudget.data.model.TransactionType.INCOME) -tx.amount else tx.amount
+                    db.walletDao().updateBalance(tx.walletId, amountAdj)
+                }
             }
 
             db.transactionDao().deleteTransaction(id)
@@ -320,9 +344,12 @@ class BudgetRepository(
             val newBill = DueBill(
                 id = UUID.randomUUID().toString(),
                 providerName = request.providerName,
+                providerIconUrl = request.providerIconUrl,
                 totalAmount = request.totalAmount,
                 dueDate = request.dueDate,
                 status = DueBillStatus.UNPAID,
+                isRecurring = request.isRecurring,
+                recurringInterval = request.recurringInterval,
                 notes = request.notes
             )
 
@@ -345,12 +372,37 @@ class BudgetRepository(
         }
     }
 
+    suspend fun updateDueBill(id: String, request: UpdateDueBillRequest): Result<Boolean> =
+        withContext(Dispatchers.IO) {
+            try {
+                db.dueBillDao().updateDueBill(
+                    id = id,
+                    providerName = request.providerName,
+                    providerIconUrl = request.providerIconUrl,
+                    totalAmount = request.totalAmount,
+                    dueDate = request.dueDate,
+                    isRecurring = request.isRecurring,
+                    recurringInterval = request.recurringInterval.name,
+                    notes = request.notes,
+                    isSynced = !isGuest
+                )
+                if (!isGuest) {
+                    api.updateDueBill(id, request)
+                }
+                Result.success(true)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
     suspend fun updateDueBillStatus(id: String, status: DueBillStatus, walletId: String? = null): Result<Boolean> =
         withContext(Dispatchers.IO) {
             try {
-                // If paying the bill and wallet is specified, create an expense transaction & deduct wallet balance
+                val bill = db.dueBillDao().getDueBillById(id)
+                var newPaidWalletId: String? = bill?.paidWalletId
+
                 if (status == DueBillStatus.PAID && walletId != null) {
-                    val bill = db.dueBillDao().getDueBillById(id)
+                    newPaidWalletId = walletId
                     if (bill != null) {
                         val newTx = Transaction(
                             id = UUID.randomUUID().toString(),
@@ -369,9 +421,32 @@ class BudgetRepository(
                             LocalTransactionEntity.fromTransaction(newTx, isSynced = !isGuest)
                         )
                     }
+                } else if (status == DueBillStatus.UNPAID) {
+                    // Check if cancelling payment for a bill previously paid with a recorded paidWalletId
+                    val previousPaidWalletId = bill?.paidWalletId
+                    if (bill != null && bill.status == DueBillStatus.PAID.name && !previousPaidWalletId.isNullOrBlank()) {
+                        // 1. Refund wallet balance
+                        db.walletDao().updateBalance(previousPaidWalletId, bill.totalAmount)
+
+                        // 2. Create Refund Income Transaction
+                        val refundTx = Transaction(
+                            id = UUID.randomUUID().toString(),
+                            amount = bill.totalAmount,
+                            type = com.ssajudn.barebudget.data.model.TransactionType.INCOME,
+                            category = com.ssajudn.barebudget.data.model.TransactionCategory.BILLS,
+                            merchant = "Refund: ${bill.providerName}",
+                            date = com.ssajudn.barebudget.utils.DateUtils.getCurrentDateISO(),
+                            notes = "Pembatalan pembayaran tagihan ${bill.providerName}",
+                            walletId = previousPaidWalletId
+                        )
+                        db.transactionDao().insertTransaction(
+                            LocalTransactionEntity.fromTransaction(refundTx, isSynced = !isGuest)
+                        )
+                    }
+                    newPaidWalletId = null
                 }
 
-                db.dueBillDao().updateDueBillStatus(id, status.name)
+                db.dueBillDao().updateDueBillStatus(id, status.name, newPaidWalletId)
                 if (!isGuest) {
                     api.updateDueBillStatus(id, UpdateDueBillStatusRequest(status = status, walletId = walletId))
                 }
@@ -458,21 +533,69 @@ class BudgetRepository(
         }
     }
 
-    suspend fun depositToGoal(id: String, amount: Long): Result<Boolean> = withContext(Dispatchers.IO) {
-        // Optimistic local update
+    suspend fun depositToGoal(id: String, amount: Long, walletId: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        // 1. Optimistic local goal update
         db.goalDao().depositToGoal(id, amount)
+
+        // 2. Adjust local wallet balance (Deposit amount > 0 -> subtract wallet balance; Withdraw amount < 0 -> add wallet balance)
+        val isDeposit = amount > 0
+        db.walletDao().updateBalance(walletId, if (isDeposit) -amount else amount)
+
+        // 3. Record local transaction for history and runway analytics
+        val goalEntity = db.goalDao().getGoalById(id)
+        val goalName = goalEntity?.name ?: "Tabungan"
+        val absAmount = kotlin.math.abs(amount)
+        val txType = if (isDeposit) com.ssajudn.barebudget.data.model.TransactionType.EXPENSE else com.ssajudn.barebudget.data.model.TransactionType.INCOME
+        val merchantName = if (isDeposit) "Tabungan: $goalName" else "Penarikan: $goalName"
+
+        val localTx = Transaction(
+            id = UUID.randomUUID().toString(),
+            amount = absAmount,
+            type = txType,
+            category = com.ssajudn.barebudget.data.model.TransactionCategory.OTHER,
+            merchant = merchantName,
+            date = com.ssajudn.barebudget.utils.DateUtils.getCurrentDateISO(),
+            notes = if (isDeposit) "Setor ke tabungan $goalName" else "Penarikan dari tabungan $goalName",
+            walletId = walletId
+        )
+        db.transactionDao().insertTransaction(
+            LocalTransactionEntity.fromTransaction(localTx, isSynced = !isGuest)
+        )
 
         if (isGuest) {
             return@withContext Result.success(true)
         }
 
         try {
-            val response = api.depositGoal(id, DepositGoalRequest(amount))
+            val response = api.depositGoal(id, DepositGoalRequest(amount = amount, walletId = walletId))
             if (response.isSuccessful) {
                 Result.success(true)
             } else {
                 Result.success(true) // local already updated
             }
+        } catch (e: Exception) {
+            Result.success(true)
+        }
+    }
+
+    suspend fun updateGoal(id: String, request: UpdateGoalRequest): Result<Boolean> = withContext(Dispatchers.IO) {
+        db.goalDao().updateGoal(
+            id = id,
+            name = request.name,
+            targetAmount = request.targetAmount,
+            targetDate = request.targetDate.ifBlank { null },
+            colorHex = request.colorHex,
+            notes = request.notes,
+            isSynced = !isGuest
+        )
+
+        if (isGuest) {
+            return@withContext Result.success(true)
+        }
+
+        try {
+            api.updateGoal(id, request)
+            Result.success(true)
         } catch (e: Exception) {
             Result.success(true)
         }
@@ -523,8 +646,15 @@ class BudgetRepository(
                 api.createDueBill(
                     CreateDueBillRequest(
                         providerName = bill.providerName,
+                        providerIconUrl = bill.providerIconUrl,
                         totalAmount = bill.totalAmount,
                         dueDate = bill.dueDate,
+                        isRecurring = bill.isRecurring,
+                        recurringInterval = try {
+                            RecurringInterval.valueOf(bill.recurringInterval)
+                        } catch (e: Exception) {
+                            RecurringInterval.NONE
+                        },
                         notes = bill.notes ?: ""
                     )
                 )
@@ -543,7 +673,8 @@ class BudgetRepository(
                     )
                 )
                 if (created.isSuccessful && created.body()?.id != null && g.currentAmount > 0) {
-                    api.depositGoal(created.body()!!.id!!, DepositGoalRequest(g.currentAmount))
+                    val defaultWalletId = db.walletDao().getAllWallets().firstOrNull()?.id ?: ""
+                    api.depositGoal(created.body()!!.id!!, DepositGoalRequest(g.currentAmount, defaultWalletId))
                 }
             }
 
@@ -584,7 +715,18 @@ class BudgetRepository(
                     )
                     Result.success(listOf(defaultWallet))
                 } else {
-                    Result.success(local)
+                    // Mencegah dan membersihkan duplikasi otomatis jika ada nama dompet yang sama persis
+                    val uniqueWallets = local.distinctBy { it.name }
+                    if (uniqueWallets.size < local.size) {
+                        // Jika ada duplikasi di DB lokal, bersihkan duplikat
+                        db.walletDao().clearAll()
+                        uniqueWallets.forEach { w ->
+                            db.walletDao().insertWallet(
+                                com.ssajudn.barebudget.data.local.room.LocalWalletEntity.fromWallet(w, isSynced = false)
+                            )
+                        }
+                    }
+                    Result.success(uniqueWallets)
                 }
             } else {
                 val response = api.getWallets()

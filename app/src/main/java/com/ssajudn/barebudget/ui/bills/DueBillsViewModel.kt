@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.ssajudn.barebudget.data.model.CreateDueBillRequest
 import com.ssajudn.barebudget.data.model.DueBill
 import com.ssajudn.barebudget.data.model.DueBillStatus
+import com.ssajudn.barebudget.data.model.RecurringInterval
+import com.ssajudn.barebudget.data.model.UpdateDueBillRequest
 import com.ssajudn.barebudget.data.repository.BudgetRepository
 import com.ssajudn.barebudget.utils.DateUtils
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,12 +30,20 @@ class DueBillsViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _selectedStatus = MutableStateFlow<DueBillStatus?>(null) // null = ALL
+    val selectedStatus: StateFlow<DueBillStatus?> = _selectedStatus.asStateFlow()
+
     private val _wallets = MutableStateFlow<List<com.ssajudn.barebudget.data.model.Wallet>>(emptyList())
     val wallets: StateFlow<List<com.ssajudn.barebudget.data.model.Wallet>> = _wallets.asStateFlow()
 
     init {
         loadDueBills()
         loadWallets()
+    }
+
+    fun setFilterStatus(status: DueBillStatus?) {
+        _selectedStatus.value = status
+        loadDueBills()
     }
 
     fun loadWallets() {
@@ -53,8 +63,9 @@ class DueBillsViewModel(
             }
 
             loadWallets()
+            val currentFilter = _selectedStatus.value
 
-            repository.getDueBills()
+            repository.getDueBills(currentFilter?.name)
                 .onSuccess { bills ->
                     _uiState.value = DueBillsUiState.Success(bills)
                     _isRefreshing.value = false
@@ -88,6 +99,33 @@ class DueBillsViewModel(
                 notes = notes
             )
             repository.createDueBill(request)
+                .onSuccess {
+                    loadDueBills()
+                }
+        }
+    }
+
+    fun updateDueBill(
+        id: String,
+        providerName: String,
+        providerIconUrl: String?,
+        totalAmount: Long,
+        dueDate: String,
+        isRecurring: Boolean = false,
+        recurringInterval: RecurringInterval = RecurringInterval.NONE,
+        notes: String = ""
+    ) {
+        viewModelScope.launch {
+            val request = UpdateDueBillRequest(
+                providerName = providerName,
+                providerIconUrl = providerIconUrl,
+                totalAmount = totalAmount,
+                dueDate = dueDate,
+                isRecurring = isRecurring,
+                recurringInterval = recurringInterval,
+                notes = notes
+            )
+            repository.updateDueBill(id, request)
                 .onSuccess {
                     loadDueBills()
                 }

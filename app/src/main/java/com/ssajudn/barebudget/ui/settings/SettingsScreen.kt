@@ -223,26 +223,7 @@ fun SettingsScreen(
                 onDarkModeChange = themePrefs::setDarkMode,
             )
 
-            // 4. APPLICATION & PREFERENCES GROUP
-            com.ssajudn.barebudget.ui.components.Material3SettingsGroup(
-                title = "Application & About",
-                items = listOf(
-                    com.ssajudn.barebudget.ui.components.Material3SettingsItem(
-                        title = "App Version",
-                        description = "Current installed build",
-                        value = BuildConfig.VERSION_NAME,
-                        icon = Icons.Default.Info
-                    ),
-                    com.ssajudn.barebudget.ui.components.Material3SettingsItem(
-                        title = "Environment",
-                        description = "Active backend endpoint",
-                        value = if (AppConfig.isDebug) "Development" else "Production",
-                        icon = Icons.Default.Dns
-                    )
-                )
-            )
-
-            // 5. SUPPORT & APPRECIATION GROUP
+            // 4. SUPPORT & APPRECIATION GROUP
             com.ssajudn.barebudget.ui.components.Material3SettingsGroup(
                 title = "Dukungan & Apresiasi",
                 items = listOf(
@@ -265,7 +246,7 @@ fun SettingsScreen(
                         onClick = {
                             val intent = android.content.Intent(
                                 android.content.Intent.ACTION_VIEW,
-                                android.net.Uri.parse("https://github.com/ssajudn/BareBudget")
+                                android.net.Uri.parse("https://github.com/Udean777/Bare-Budget")
                             )
                             context.startActivity(intent)
                         }
@@ -279,7 +260,7 @@ fun SettingsScreen(
                                 type = "text/plain"
                                 putExtra(
                                     android.content.Intent.EXTRA_TEXT,
-                                    "Kelola keuangan dan hitung runway finansialmu dengan BareBudget! Cek repository-nya di: https://github.com/ssajudn/BareBudget"
+                                    "Kelola keuangan dan hitung runway finansialmu dengan BareBudget! Cek repository-nya di: https://github.com/Udean777/Bare-Budget"
                                 )
                             }
                             context.startActivity(android.content.Intent.createChooser(shareIntent, "Bagikan BareBudget"))
@@ -302,7 +283,27 @@ fun SettingsScreen(
                 )
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            // Minimalist Footer Versioning
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "BareBudget v${BuildConfig.VERSION_NAME}",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Frictionless Personal Finance",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 

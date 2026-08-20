@@ -24,6 +24,7 @@ data class LocalTransactionEntity(
     val notes: String?,
     val receiptUrl: String?,
     val walletId: String? = null,
+    val toWalletId: String? = null,
     val isSynced: Boolean = false
 ) {
     fun toTransaction(): Transaction {
@@ -46,7 +47,8 @@ data class LocalTransactionEntity(
             date = date,
             notes = notes,
             receiptUrl = receiptUrl,
-            walletId = walletId
+            walletId = walletId,
+            toWalletId = toWalletId
         )
     }
 
@@ -62,6 +64,7 @@ data class LocalTransactionEntity(
                 notes = tx.notes,
                 receiptUrl = tx.receiptUrl,
                 walletId = tx.walletId,
+                toWalletId = tx.toWalletId,
                 isSynced = isSynced
             )
         }
@@ -76,6 +79,7 @@ data class LocalDueBillEntity(
     val totalAmount: Long,
     val dueDate: String,
     val status: String,
+    val paidWalletId: String? = null,
     val isRecurring: Boolean = false,
     val recurringInterval: String = "NONE",
     val notes: String?,
@@ -99,6 +103,7 @@ data class LocalDueBillEntity(
             totalAmount = totalAmount,
             dueDate = dueDate,
             status = s,
+            paidWalletId = paidWalletId,
             isRecurring = isRecurring,
             recurringInterval = interval,
             notes = notes
@@ -114,6 +119,7 @@ data class LocalDueBillEntity(
                 totalAmount = bill.totalAmount,
                 dueDate = bill.dueDate,
                 status = bill.status.name,
+                paidWalletId = bill.paidWalletId,
                 isRecurring = bill.isRecurring,
                 recurringInterval = bill.recurringInterval.name,
                 notes = bill.notes,

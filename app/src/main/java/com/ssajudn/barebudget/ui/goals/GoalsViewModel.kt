@@ -26,8 +26,20 @@ class GoalsViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _wallets = MutableStateFlow<List<com.ssajudn.barebudget.data.model.Wallet>>(emptyList())
+    val wallets: StateFlow<List<com.ssajudn.barebudget.data.model.Wallet>> = _wallets.asStateFlow()
+
     init {
         loadGoals()
+        loadWallets()
+    }
+
+    fun loadWallets() {
+        viewModelScope.launch {
+            repository.getWallets().onSuccess {
+                _wallets.value = it
+            }
+        }
     }
 
     fun loadGoals(isPullToRefresh: Boolean = false) {
@@ -37,6 +49,8 @@ class GoalsViewModel(
             } else if (_uiState.value !is GoalsUiState.Success) {
                 _uiState.value = GoalsUiState.Loading
             }
+
+            loadWallets()
 
             repository.getGoals()
                 .onSuccess { goals ->
@@ -74,11 +88,35 @@ class GoalsViewModel(
         }
     }
 
-    fun depositToGoal(id: String, amount: Long) {
+    fun updateGoal(
+        id: String,
+        name: String,
+        targetAmount: Long,
+        targetDate: String = "",
+        colorHex: String = "#4E73DF",
+        notes: String = ""
+    ) {
         viewModelScope.launch {
-            repository.depositToGoal(id, amount)
+            val request = com.ssajudn.barebudget.data.model.UpdateGoalRequest(
+                name = name,
+                targetAmount = targetAmount,
+                targetDate = targetDate,
+                colorHex = colorHex,
+                notes = notes
+            )
+            repository.updateGoal(id, request)
                 .onSuccess {
                     loadGoals()
+                }
+        }
+    }
+
+    fun depositToGoal(id: String, amount: Long, walletId: String) {
+        viewModelScope.launch {
+            repository.depositToGoal(id, amount, walletId)
+                .onSuccess {
+                    loadGoals()
+                    loadWallets()
                 }
         }
     }

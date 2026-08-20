@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
@@ -43,8 +44,30 @@ fun DueBillsScreen(
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
     val wallets by viewModel.wallets.collectAsState()
-    var showAddDialog by remember { mutableStateOf(false) }
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+
+    // Auto-refresh data dompet & tagihan setiap kali pengguna kembali ke layar ini
+    DisposableEffect(lifecycleOwner) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) {
+                viewModel.loadDueBills()
+                viewModel.loadWallets()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
+    val selectedStatusFilter by viewModel.selectedStatus.collectAsState()
+
+    var showFormDialog by remember { mutableStateOf(false) }
+    var editingBill by remember { mutableStateOf<DueBill?>(null) }
+    var actionSheetBill by remember { mutableStateOf<DueBill?>(null) }
+
     var payingBill by remember { mutableStateOf<DueBill?>(null) }
+    var unpayingBillConfirm by remember { mutableStateOf<DueBill?>(null) }
+    var deletingBillConfirm by remember { mutableStateOf<DueBill?>(null) }
 
     Scaffold(
         topBar = {
@@ -65,7 +88,10 @@ fun DueBillsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { showAddDialog = true }) {
+                    IconButton(onClick = {
+                        editingBill = null
+                        showFormDialog = true
+                    }) {
                         Icon(Icons.Default.Add, contentDescription = "Add Bill")
                     }
                 },
@@ -76,93 +102,120 @@ fun DueBillsScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        PullToRefreshBox(
-            isRefreshing = isRefreshing,
-            onRefresh = { viewModel.loadDueBills(isPullToRefresh = true) },
+        Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when (val state = uiState) {
-                is DueBillsUiState.Loading -> {
-                    CircularProgressIndicator(
-                        modifier = Modifier.align(Alignment.Center),
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
-                is DueBillsUiState.Error -> {
-                    Column(
-                        modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
+            // 1. FILTER TABS (Semua / Belum Lunas / Lunas)
+            SingleChoiceSegmentedButtonRow(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 8.dp)
+            ) {
+                val filters = listOf(
+                    Triple(null, "Semua", 0),
+                    Triple(DueBillStatus.UNPAID, "Belum Lunas", 1),
+                    Triple(DueBillStatus.PAID, "Lunas", 2)
+                )
+                filters.forEach { (status, label, index) ->
+                    SegmentedButton(
+                        selected = selectedStatusFilter == status,
+                        onClick = { viewModel.setFilterStatus(status) },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
                     ) {
-                        Text(
-                            text = "Error loading bills",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Text(
-                            text = state.message,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
-                        Button(onClick = { viewModel.loadDueBills() }) {
-                            Text("Retry")
-                        }
+                        Text(label)
                     }
                 }
-                is DueBillsUiState.Success -> {
-                    if (state.bills.isEmpty()) {
-                        Box(
+            }
+
+            PullToRefreshBox(
+                isRefreshing = isRefreshing,
+                onRefresh = { viewModel.loadDueBills(isPullToRefresh = true) },
+                modifier = Modifier.fillMaxSize()
+            ) {
+                when (val state = uiState) {
+                    is DueBillsUiState.Loading -> {
+                        CircularProgressIndicator(
+                            modifier = Modifier.align(Alignment.Center),
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    is DueBillsUiState.Error -> {
+                        Column(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
+                                .align(Alignment.Center)
+                                .padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(
-                                    imageVector = Icons.Default.CheckCircle,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(56.dp)
-                                )
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Text(
-                                    text = "No Due Bills",
-                                    style = MaterialTheme.typography.titleLarge.copy(
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                )
-                                Spacer(modifier = Modifier.height(6.dp))
-                                Text(
-                                    text = "You have no upcoming liabilities or paylater commitments.",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                            Text(
+                                text = "Gagal memuat daftar tagihan",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = state.message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Button(onClick = { viewModel.loadDueBills() }) {
+                                Text("Coba Lagi")
                             }
                         }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 20.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(top = Spacing.MediumSmall, bottom = Spacing.FabClearance)
-                        ) {
-                            items(state.bills) { bill ->
-                                DueBillItem(
-                                    bill = bill,
-                                    onToggleStatus = {
-                                        if (bill.status == DueBillStatus.UNPAID) {
-                                            payingBill = bill
-                                        } else {
-                                            viewModel.markBillAsUnpaid(bill)
+                    }
+                    is DueBillsUiState.Success -> {
+                        if (state.bills.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                    Icon(
+                                        imageVector = Icons.Default.CheckCircle,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(56.dp)
+                                    )
+                                    Spacer(modifier = Modifier.height(16.dp))
+                                    Text(
+                                        text = "Tidak Ada Tagihan",
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold
+                                        )
+                                    )
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Text(
+                                        text = "Semua kewajiban dan tagihan Anda sudah terkelola dengan baik.",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(horizontal = 20.dp),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(top = Spacing.MediumSmall, bottom = Spacing.FabClearance)
+                            ) {
+                                items(state.bills) { bill ->
+                                    DueBillItem(
+                                        bill = bill,
+                                        onClick = { actionSheetBill = bill },
+                                        onToggleStatus = {
+                                            if (bill.status == DueBillStatus.UNPAID) {
+                                                payingBill = bill
+                                            } else {
+                                                unpayingBillConfirm = bill
+                                            }
                                         }
-                                    }
-                                )
+                                    )
+                                }
                             }
                         }
                     }
@@ -171,16 +224,206 @@ fun DueBillsScreen(
         }
     }
 
-    if (showAddDialog) {
-        AddDueBillDialog(
-            onDismiss = { showAddDialog = false },
+    // 2. QUICK ACTION BOTTOM SHEET
+    if (actionSheetBill != null) {
+        val targetBill = actionSheetBill!!
+        ModalBottomSheet(
+            onDismissRequest = { actionSheetBill = null },
+            shape = MaterialTheme.shapes.extraLarge,
+            containerColor = MaterialTheme.colorScheme.surface
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+                    .navigationBarsPadding(),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                // Header Info Card
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.surfaceContainerHigh
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.primaryContainer,
+                            modifier = Modifier.size(48.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.ReceiptLong,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = targetBill.providerName,
+                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            )
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = CurrencyFormatter.formatRupiah(targetBill.totalAmount),
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                            )
+                            Text(
+                                text = "Jatuh Tempo: ${DateUtils.formatDisplayDate(targetBill.dueDate)}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
+                Text(
+                    text = "Tindakan Cepat",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+
+                // Actions Group
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    if (targetBill.status == DueBillStatus.UNPAID) {
+                        Surface(
+                            onClick = {
+                                val b = targetBill
+                                actionSheetBill = null
+                                payingBill = b
+                            },
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.primaryContainer
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Column {
+                                    Text("Bayar Tagihan Sekarang", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    Text("Pilih dompet sumber pembayaran", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                                }
+                            }
+                        }
+                    } else {
+                        Surface(
+                            onClick = {
+                                val b = targetBill
+                                actionSheetBill = null
+                                unpayingBillConfirm = b
+                            },
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.tertiaryContainer
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                Icon(Icons.Default.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
+                                Column {
+                                    Text("Batalkan Pembayaran (Refund)", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onTertiaryContainer)
+                                    Text("Kembalikan status & saldo ke dompet", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f))
+                                }
+                            }
+                        }
+                    }
+
+                    Surface(
+                        onClick = {
+                            val b = targetBill
+                            actionSheetBill = null
+                            editingBill = b
+                            showFormDialog = true
+                        },
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
+                            Text("Edit Rincian Tagihan", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
+                        }
+                    }
+
+                    Surface(
+                        onClick = {
+                            val b = targetBill
+                            actionSheetBill = null
+                            deletingBillConfirm = b
+                        },
+                        shape = MaterialTheme.shapes.medium,
+                        color = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.4f)
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
+                        ) {
+                            Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                            Text("Hapus Tagihan Ini", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+
+                OutlinedButton(
+                    onClick = { actionSheetBill = null },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
+                    shape = MaterialTheme.shapes.medium
+                ) {
+                    Text("Tutup")
+                }
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+        }
+    }
+
+    // 3. ADD / EDIT FORM DIALOG REUSABLE
+    if (showFormDialog) {
+        DueBillFormDialog(
+            initialBill = editingBill,
+            onDismiss = {
+                showFormDialog = false
+                editingBill = null
+            },
             onConfirm = { provider, iconUrl, amount, dueDate, isRecurring, interval, notes ->
-                viewModel.addDueBill(provider, iconUrl, amount, dueDate, isRecurring, interval, notes)
-                showAddDialog = false
+                if (editingBill != null && editingBill!!.id != null) {
+                    viewModel.updateDueBill(editingBill!!.id!!, provider, iconUrl, amount, dueDate, isRecurring, interval, notes)
+                } else {
+                    viewModel.addDueBill(provider, iconUrl, amount, dueDate, isRecurring, interval, notes)
+                }
+                showFormDialog = false
+                editingBill = null
             }
         )
     }
 
+    // 4. PAY BILL DIALOG
     if (payingBill != null) {
         val billToPay = payingBill!!
         PayDueBillDialog(
@@ -193,11 +436,44 @@ fun DueBillsScreen(
             }
         )
     }
+
+    // 5. UNPAID REFUND CONFIRMATION DIALOG
+    if (unpayingBillConfirm != null) {
+        val billToUnpay = unpayingBillConfirm!!
+        com.ssajudn.barebudget.ui.components.AppConfirmDialog(
+            title = "Batal Pembayaran?",
+            message = "Tagihan '${billToUnpay.providerName}' akan dikembalikan ke status Belum Lunas. Saldo dompet yang sebelumnya digunakan akan otomatis dikembalikan (refund).",
+            confirmButtonText = "Batal Bayar",
+            onConfirm = {
+                viewModel.markBillAsUnpaid(billToUnpay)
+                unpayingBillConfirm = null
+            },
+            onDismissRequest = { unpayingBillConfirm = null }
+        )
+    }
+
+    // 6. DELETE CONFIRMATION DIALOG
+    if (deletingBillConfirm != null) {
+        val billToDelete = deletingBillConfirm!!
+        com.ssajudn.barebudget.ui.components.AppConfirmDialog(
+            title = "Hapus Tagihan?",
+            message = "Apakah Anda yakin ingin menghapus tagihan '${billToDelete.providerName}' sebesar ${CurrencyFormatter.formatRupiah(billToDelete.totalAmount)}?",
+            confirmButtonText = "Hapus",
+            onConfirm = {
+                if (billToDelete.id != null) {
+                    viewModel.deleteBill(billToDelete.id)
+                }
+                deletingBillConfirm = null
+            },
+            onDismissRequest = { deletingBillConfirm = null }
+        )
+    }
 }
 
 @Composable
 fun DueBillItem(
     bill: DueBill,
+    onClick: () -> Unit,
     onToggleStatus: () -> Unit
 ) {
     val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
@@ -205,15 +481,33 @@ fun DueBillItem(
     val daysLeft = DateUtils.getDaysUntilDue(bill.dueDate)
     val isOverdue = !isPaid && daysLeft < 0
 
-    val badgeColor = when {
-        isPaid -> MaterialTheme.colorScheme.primary
-        isOverdue -> MaterialTheme.colorScheme.error
-        daysLeft <= 3 -> MaterialTheme.colorScheme.tertiary
-        else -> MaterialTheme.colorScheme.secondary
+    val (badgeBgColor, badgeTextColor, statusLabelText) = when {
+        isPaid -> Triple(
+            MaterialTheme.colorScheme.primaryContainer,
+            MaterialTheme.colorScheme.onPrimaryContainer,
+            "Lunas"
+        )
+        isOverdue -> Triple(
+            MaterialTheme.colorScheme.errorContainer,
+            MaterialTheme.colorScheme.onErrorContainer,
+            "Terlambat ${-daysLeft} Hari"
+        )
+        daysLeft == 0L -> Triple(
+            MaterialTheme.colorScheme.tertiaryContainer,
+            MaterialTheme.colorScheme.onTertiaryContainer,
+            "Jatuh Tempo Hari Ini"
+        )
+        else -> Triple(
+            MaterialTheme.colorScheme.secondaryContainer,
+            MaterialTheme.colorScheme.onSecondaryContainer,
+            "Sisa $daysLeft Hari"
+        )
     }
 
     ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
         shape = MaterialTheme.shapes.large,
         colors = CardDefaults.elevatedCardColors(
             containerColor = if (isPaid) MaterialTheme.colorScheme.surfaceContainerLowest else MaterialTheme.colorScheme.surface
@@ -224,7 +518,6 @@ fun DueBillItem(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Checkbox indicator to toggle Paid/Unpaid with Haptics
             FilledIconToggleButton(
                 checked = isPaid,
                 onCheckedChange = {
@@ -244,8 +537,6 @@ fun DueBillItem(
             ) {
                 Icon(
                     Icons.Default.Check,
-                    // Announce the state, not just the icon, and keep the icon
-                    // present-but-transparent so the target never changes size.
                     contentDescription = if (isPaid) "Sudah dibayar" else "Tandai sudah dibayar",
                     modifier = Modifier.size(20.dp),
                     tint = if (isPaid) LocalContentColor.current else Color.Transparent
@@ -315,14 +606,33 @@ fun DueBillItem(
                         }
                     }
                 }
-                Spacer(modifier = Modifier.height(2.dp))
-                Text(
-                    text = "Due ${DateUtils.formatDisplayDate(bill.dueDate)} • ${DateUtils.getDueStatusMessage(bill.dueDate)}",
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        color = if (isPaid) MaterialTheme.colorScheme.onSurfaceVariant else badgeColor,
-                        fontWeight = if (isOverdue) FontWeight.Bold else FontWeight.Normal
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Visual Status Badge
+                    Surface(
+                        shape = MaterialTheme.shapes.extraSmall,
+                        color = badgeBgColor
+                    ) {
+                        Text(
+                            text = statusLabelText,
+                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 10.sp
+                            ),
+                            color = badgeTextColor
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Text(
+                        text = "Due ${DateUtils.formatDisplayDate(bill.dueDate)}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                )
+                }
             }
 
             Text(
@@ -338,7 +648,8 @@ fun DueBillItem(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddDueBillDialog(
+fun DueBillFormDialog(
+    initialBill: DueBill? = null,
     onDismiss: () -> Unit,
     onConfirm: (
         provider: String,
@@ -346,7 +657,7 @@ fun AddDueBillDialog(
         amount: Long,
         dueDate: String,
         isRecurring: Boolean,
-        recurringInterval: RecurringInterval,
+        interval: RecurringInterval,
         notes: String
     ) -> Unit
 ) {
@@ -358,150 +669,167 @@ fun AddDueBillDialog(
         BillProvider("Lainnya (Custom)", null, isCustom = true)
     )
 
-    var selectedProvider by remember { mutableStateOf(builtinProviders[0]) }
-    var customProviderName by remember { mutableStateOf("") }
-    var customProviderIconUrl by remember { mutableStateOf<String?>(null) }
-    
+    val existingProvider = builtinProviders.find { it.name == initialBill?.providerName }
+    val initialSelectedProvider = existingProvider ?: if (initialBill != null) builtinProviders.last() else builtinProviders[0]
+
+    var selectedProvider by remember { mutableStateOf(initialSelectedProvider) }
+    var customProviderName by remember { mutableStateOf(if (existingProvider == null && initialBill != null) initialBill.providerName else "") }
+    var customProviderIconUrl by remember { mutableStateOf<String?>(initialBill?.providerIconUrl) }
+
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: android.net.Uri? ->
         customProviderIconUrl = uri?.toString()
     }
 
-    var rawAmount by remember { mutableStateOf("") }
-    var dueDate by remember { mutableStateOf(DateUtils.getCurrentDateISO()) }
+    var rawAmount by remember { mutableStateOf(initialBill?.totalAmount?.toString() ?: "") }
+    var parsedAmount by remember { mutableStateOf(initialBill?.totalAmount ?: 0L) }
+    var dueDateIso by remember { mutableStateOf(initialBill?.dueDate ?: DateUtils.getCurrentDateISO()) }
+    var isRecurring by remember { mutableStateOf(initialBill?.isRecurring ?: false) }
+    var recurringInterval by remember { mutableStateOf(initialBill?.recurringInterval ?: RecurringInterval.MONTHLY) }
+    var notes by remember { mutableStateOf(initialBill?.notes ?: "") }
     var showDatePicker by remember { mutableStateOf(false) }
-    var isRecurring by remember { mutableStateOf(false) }
-    var recurringInterval by remember { mutableStateOf(RecurringInterval.MONTHLY) }
-    var notes by remember { mutableStateOf("") }
-
-    val amount = rawAmount.toLongOrNull() ?: 0L
-    val finalProviderName = if (selectedProvider.isCustom) customProviderName else selectedProvider.name
-    val isValid = finalProviderName.isNotBlank() && amount > 0
 
     if (showDatePicker) {
         AppDatePickerDialog(
-            initialDateMillis = DateUtils.parseIsoToMillis(dueDate),
+            initialDateMillis = DateUtils.parseIsoToMillis(dueDateIso),
             onDateSelected = { millis ->
-                dueDate = DateUtils.formatMillisToIso(millis)
+                dueDateIso = DateUtils.formatMillisToIso(millis)
+                showDatePicker = false
             },
             onDismiss = { showDatePicker = false }
         )
     }
 
+    val finalProviderName = if (selectedProvider.isCustom) customProviderName.trim() else selectedProvider.name
+    val finalIconUrl = if (selectedProvider.isCustom) customProviderIconUrl else selectedProvider.iconRes?.let { "res://$it" }
+
+    val isFormValid = finalProviderName.isNotBlank() && parsedAmount > 0
+
     AppFormDialog(
-        title = "Add Due Bill",
+        title = if (initialBill != null) "Edit Tagihan" else "Tambah Tagihan Baru",
         icon = Icons.AutoMirrored.Filled.ReceiptLong,
-        iconTint = MaterialTheme.colorScheme.error,
-        confirmButtonText = "Save Bill",
-        isConfirmEnabled = isValid,
+        iconTint = MaterialTheme.colorScheme.primary,
+        confirmButtonText = if (initialBill != null) "Simpan Perubahan" else "Tambah Tagihan",
+        isConfirmEnabled = isFormValid,
         onDismissRequest = onDismiss,
         onConfirm = {
-            if (isValid) {
-                val iconUrl = if (selectedProvider.isCustom) customProviderIconUrl else "res://${selectedProvider.iconRes}"
-                onConfirm(
-                    finalProviderName,
-                    iconUrl,
-                    amount,
-                    dueDate,
-                    isRecurring,
-                    if (isRecurring) recurringInterval else RecurringInterval.NONE,
-                    notes
-                )
-            }
+            onConfirm(
+                finalProviderName,
+                finalIconUrl,
+                parsedAmount,
+                dueDateIso,
+                isRecurring,
+                if (isRecurring) recurringInterval else RecurringInterval.NONE,
+                notes
+            )
         }
     ) {
-        Text("Pilih Provider", style = MaterialTheme.typography.labelMedium)
-        Spacer(modifier = Modifier.height(4.dp))
-        androidx.compose.foundation.lazy.LazyRow(
+        // Provider Selection Chips
+        Text(
+            text = "Penyedia / Tagihan",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            items(builtinProviders) { provider ->
+            builtinProviders.forEach { provider ->
                 FilterChip(
                     selected = selectedProvider == provider,
                     onClick = { selectedProvider = provider },
-                    label = { Text(provider.name) }
+                    label = { Text(provider.name, fontSize = 11.sp) },
+                    modifier = Modifier.weight(1f)
                 )
             }
         }
 
+        // Custom Provider Input
         if (selectedProvider.isCustom) {
+            Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
                 value = customProviderName,
                 onValueChange = { customProviderName = it },
-                label = { Text("Nama Provider Custom") },
-                placeholder = { Text("Mis. PLN, PDAM, dll") },
+                label = { Text("Nama Tagihan / Provider") },
+                placeholder = { Text("e.g. PLN Electricity, Netflix, Wifi") },
                 singleLine = true,
-                shape = MaterialTheme.shapes.medium,
                 modifier = Modifier.fillMaxWidth()
             )
+
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedButton(
                 onClick = { launcher.launch("image/*") },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                if (customProviderIconUrl != null) {
-                    Text("Ubah Logo Provider (Terpilih)")
-                } else {
-                    Text("Upload Logo Provider (Opsional)")
-                }
+                Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(if (customProviderIconUrl != null) "Ganti Logo Icon" else "Upload Logo Icon (Opsional)")
             }
         }
 
+        Spacer(modifier = Modifier.height(12.dp))
 
+        // Amount Input
         OutlinedTextField(
             value = rawAmount,
             onValueChange = { input ->
-                rawAmount = input.filter { it.isDigit() }.take(12)
+                val digitsOnly = input.filter { it.isDigit() }.take(12)
+                rawAmount = digitsOnly
+                parsedAmount = digitsOnly.toLongOrNull() ?: 0L
             },
-            label = { Text("Amount") },
+            label = { Text("Jumlah Tagihan") },
             placeholder = { Text("Rp 0") },
+            singleLine = true,
             visualTransformation = CurrencyVisualTransformation(),
-            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
-            ),
-            singleLine = true,
-            shape = MaterialTheme.shapes.medium,
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
             modifier = Modifier.fillMaxWidth()
-        )
-
-
-        OutlinedTextField(
-            value = DateUtils.formatDisplayDate(dueDate),
-            onValueChange = { },
-            label = { Text("Due Date") },
-            readOnly = true,
-            singleLine = true,
-            shape = MaterialTheme.shapes.medium,
-            modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
-            enabled = false,
-            colors = OutlinedTextFieldDefaults.colors(
-                disabledTextColor = MaterialTheme.colorScheme.onSurface,
-                disabledBorderColor = MaterialTheme.colorScheme.outline,
-                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
-            )
         )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Recurring Toggle
-        Row(
+        // Due Date Picker Field
+        OutlinedTextField(
+            value = DateUtils.formatDisplayDate(dueDateIso),
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Tanggal Jatuh Tempo") },
+            trailingIcon = {
+                IconButton(onClick = { showDatePicker = true }) {
+                    Icon(Icons.Default.CalendarToday, contentDescription = "Pilih Tanggal")
+                }
+            },
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.medium)
-                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                .clickable { isRecurring = !isRecurring }
-                .padding(horizontal = 14.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
+                .clickable { showDatePicker = true }
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Notes Input
+        OutlinedTextField(
+            value = notes,
+            onValueChange = { notes = it },
+            label = { Text("Catatan / No. Pelanggan (Opsional)") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // Recurring Switch
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.weight(1f)) {
+            Column {
                 Text(
-                    text = "Recurring Subscription",
+                    text = "Tagihan Berulang",
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
                 Text(
-                    text = "Auto renew when paid",
+                    text = "Otomatis diperbarui saat dibayar",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -512,21 +840,15 @@ fun AddDueBillDialog(
             )
         }
 
-        // Recurring Interval Selection
         if (isRecurring) {
             Spacer(modifier = Modifier.height(8.dp))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                listOf(
-                    RecurringInterval.WEEKLY,
-                    RecurringInterval.MONTHLY,
-                    RecurringInterval.YEARLY
-                ).forEach { interval ->
-                    val isSelected = recurringInterval == interval
+                listOf(RecurringInterval.WEEKLY, RecurringInterval.MONTHLY, RecurringInterval.YEARLY).forEach { interval ->
                     FilterChip(
-                        selected = isSelected,
+                        selected = recurringInterval == interval,
                         onClick = { recurringInterval = interval },
                         label = { Text(interval.displayName, fontSize = 12.sp) },
                         modifier = Modifier.weight(1f)
@@ -610,7 +932,7 @@ fun PayDueBillDialog(
                 readOnly = true,
                 label = { Text("Dompet") },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = walletDropdownExpanded) },
-                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
             )
             ExposedDropdownMenu(

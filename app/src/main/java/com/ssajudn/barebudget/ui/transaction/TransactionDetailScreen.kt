@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 data class TransactionDetailUiState(
     val transaction: Transaction? = null,
     val walletName: String? = null,
+    val toWalletName: String? = null,
     val isLoading: Boolean = false,
     val isDeleted: Boolean = false,
     val errorMessage: String? = null
@@ -55,15 +56,22 @@ class TransactionDetailViewModel(
                 .onSuccess { transactions ->
                     val found = transactions.find { it.id == transactionId }
                     var wName: String? = null
-                    if (found != null && found.walletId != null) {
+                    var toWName: String? = null
+                    if (found != null) {
                         repository.getWallets().onSuccess { wallets ->
-                            wName = wallets.find { it.id == found.walletId }?.name
+                            if (found.walletId != null) {
+                                wName = wallets.find { it.id == found.walletId }?.name
+                            }
+                            if (found.toWalletId != null) {
+                                toWName = wallets.find { it.id == found.toWalletId }?.name
+                            }
                         }
                     }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         transaction = found,
-                        walletName = wName
+                        walletName = wName,
+                        toWalletName = toWName
                     )
                 }
                 .onFailure { error ->
@@ -157,8 +165,17 @@ fun TransactionDetailScreen(
                 val categoryIcon = getCategoryIcon(tx.category)
 
                 val isIncome = tx.type == com.ssajudn.barebudget.data.model.TransactionType.INCOME
-                val amountColor = if (isIncome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
-                val amountPrefix = if (isIncome) "+" else "-"
+                val isTransfer = tx.type == com.ssajudn.barebudget.data.model.TransactionType.TRANSFER
+                val amountColor = when {
+                    isIncome -> MaterialTheme.colorScheme.primary
+                    isTransfer -> MaterialTheme.colorScheme.onSurface
+                    else -> MaterialTheme.colorScheme.onSurface
+                }
+                val amountPrefix = when {
+                    isIncome -> "+"
+                    isTransfer -> "⇄ "
+                    else -> "-"
+                }
 
                 Column(
                     modifier = Modifier
@@ -200,7 +217,7 @@ fun TransactionDetailScreen(
                             Spacer(modifier = Modifier.height(20.dp))
 
                             Text(
-                                text = tx.merchant?.takeIf { it.isNotBlank() } ?: tx.category.displayName,
+                                text = if (isTransfer) "Transfer Antar Dompet" else (tx.merchant?.takeIf { it.isNotBlank() } ?: tx.category.displayName),
                                 style = MaterialTheme.typography.headlineSmall.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
@@ -234,15 +251,31 @@ fun TransactionDetailScreen(
                             modifier = Modifier.padding(20.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            DetailRow(label = "Tipe Transaksi", value = if (isIncome) "Pemasukan" else "Pengeluaran")
+                            val typeLabel = when {
+                                isIncome -> "Pemasukan"
+                                isTransfer -> "Transfer Antar Dompet"
+                                else -> "Pengeluaran"
+                            }
+                            DetailRow(label = "Tipe Transaksi", value = typeLabel)
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                            DetailRow(label = "Sumber / Dompet", value = uiState.walletName ?: "Uang Tunai")
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                            DetailRow(label = "Kategori", value = tx.category.displayName)
+
+                            if (isTransfer) {
+                                DetailRow(label = "Dari Dompet (Asal)", value = uiState.walletName ?: "Dompet Asal")
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                                DetailRow(label = "Ke Dompet (Tujuan)", value = uiState.toWalletName ?: "Dompet Tujuan")
+                            } else {
+                                DetailRow(label = "Sumber / Dompet", value = uiState.walletName ?: "Uang Tunai")
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                                DetailRow(label = "Kategori", value = tx.category.displayName)
+                            }
+
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                             DetailRow(label = "Tanggal", value = DateUtils.formatDisplayDate(tx.date))
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                            DetailRow(label = "Merchant / Toko", value = tx.merchant?.ifBlank { "-" } ?: "-")
+                            
+                            if (!isTransfer) {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                                DetailRow(label = "Merchant / Toko", value = tx.merchant?.ifBlank { "-" } ?: "-")
+                            }
                             
                             if (!tx.notes.isNullOrBlank()) {
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))

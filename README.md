@@ -174,5 +174,5 @@ BareBudget menerapkan panduan desain **Material Design 3 (M3)** secara menyeluru
 Distributed under the **MIT License**. Lihat `LICENSE` untuk informasi lebih lanjut.
 
 <div align="center">
-  <sub>Dibangun dengan ❤️ oleh <a href="https://github.com/ssajudn">ssajudn</a> untuk kebebasan finansial yang lebih sehat.</sub>
+  <sub>Dibangun dengan ❤️ oleh <a href="https://github.com/Udean777">Udean777</a> untuk kebebasan finansial yang lebih sehat.</sub>
 </div>

@@ -91,4 +91,20 @@ object DateUtils {
             currentDueDateStr
         }
     }
+
+    fun parseIsoToMillis(isoDate: String): Long {
+        return try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+            sdf.parse(isoDate.substring(0, 10))?.time ?: System.currentTimeMillis()
+        } catch (e: Exception) {
+            System.currentTimeMillis()
+        }
+    }
+
+    fun formatMillisToIso(millis: Long): String {
+        val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        // Avoid timezone shift issues with date picker
+        sdf.timeZone = TimeZone.getTimeZone("UTC")
+        return sdf.format(Date(millis))
+    }
 }

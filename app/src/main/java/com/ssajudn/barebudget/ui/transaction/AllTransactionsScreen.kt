@@ -28,7 +28,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ssajudn.barebudget.data.model.TransactionCategory
 import com.ssajudn.barebudget.ui.components.TransactionItem
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
-import com.ssajudn.barebudget.ui.components.getCategoryPastelColor
+import com.ssajudn.barebudget.ui.theme.categoryColors
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -113,7 +113,7 @@ fun AllTransactionsScreen(
                                     }
                                 },
                                 singleLine = true,
-                                shape = RoundedCornerShape(14.dp),
+                                shape = MaterialTheme.shapes.medium,
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedContainerColor = MaterialTheme.colorScheme.surface,
@@ -121,7 +121,7 @@ fun AllTransactionsScreen(
                                 )
                             )
 
-                            // Category Filter Chips
+                            // Category Filter Chips (M3 FilterChips)
                             LazyRow(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                                 contentPadding = PaddingValues(vertical = 4.dp)
@@ -129,65 +129,54 @@ fun AllTransactionsScreen(
                                 // "All" chip
                                 item {
                                     val isAllSelected = state.selectedCategory == null
-                                    Surface(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .clickable { viewModel.filterByCategory(null) },
-                                        color = if (isAllSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surface,
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            1.dp,
-                                            if (isAllSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                                    FilterChip(
+                                        selected = isAllSelected,
+                                        onClick = { viewModel.filterByCategory(null) },
+                                        label = {
+                                            Text(
+                                                "Semua",
+                                                style = MaterialTheme.typography.labelMedium.copy(
+                                                    fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Medium
+                                                )
+                                            )
+                                        },
+                                        shape = MaterialTheme.shapes.medium,
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
                                         )
-                                    ) {
-                                        Text(
-                                            text = "All Categories",
-                                            style = MaterialTheme.typography.bodyMedium.copy(
-                                                fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Medium
-                                            ),
-                                            color = if (isAllSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
-                                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
-                                        )
-                                    }
+                                    )
                                 }
 
-                                // Category items
-                                items(TransactionCategory.values()) { category ->
-                                    val isSelected = state.selectedCategory == category
-                                    val categoryColor = getCategoryPastelColor(category)
+                                items(TransactionCategory.entries) { category ->
+                                    val isSelected = category == state.selectedCategory
+                                    val catColors = categoryColors
 
-                                    Surface(
-                                        modifier = Modifier
-                                            .clip(RoundedCornerShape(12.dp))
-                                            .clickable {
-                                                if (isSelected) viewModel.filterByCategory(null)
-                                                else viewModel.filterByCategory(category)
-                                            },
-                                        color = if (isSelected) categoryColor.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface,
-                                        border = androidx.compose.foundation.BorderStroke(
-                                            1.dp,
-                                            if (isSelected) categoryColor else MaterialTheme.colorScheme.outline
-                                        )
-                                    ) {
-                                        Row(
-                                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { viewModel.filterByCategory(category) },
+                                        label = {
+                                            Text(
+                                                category.displayName,
+                                                style = MaterialTheme.typography.labelMedium.copy(
+                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                                )
+                                            )
+                                        },
+                                        leadingIcon = {
                                             Icon(
                                                 imageVector = getCategoryIcon(category),
                                                 contentDescription = null,
-                                                tint = if (isSelected) categoryColor else MaterialTheme.colorScheme.onSurfaceVariant,
                                                 modifier = Modifier.size(16.dp)
                                             )
-                                            Spacer(modifier = Modifier.width(6.dp))
-                                            Text(
-                                                text = category.displayName,
-                                                style = MaterialTheme.typography.bodyMedium.copy(
-                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                                ),
-                                                color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    }
+                                        },
+                                        shape = MaterialTheme.shapes.small,
+                                        colors = FilterChipDefaults.filterChipColors(
+                                            selectedContainerColor = catColors.container(category),
+                                            selectedLabelColor = catColors.onContainer(category),
+                                            selectedLeadingIconColor = catColors.onContainer(category)
+                                        )
+                                    )
                                 }
                             }
                         }

@@ -52,7 +52,21 @@ android {
     }
 }
 
+// Module-wide opt-in so no file needs @OptIn for Material 3 APIs.
+// MaterialExpressiveTheme, ShortNavigationBar and WideNavigationRail are all
+// still annotated as experimental in material3 1.4.0.
+kotlin {
+    compilerOptions {
+        optIn.addAll(
+            "androidx.compose.material3.ExperimentalMaterial3Api",
+            "androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
+        )
+    }
+}
+
 dependencies {
+    implementation(libs.coil.compose)
+
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -62,6 +76,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime.compose)
 
     // Navigation & ViewModel
     implementation(libs.androidx.navigation.compose)
@@ -94,9 +109,17 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     testImplementation(libs.junit)
+    // The BOM must be applied to the androidTest configuration too, otherwise the
+    // versionless Compose test artifacts below cannot resolve — which failed the
+    // build for `lint` and any instrumented test run.
+    androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    
+    // Theme generation from Overture
+    implementation("com.materialkolor:material-kolor:5.0.0-alpha07")
+    implementation("androidx.palette:palette-ktx:1.0.0")
 }

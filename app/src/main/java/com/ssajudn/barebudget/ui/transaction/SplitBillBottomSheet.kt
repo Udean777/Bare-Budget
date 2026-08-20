@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ssajudn.barebudget.ui.theme.PastelMintLight
+import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -90,18 +90,22 @@ fun SplitBillBottomSheet(
                 }
             }
 
-            // Calculation Overview Card
-            Surface(
-                shape = RoundedCornerShape(16.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant,
+            // Calculation Overview Card (M3 ElevatedCard)
+            ElevatedCard(
+                shape = AppShapes.LargeIncreased,
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(18.dp)) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Subtotal", style = MaterialTheme.typography.bodyMedium)
+                        Text("Subtotal Tagihan", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             CurrencyFormatter.formatRupiah(totalBillAmount),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
@@ -123,7 +127,10 @@ fun SplitBillBottomSheet(
                         }
                     }
 
-                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(
+                        modifier = Modifier.padding(vertical = 12.dp),
+                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
+                    )
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -132,30 +139,24 @@ fun SplitBillBottomSheet(
                     ) {
                         Column {
                             Text(
-                                "Porsi per Orang ($peopleCount org)",
-                                style = MaterialTheme.typography.bodySmall,
+                                text = "Porsi per Orang",
+                                style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                CurrencyFormatter.formatRupiah(perPersonAmount),
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
+                                text = "Bagi rata ($peopleCount orang)",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
                         }
 
-                        Surface(
-                            shape = RoundedCornerShape(8.dp),
-                            color = PastelMintLight.copy(alpha = 0.3f)
-                        ) {
-                            Text(
-                                text = "Total: ${CurrencyFormatter.formatRupiah(grandTotal)}",
-                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
+                        Text(
+                            text = CurrencyFormatter.formatRupiah(perPersonAmount),
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }
@@ -178,7 +179,7 @@ fun SplitBillBottomSheet(
                     FilledIconButton(
                         onClick = { if (peopleCount > 2) peopleCount-- },
                         enabled = peopleCount > 2,
-                        shape = RoundedCornerShape(10.dp)
+                        shape = MaterialTheme.shapes.small
                     ) {
                         Text("-", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     }
@@ -191,7 +192,7 @@ fun SplitBillBottomSheet(
                     FilledIconButton(
                         onClick = { if (peopleCount < 20) peopleCount++ },
                         enabled = peopleCount < 20,
-                        shape = RoundedCornerShape(10.dp)
+                        shape = MaterialTheme.shapes.small
                     ) {
                         Text("+", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     }
@@ -210,7 +211,7 @@ fun SplitBillBottomSheet(
                     placeholder = { Text("10") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.weight(1f)
                 )
 
@@ -221,7 +222,7 @@ fun SplitBillBottomSheet(
                     placeholder = { Text("5") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -241,7 +242,7 @@ fun SplitBillBottomSheet(
                         )
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = MaterialTheme.shapes.medium
                 ) {
                     Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
@@ -255,7 +256,7 @@ fun SplitBillBottomSheet(
                         onDismiss()
                     },
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = MaterialTheme.shapes.medium
                 ) {
                     Text(
                         "Terapkan Porsi Saya (${CurrencyFormatter.formatRupiah(perPersonAmount)})",

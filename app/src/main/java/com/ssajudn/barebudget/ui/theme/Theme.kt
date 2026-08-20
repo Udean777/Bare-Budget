@@ -1,83 +1,94 @@
 package com.ssajudn.barebudget.ui.theme
 
-import android.app.Activity
 import android.os.Build
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.snap
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
+import androidx.compose.ui.platform.LocalContext
+import com.materialkolor.PaletteStyle
+import com.materialkolor.dynamicColorScheme
+import com.materialkolor.ktx.toHct
+import com.ssajudn.barebudget.data.model.TransactionCategory
 
-private val DarkColorScheme = darkColorScheme(
-    primary = PastelMintDark,
-    onPrimary = Color(0xFF0F291E),
-    primaryContainer = PastelMintDarkBg,
-    onPrimaryContainer = PastelMintDark,
-    secondary = PastelBlueDark,
-    onSecondary = Color(0xFF0D2538),
-    secondaryContainer = Color(0xFF1E2F3D),
-    onSecondaryContainer = PastelBlueDark,
-    tertiary = PastelLavenderDark,
-    error = PastelCoralDark,
-    onError = Color(0xFF370B0E),
-    errorContainer = PastelCoralDarkBg,
-    onErrorContainer = PastelCoralDark,
-    background = DarkBackground,
-    onBackground = DarkTextPrimary,
-    surface = DarkSurface,
-    onSurface = DarkTextPrimary,
-    surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = DarkTextSecondary,
-    outline = DarkOutline
-)
+enum class ThemeColorMode {
+    System,
+    Brand,
+}
 
-private val LightColorScheme = lightColorScheme(
-    primary = PastelMintLight,
-    onPrimary = Color.White,
-    primaryContainer = PastelMintLightBg,
-    onPrimaryContainer = Color(0xFF2E6B47),
-    secondary = PastelBlueLight,
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFFE3F2FD),
-    onSecondaryContainer = Color(0xFF1565C0),
-    tertiary = PastelLavenderLight,
-    error = PastelCoralLight,
-    onError = Color.White,
-    errorContainer = PastelCoralLightBg,
-    onErrorContainer = Color(0xFFC62828),
-    background = LightBackground,
-    onBackground = LightTextPrimary,
-    surface = LightSurface,
-    onSurface = LightTextPrimary,
-    surfaceVariant = LightSurfaceVariant,
-    onSurfaceVariant = LightTextSecondary,
-    outline = LightOutline
-)
+enum class ThemeDarkMode {
+    FollowSystem,
+    Light,
+    Dark,
+}
+
+val DefaultThemeColor = Color(0xFFED5564)
+
+private fun paletteStyleFor(seedColor: Color): PaletteStyle {
+    val chroma = seedColor.toHct().chroma
+    return when {
+        chroma < 4.0 -> PaletteStyle.Monochrome
+        chroma < 12.0 -> PaletteStyle.Neutral
+        else -> PaletteStyle.TonalSpot
+    }
+}
+
+val LocalIsDynamicColor = staticCompositionLocalOf { false }
+
+private val LocalCategoryColors = staticCompositionLocalOf { LightCategoryColors }
+
+val categoryColors: CategoryColors
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalCategoryColors.current
 
 @Composable
 fun BareBudgetTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
+    colorMode: ThemeColorMode = ThemeColorMode.Brand,
+    darkMode: ThemeDarkMode = ThemeDarkMode.FollowSystem,
+    themeColor: Color = DefaultThemeColor,
+    content: @Composable () -> Unit,
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
-    val view = LocalView.current
-
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.background.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
-        }
+    val context = LocalContext.current
+    val darkTheme = when (darkMode) {
+        ThemeDarkMode.FollowSystem -> isSystemInDarkTheme()
+        ThemeDarkMode.Light -> false
+        ThemeDarkMode.Dark -> true
     }
 
-    MaterialTheme(
-        colorScheme = colorScheme,
-        typography = Typography,
-        content = content
-    )
+    val supportsDynamic = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val useDynamic = colorMode == ThemeColorMode.System && supportsDynamic
+
+    val baseColorScheme = if (useDynamic) {
+        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+    } else {
+        dynamicColorScheme(
+            seedColor = themeColor,
+            isDark = darkTheme,
+            contrastLevel = 0.0,
+            style = paletteStyleFor(themeColor),
+        )
+    }
+
+    CompositionLocalProvider(
+        LocalCategoryColors provides if (darkTheme) DarkCategoryColors else LightCategoryColors,
+        LocalIsDynamicColor provides useDynamic,
+    ) {
+        MaterialTheme(
+            colorScheme = baseColorScheme,
+            typography = Typography,
+            shapes = Shapes,
+            content = content,
+        )
+    }
 }

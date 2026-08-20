@@ -1,11 +1,11 @@
 package com.ssajudn.barebudget.ui.bills
 
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
@@ -25,10 +25,14 @@ import com.ssajudn.barebudget.data.model.DueBillStatus
 import com.ssajudn.barebudget.ui.theme.*
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
-
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import com.ssajudn.barebudget.ui.components.CustomDialog
+import coil.compose.AsyncImage
+import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
+import com.ssajudn.barebudget.ui.components.AppFormDialog
+import com.ssajudn.barebudget.data.model.RecurringInterval
+import androidx.activity.result.contract.ActivityResultContracts
+import com.ssajudn.barebudget.R
+import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -120,7 +124,7 @@ fun DueBillsScreen(
                                 Icon(
                                     imageVector = Icons.Default.CheckCircle,
                                     contentDescription = null,
-                                    tint = PastelMintLight,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(56.dp)
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
@@ -144,7 +148,7 @@ fun DueBillsScreen(
                                 .fillMaxSize()
                                 .padding(horizontal = 20.dp),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(top = 12.dp, bottom = 100.dp)
+                            contentPadding = PaddingValues(top = Spacing.MediumSmall, bottom = Spacing.FabClearance)
                         ) {
                             items(state.bills) { bill ->
                                 DueBillItem(
@@ -162,8 +166,8 @@ fun DueBillsScreen(
     if (showAddDialog) {
         AddDueBillDialog(
             onDismiss = { showAddDialog = false },
-            onConfirm = { provider, amount, dueDate, isRecurring, interval, notes ->
-                viewModel.addDueBill(provider, amount, dueDate, isRecurring, interval, notes)
+            onConfirm = { provider, iconUrl, amount, dueDate, isRecurring, interval, notes ->
+                viewModel.addDueBill(provider, iconUrl, amount, dueDate, isRecurring, interval, notes)
                 showAddDialog = false
             }
         )
@@ -175,53 +179,86 @@ fun DueBillItem(
     bill: DueBill,
     onToggleStatus: () -> Unit
 ) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val isPaid = bill.status == DueBillStatus.PAID
     val daysLeft = DateUtils.getDaysUntilDue(bill.dueDate)
     val isOverdue = !isPaid && daysLeft < 0
 
     val badgeColor = when {
-        isPaid -> PastelMintLight
-        isOverdue -> PastelCoralLight
-        daysLeft <= 3 -> PastelYellowLight
-        else -> PastelBlueLight
+        isPaid -> MaterialTheme.colorScheme.primary
+        isOverdue -> MaterialTheme.colorScheme.error
+        daysLeft <= 3 -> MaterialTheme.colorScheme.tertiary
+        else -> MaterialTheme.colorScheme.secondary
     }
 
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(16.dp)),
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = if (isPaid) MaterialTheme.colorScheme.surfaceContainerLowest else MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = if (isPaid) 0.dp else 2.dp)
     ) {
         Row(
             modifier = Modifier.padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Checkbox indicator to toggle Paid/Unpaid
+            // Checkbox indicator to toggle Paid/Unpaid with Haptics
             FilledIconToggleButton(
                 checked = isPaid,
-                onCheckedChange = { onToggleStatus() },
-                colors = IconButtonDefaults.filledIconToggleButtonColors(
-                    checkedContainerColor = PastelMintLight,
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant
-                ),
-                shape = RoundedCornerShape(10.dp),
-                modifier = Modifier.size(36.dp)
-            ) {
-                if (isPaid) {
-                    Icon(
-                        Icons.Default.Check,
-                        contentDescription = "Paid",
-                        tint = Color.White,
-                        modifier = Modifier.size(20.dp)
+                onCheckedChange = {
+                    haptic.performHapticFeedback(
+                        if (!isPaid) androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress
+                        else androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove
                     )
-                }
+                    onToggleStatus()
+                },
+                colors = IconButtonDefaults.filledIconToggleButtonColors(
+                    checkedContainerColor = MaterialTheme.colorScheme.primary,
+                    checkedContentColor = MaterialTheme.colorScheme.onPrimary,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                ),
+                shape = MaterialTheme.shapes.medium,
+                // Was 38dp, below the 48dp accessible minimum, on the primary
+                // action of the screen.
+                modifier = Modifier.size(MinTouchTarget)
+            ) {
+                Icon(
+                    Icons.Default.Check,
+                    // Announce the state, not just the icon, and keep the icon
+                    // present-but-transparent so the target never changes size.
+                    contentDescription = if (isPaid) "Sudah dibayar" else "Tandai sudah dibayar",
+                    modifier = Modifier.size(20.dp),
+                    tint = if (isPaid) LocalContentColor.current else Color.Transparent
+                )
             }
 
             Spacer(modifier = Modifier.width(14.dp))
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (bill.providerIconUrl != null) {
+                        if (bill.providerIconUrl.startsWith("res://")) {
+                            val resId = bill.providerIconUrl.removePrefix("res://").toIntOrNull()
+                            if (resId != null) {
+                                Icon(
+                                    painter = androidx.compose.ui.res.painterResource(id = resId),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp).clip(MaterialTheme.shapes.small),
+                                    tint = Color.Unspecified
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                        } else {
+                            AsyncImage(
+                                model = bill.providerIconUrl,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp).clip(MaterialTheme.shapes.small)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                        }
+                    }
+
                     Text(
                         text = bill.providerName,
                         style = MaterialTheme.typography.titleMedium.copy(
@@ -233,8 +270,8 @@ fun DueBillItem(
                     if (bill.isRecurring) {
                         Spacer(modifier = Modifier.width(6.dp))
                         Surface(
-                            shape = RoundedCornerShape(6.dp),
-                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                            shape = MaterialTheme.shapes.extraSmall,
+                            color = MaterialTheme.colorScheme.primaryContainer
                         ) {
                             Text(
                                 text = "🔁 ${bill.recurringInterval.displayName}",
@@ -275,52 +312,112 @@ fun AddDueBillDialog(
     onDismiss: () -> Unit,
     onConfirm: (
         provider: String,
+        providerIconUrl: String?,
         amount: Long,
         dueDate: String,
         isRecurring: Boolean,
-        recurringInterval: com.ssajudn.barebudget.data.model.RecurringInterval,
+        recurringInterval: RecurringInterval,
         notes: String
     ) -> Unit
 ) {
-    var provider by remember { mutableStateOf("") }
+    data class BillProvider(val name: String, val iconRes: Int? = null, val isCustom: Boolean = false)
+    val builtinProviders = listOf(
+        BillProvider("Shopee PayLater", R.drawable.ic_provider_shopee),
+        BillProvider("Kredivo", R.drawable.ic_provider_kredivo),
+        BillProvider("GoPay Later", R.drawable.ic_provider_gopay),
+        BillProvider("Lainnya (Custom)", null, isCustom = true)
+    )
+
+    var selectedProvider by remember { mutableStateOf(builtinProviders[0]) }
+    var customProviderName by remember { mutableStateOf("") }
+    var customProviderIconUrl by remember { mutableStateOf<String?>(null) }
+    
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: android.net.Uri? ->
+        customProviderIconUrl = uri?.toString()
+    }
+
     var rawAmount by remember { mutableStateOf("") }
     var dueDate by remember { mutableStateOf(DateUtils.getCurrentDateISO()) }
+    var showDatePicker by remember { mutableStateOf(false) }
     var isRecurring by remember { mutableStateOf(false) }
-    var recurringInterval by remember { mutableStateOf(com.ssajudn.barebudget.data.model.RecurringInterval.MONTHLY) }
+    var recurringInterval by remember { mutableStateOf(RecurringInterval.MONTHLY) }
     var notes by remember { mutableStateOf("") }
 
     val amount = rawAmount.toLongOrNull() ?: 0L
-    val isValid = provider.isNotBlank() && amount > 0
+    val finalProviderName = if (selectedProvider.isCustom) customProviderName else selectedProvider.name
+    val isValid = finalProviderName.isNotBlank() && amount > 0
 
-    CustomDialog(
+    if (showDatePicker) {
+        AppDatePickerDialog(
+            initialDateMillis = DateUtils.parseIsoToMillis(dueDate),
+            onDateSelected = { millis ->
+                dueDate = DateUtils.formatMillisToIso(millis)
+            },
+            onDismiss = { showDatePicker = false }
+        )
+    }
+
+    AppFormDialog(
         title = "Add Due Bill",
         icon = Icons.AutoMirrored.Filled.ReceiptLong,
-        iconTint = PastelCoralLight,
+        iconTint = MaterialTheme.colorScheme.error,
         confirmButtonText = "Save Bill",
         isConfirmEnabled = isValid,
         onDismissRequest = onDismiss,
         onConfirm = {
             if (isValid) {
+                val iconUrl = if (selectedProvider.isCustom) customProviderIconUrl else "res://${selectedProvider.iconRes}"
                 onConfirm(
-                    provider,
+                    finalProviderName,
+                    iconUrl,
                     amount,
                     dueDate,
                     isRecurring,
-                    if (isRecurring) recurringInterval else com.ssajudn.barebudget.data.model.RecurringInterval.NONE,
+                    if (isRecurring) recurringInterval else RecurringInterval.NONE,
                     notes
                 )
             }
         }
     ) {
-        OutlinedTextField(
-            value = provider,
-            onValueChange = { provider = it },
-            label = { Text("Provider / Bill Name") },
-            placeholder = { Text("e.g. Shopee PayLater, Netflix, WiFi") },
-            singleLine = true,
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth()
-        )
+        Text("Pilih Provider", style = MaterialTheme.typography.labelMedium)
+        Spacer(modifier = Modifier.height(4.dp))
+        androidx.compose.foundation.lazy.LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(builtinProviders) { provider ->
+                FilterChip(
+                    selected = selectedProvider == provider,
+                    onClick = { selectedProvider = provider },
+                    label = { Text(provider.name) }
+                )
+            }
+        }
+
+        if (selectedProvider.isCustom) {
+            Spacer(modifier = Modifier.height(10.dp))
+            OutlinedTextField(
+                value = customProviderName,
+                onValueChange = { customProviderName = it },
+                label = { Text("Nama Provider Custom") },
+                placeholder = { Text("Mis. PLN, PDAM, dll") },
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            OutlinedButton(
+                onClick = { launcher.launch("image/*") },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                if (customProviderIconUrl != null) {
+                    Text("Ubah Logo Provider (Terpilih)")
+                } else {
+                    Text("Upload Logo Provider (Opsional)")
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -331,24 +428,31 @@ fun AddDueBillDialog(
             },
             label = { Text("Amount") },
             placeholder = { Text("Rp 0") },
-            visualTransformation = com.ssajudn.barebudget.utils.CurrencyVisualTransformation(),
+            visualTransformation = CurrencyVisualTransformation(),
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                 keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
             ),
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
-            value = dueDate,
-            onValueChange = { dueDate = it },
-            label = { Text("Due Date (YYYY-MM-DD)") },
+            value = DateUtils.formatDisplayDate(dueDate),
+            onValueChange = { },
+            label = { Text("Due Date") },
+            readOnly = true,
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth()
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -357,7 +461,7 @@ fun AddDueBillDialog(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(RoundedCornerShape(12.dp))
+                .clip(MaterialTheme.shapes.medium)
                 .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                 .clickable { isRecurring = !isRecurring }
                 .padding(horizontal = 14.dp, vertical = 8.dp),
@@ -389,9 +493,9 @@ fun AddDueBillDialog(
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 listOf(
-                    com.ssajudn.barebudget.data.model.RecurringInterval.WEEKLY,
-                    com.ssajudn.barebudget.data.model.RecurringInterval.MONTHLY,
-                    com.ssajudn.barebudget.data.model.RecurringInterval.YEARLY
+                    RecurringInterval.WEEKLY,
+                    RecurringInterval.MONTHLY,
+                    RecurringInterval.YEARLY
                 ).forEach { interval ->
                     val isSelected = recurringInterval == interval
                     FilterChip(

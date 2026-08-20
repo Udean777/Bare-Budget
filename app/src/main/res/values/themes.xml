@@ -1,5 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.BareBudget" parent="android:Theme.Material.Light.NoActionBar" />
+    <!--
+      Window-level theme. Compose owns all in-app colour; this only needs to get
+      the pre-Compose frame right.
+
+      Light/dark is handled by the values-night override of this file rather than
+      a "DayNight" parent: on the platform, Theme.DeviceDefault.DayNight is just
+      an alias for Theme.DeviceDefault.Light, and Theme.Material has no DayNight
+      variant at all — so a parent alone would never have produced a dark window.
+
+      Bars are transparent because MainActivity calls enableEdgeToEdge() and
+      Compose draws behind them.
+    -->
+    <style name="Theme.BareBudget" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
 </resources>

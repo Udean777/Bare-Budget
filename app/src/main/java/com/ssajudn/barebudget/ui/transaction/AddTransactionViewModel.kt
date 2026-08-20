@@ -48,6 +48,10 @@ class AddTransactionViewModel(
         _uiState.value = _uiState.value.copy(selectedCategory = category)
     }
 
+    fun onDateChange(date: String) {
+        _uiState.value = _uiState.value.copy(date = date)
+    }
+
     fun onNotesChange(notes: String) {
         _uiState.value = _uiState.value.copy(notes = notes)
     }

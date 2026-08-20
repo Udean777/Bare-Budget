@@ -160,9 +160,9 @@ fun DashboardContent(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp),
+            .padding(horizontal = Spacing.ScreenHorizontal),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(top = 8.dp, bottom = 88.dp)
+        contentPadding = PaddingValues(top = Spacing.Small, bottom = Spacing.FabClearance)
     ) {
         // 1. FINANCIAL RUNWAY CARD (Core Feature)
         item {
@@ -171,56 +171,55 @@ fun DashboardContent(
                 totalBudget = summary.monthlyBudget,
                 estimatedDeathDay = summary.estimatedDeathDay,
                 daysInMonth = summary.daysInMonth,
-                daysPassed = summary.daysPassed,
                 message = summary.runwayMessage,
                 onSetBudgetClick = onSetBudgetClick
             )
         }
 
-        // 2. QUICK ACTION TILES
+        // 2. QUICK ACTION TILES (M3 Surface Containers)
         item {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 QuickActionCard(
-                    title = "Quick Log",
-                    subtitle = "Manual Entry",
+                    title = "Catat",
+                    subtitle = "Manual",
                     icon = Icons.Default.EditNote,
-                    bgColor = MaterialTheme.colorScheme.secondaryContainer,
-                    tintColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    bgColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tintColor = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),
                     onClick = onAddManualClick
                 )
 
                 QuickActionCard(
-                    title = "Due Bills",
+                    title = "Tagihan",
                     subtitle = if (summary.unpaidDueBillsSum > 0) {
                         CurrencyFormatter.formatCompact(summary.unpaidDueBillsSum)
-                    } else "All Clear",
+                    } else "Lunas",
                     icon = Icons.Default.ReceiptLong,
-                    bgColor = PastelCoralLightBg,
-                    tintColor = PastelCoralLight,
+                    bgColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tintColor = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),
                     onClick = onDueBillsClick
                 )
 
                 QuickActionCard(
-                    title = "Goals",
+                    title = "Target",
                     subtitle = "Pockets",
                     icon = Icons.Default.Payments,
-                    bgColor = PastelMintLight.copy(alpha = 0.2f),
-                    tintColor = PastelMintLight,
+                    bgColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tintColor = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),
                     onClick = onGoalsClick
                 )
 
                 QuickActionCard(
-                    title = "Analytics",
-                    subtitle = "Breakdown",
+                    title = "Analitik",
+                    subtitle = "Review",
                     icon = Icons.Default.TrendingUp,
-                    bgColor = PastelLavenderLight.copy(alpha = 0.2f),
-                    tintColor = PastelLavenderLight,
+                    bgColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    tintColor = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),
                     onClick = onAnalyticsClick
                 )
@@ -231,7 +230,7 @@ fun DashboardContent(
         item {
             Surface(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = MaterialTheme.shapes.large,
                 color = MaterialTheme.colorScheme.surface,
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
             ) {
@@ -268,7 +267,7 @@ fun DashboardContent(
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.SemiBold
                             ),
-                            color = PastelCoralLight
+                            color = MaterialTheme.colorScheme.error
                         )
                     }
                 }
@@ -297,7 +296,7 @@ fun DashboardContent(
                         color = MaterialTheme.colorScheme.primary
                     ),
                     modifier = Modifier
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .clickable { onSeeAllTransactionsClick() }
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 )
@@ -308,7 +307,7 @@ fun DashboardContent(
             item {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Box(
@@ -346,12 +345,21 @@ fun QuickActionCard(
     modifier: Modifier = Modifier,
     onClick: () -> Unit
 ) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
+
     Surface(
         modifier = modifier
-            .clip(RoundedCornerShape(18.dp))
-            .clickable { onClick() },
+            .clip(AppShapes.LargeIncreased)
+            .clickable {
+                haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                onClick()
+            },
         color = bgColor,
-        shape = RoundedCornerShape(18.dp)
+        shape = AppShapes.LargeIncreased,
+        border = androidx.compose.foundation.BorderStroke(
+            1.dp,
+            tintColor.copy(alpha = 0.25f)
+        )
     ) {
         Column(
             modifier = Modifier
@@ -362,9 +370,9 @@ fun QuickActionCard(
         ) {
             Box(
                 modifier = Modifier
-                    .size(42.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(tintColor.copy(alpha = 0.2f)),
+                    .size(40.dp)
+                    .clip(MaterialTheme.shapes.medium)
+                    .background(tintColor.copy(alpha = 0.18f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
@@ -375,14 +383,14 @@ fun QuickActionCard(
                 )
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             Column {
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+                        fontSize = 13.sp
                     ),
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1
@@ -390,8 +398,8 @@ fun QuickActionCard(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        fontSize = 11.sp,
                         fontWeight = FontWeight.Medium
                     ),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

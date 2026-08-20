@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+      Dark counterpart of Theme.BareBudget.
+
+      The parent is the dark Material theme, so system-drawn surfaces before
+      Compose composes (the window background, and any platform dialog) are dark
+      too. Previously the theme was hardcoded to the Light parent in all
+      configurations, so the window stayed light behind a dark Compose UI.
+    -->
+    <style name="Theme.BareBudget" parent="android:Theme.Material.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/window_background</item>
+    </style>
+</resources>

@@ -59,29 +59,29 @@ fun OnboardingScreen(
             title = "Zero Friction Expense Tracking",
             description = "Log your daily expenses in seconds. Clean, minimal, and focused on what truly matters to your wallet.",
             icon = Icons.Default.Bolt,
-            iconBgColor = PastelMintLightBg,
-            iconTint = PastelMintLight
+            iconBgColor = MaterialTheme.colorScheme.primaryContainer,
+            iconTint = MaterialTheme.colorScheme.onPrimaryContainer
         ),
         OnboardingPageData(
             title = "Track Your Financial Runway",
             description = "Get honest predictions of how long your money will last based on your real-time daily burn rate.",
             icon = Icons.Default.Timeline,
-            iconBgColor = PastelBlueLight.copy(alpha = 0.15f),
-            iconTint = PastelBlueLight
+            iconBgColor = MaterialTheme.colorScheme.secondaryContainer,
+            iconTint = MaterialTheme.colorScheme.onSecondaryContainer
         ),
         OnboardingPageData(
             title = "Due Bills & Commitments",
             description = "Never get caught off-guard by PayLater or monthly subscription due dates ever again.",
             icon = Icons.Default.ReceiptLong,
-            iconBgColor = PastelCoralLightBg,
-            iconTint = PastelCoralLight
+            iconBgColor = MaterialTheme.colorScheme.errorContainer,
+            iconTint = MaterialTheme.colorScheme.onErrorContainer
         ),
         OnboardingPageData(
             title = "Choose How You Start",
             description = "Select whether to sign in or explore immediately in Guest Mode.",
             icon = Icons.Default.LockPerson,
-            iconBgColor = PastelLavenderLight.copy(alpha = 0.2f),
-            iconTint = PastelLavenderLight
+            iconBgColor = MaterialTheme.colorScheme.tertiaryContainer,
+            iconTint = MaterialTheme.colorScheme.onTertiaryContainer
         )
     )
 
@@ -197,7 +197,7 @@ fun OnboardingScreen(
                                 pagerState.animateScrollToPage(pagerState.currentPage + 1)
                             }
                         },
-                        shape = RoundedCornerShape(14.dp),
+                        shape = MaterialTheme.shapes.medium,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -233,7 +233,7 @@ fun OnboardingSlide(data: OnboardingPageData) {
         Box(
             modifier = Modifier
                 .size(120.dp)
-                .clip(RoundedCornerShape(32.dp))
+                .clip(AppShapes.ExtraLargeIncreased)
                 .background(data.iconBgColor),
             contentAlignment = Alignment.Center
         ) {
@@ -307,7 +307,7 @@ fun FinalAuthChoiceStep(
         // OPTION 1: SIGN IN (Cloud Persistent via Google)
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
+            shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surface,
             border = androidx.compose.foundation.BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary)
         ) {
@@ -316,14 +316,14 @@ fun FinalAuthChoiceStep(
                     Box(
                         modifier = Modifier
                             .size(36.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(PastelMintLightBg),
+                            .clip(MaterialTheme.shapes.small)
+                            .background(MaterialTheme.colorScheme.primaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             Icons.Default.CloudDone,
                             contentDescription = null,
-                            tint = PastelMintLight,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -353,7 +353,7 @@ fun FinalAuthChoiceStep(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
-                    shape = RoundedCornerShape(12.dp),
+                    shape = MaterialTheme.shapes.medium,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
@@ -376,7 +376,7 @@ fun FinalAuthChoiceStep(
         // OPTION 2: GUEST MODE (Temporary Device Only)
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(18.dp),
+            shape = MaterialTheme.shapes.large,
             color = MaterialTheme.colorScheme.surfaceVariant
         ) {
             Column(modifier = Modifier.padding(18.dp)) {
@@ -384,14 +384,14 @@ fun FinalAuthChoiceStep(
                     Box(
                         modifier = Modifier
                             .size(36.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(PastelCoralLightBg),
+                            .clip(MaterialTheme.shapes.small)
+                            .background(MaterialTheme.colorScheme.secondaryContainer),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             Icons.Default.PersonOutline,
                             contentDescription = null,
-                            tint = PastelCoralLight,
+                            tint = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.size(20.dp)
                         )
                     }
@@ -421,7 +421,7 @@ fun FinalAuthChoiceStep(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(48.dp),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = MaterialTheme.shapes.medium
                 ) {
                     if (isGuestLoading) {
                         CircularProgressIndicator(

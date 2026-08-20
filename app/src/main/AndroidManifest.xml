@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
-    <!-- Permissions for Networking & Snap Ledger OCR -->
-    <uses-permission android:name="android.intent.action.INTERNET" />
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!--
+      CAMERA is declared for the planned receipt-scanning (OCR) feature. The UI
+      for it does not exist yet (ui/ocr/ is empty), so nothing currently requests
+      this permission at runtime. If that feature is dropped, remove this along
+      with the CameraX and ML Kit dependencies in app/build.gradle.kts.
+    -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
@@ -21,7 +26,6 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.BareBudget"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>

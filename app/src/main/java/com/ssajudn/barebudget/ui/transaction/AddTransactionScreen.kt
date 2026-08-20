@@ -24,11 +24,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ssajudn.barebudget.data.model.TransactionCategory
+import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
-import com.ssajudn.barebudget.ui.components.getCategoryPastelColor
-import com.ssajudn.barebudget.ui.theme.PastelMintLight
-
+import com.ssajudn.barebudget.ui.theme.categoryColors
+import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
+import com.ssajudn.barebudget.utils.DateUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,7 +79,7 @@ fun AddTransactionScreen(
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp, vertical = 16.dp)
                         .height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = MaterialTheme.shapes.large,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
                         contentColor = MaterialTheme.colorScheme.onPrimary
@@ -110,19 +111,22 @@ fun AddTransactionScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // 1. AMOUNT INPUT (Large prominent field with VisualTransformation)
-            Surface(
+            // 1. AMOUNT INPUT (Prominent M3 Display Card with Quick Presets)
+            ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant
+                shape = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                ),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
             ) {
                 Column(
                     modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Amount",
-                        style = MaterialTheme.typography.labelLarge,
+                        text = "Nominal Pengeluaran",
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -132,16 +136,16 @@ fun AddTransactionScreen(
                         placeholder = {
                             Text(
                                 "Rp 0",
-                                style = MaterialTheme.typography.displayLarge.copy(
+                                style = MaterialTheme.typography.displayMedium.copy(
                                     fontWeight = FontWeight.Bold,
-                                    fontSize = 28.sp
+                                    fontSize = 32.sp
                                 ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
                             )
                         },
-                        textStyle = MaterialTheme.typography.displayLarge.copy(
+                        textStyle = MaterialTheme.typography.displayMedium.copy(
                             fontWeight = FontWeight.Bold,
-                            fontSize = 28.sp
+                            fontSize = 32.sp
                         ),
                         singleLine = true,
                         visualTransformation = CurrencyVisualTransformation(),
@@ -153,26 +157,52 @@ fun AddTransactionScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // Quick Nominal Presets (+10k, +20k, +50k, +100k)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        listOf(10_000L, 20_000L, 50_000L, 100_000L).forEach { addNominal ->
+                            SuggestionChip(
+                                onClick = {
+                                    val current = uiState.parsedAmount
+                                    viewModel.onAmountChange((current + addNominal).toString())
+                                },
+                                label = {
+                                    Text(
+                                        "+${CurrencyFormatter.formatCompact(addNominal)}",
+                                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
+                                    )
+                                },
+                                shape = MaterialTheme.shapes.small,
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
                     // Quick Split Bill Trigger Button
                     if (uiState.parsedAmount > 0) {
-                        Spacer(modifier = Modifier.height(10.dp))
-                        OutlinedButton(
+                        Spacer(modifier = Modifier.height(14.dp))
+                        FilledTonalButton(
                             onClick = { showSplitBottomSheet = true },
-                            shape = RoundedCornerShape(12.dp),
-                            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 6.dp)
+                            shape = MaterialTheme.shapes.medium,
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("👥 Smart Split Bill (Patungan)", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold))
+                            Text("👥 Smart Split Bill (Patungan Cerdas)", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
                         }
                     }
                 }
             }
 
-            // 2. CATEGORY SELECTOR (Horizontal Chip Carousel)
+            // 2. CATEGORY SELECTOR (M3 Filter Chips with Animated Indicators)
             Column {
                 Text(
-                    text = "Category",
+                    text = "Kategori",
                     style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.SemiBold
+                        fontWeight = FontWeight.Bold
                     ),
                     color = MaterialTheme.colorScheme.onSurface
                 )
@@ -181,40 +211,40 @@ fun AddTransactionScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(vertical = 4.dp)
                 ) {
-                    items(TransactionCategory.values()) { category ->
+                    items(TransactionCategory.entries) { category ->
                         val isSelected = category == uiState.selectedCategory
-                        val categoryColor = getCategoryPastelColor(category)
+                        val catColors = categoryColors
 
-                        Surface(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(12.dp))
-                                .clickable { viewModel.onCategoryChange(category) },
-                            color = if (isSelected) categoryColor.copy(alpha = 0.25f) else MaterialTheme.colorScheme.surface,
-                            border = androidx.compose.foundation.BorderStroke(
-                                1.dp,
-                                if (isSelected) categoryColor else MaterialTheme.colorScheme.outline
-                            )
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
+                        FilterChip(
+                            selected = isSelected,
+                            onClick = { viewModel.onCategoryChange(category) },
+                            label = {
+                                Text(
+                                    text = category.displayName,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                    )
+                                )
+                            },
+                            leadingIcon = {
                                 Icon(
                                     imageVector = getCategoryIcon(category),
                                     contentDescription = null,
-                                    tint = if (isSelected) categoryColor else MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.size(18.dp)
                                 )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = category.displayName,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal
-                                    ),
-                                    color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
+                            },
+                            shape = MaterialTheme.shapes.small,
+                            // Per-category colour, so the selected chip reinforces
+                            // the same hue used in the list and the analytics
+                            // breakdown. Previously every category selected to the
+                            // same primaryContainer, which threw the colour coding
+                            // away at the one moment the user is choosing a category.
+                            colors = FilterChipDefaults.filterChipColors(
+                                selectedContainerColor = catColors.container(category),
+                                selectedLabelColor = catColors.onContainer(category),
+                                selectedLeadingIconColor = catColors.onContainer(category)
+                            )
+                        )
                     }
                 }
             }
@@ -234,8 +264,44 @@ fun AddTransactionScreen(
                     onValueChange = { viewModel.onMerchantChange(it) },
                     placeholder = { Text("e.g. Starbucks, Indomaret, Grab") },
                     singleLine = true,
-                    shape = RoundedCornerShape(14.dp),
+                    shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            // 3.5. DATE
+            var showDatePicker by remember { mutableStateOf(false) }
+            if (showDatePicker) {
+                AppDatePickerDialog(
+                    initialDateMillis = DateUtils.parseIsoToMillis(uiState.date),
+                    onDateSelected = { millis ->
+                        viewModel.onDateChange(DateUtils.formatMillisToIso(millis))
+                    },
+                    onDismiss = { showDatePicker = false }
+                )
+            }
+            Column {
+                Text(
+                    text = "Tanggal",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = DateUtils.formatDisplayDate(uiState.date),
+                    onValueChange = { },
+                    readOnly = true,
+                    singleLine = true,
+                    shape = MaterialTheme.shapes.medium,
+                    modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
+                    enabled = false,
+                    colors = OutlinedTextFieldDefaults.colors(
+                        disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        disabledBorderColor = MaterialTheme.colorScheme.outline,
+                        disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
             }
 
@@ -253,7 +319,7 @@ fun AddTransactionScreen(
                     value = uiState.notes,
                     onValueChange = { viewModel.onNotesChange(it) },
                     placeholder = { Text("Add detail...") },
-                    shape = RoundedCornerShape(14.dp),
+                    shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -278,7 +344,7 @@ fun AddTransactionScreen(
             onApplyMyPortion = { myPortion ->
                 viewModel.onAmountChange(myPortion.toString())
                 if (uiState.notes.isBlank()) {
-                    viewModel.onNotesChange("Split bill (Porsi saya dari total ${com.ssajudn.barebudget.utils.CurrencyFormatter.formatRupiah(uiState.parsedAmount)})")
+                    viewModel.onNotesChange("Split bill (Porsi saya dari total ${CurrencyFormatter.formatRupiah(uiState.parsedAmount)})")
                 }
                 showSplitBottomSheet = false
             }

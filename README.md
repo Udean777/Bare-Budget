@@ -36,33 +36,39 @@ Dengan konsep **Offline-First**, BareBudget dapat digunakan langsung tanpa login
 * Memprediksi tanggal persis kapan saldo budget Anda akan habis di bulan berjalan.
 * Memberikan pesan status real-time (*Aman*, *Waspada*, atau *Kritis*).
 
-### 2. 🌊 Floating Bottom Navigation Bar & Modern UI
+### 2. 👛 Multi-Wallet & Income Tracking
+* Lacak arus kas secara nyata dengan tipe transaksi **Pemasukan (Income)**, **Pengeluaran (Expense)**, dan **Transfer**.
+* Buat dan kelola dompet/rekening tanpa batas (misal: Tunai, Bank BCA, GoPay, OVO).
+* Kalkulasi kekayaan bersih (**Net Worth**) otomatis dari akumulasi seluruh dompet.
+
+### 3. 🌊 Floating Bottom Navigation Bar & Modern UI
 * Navigasi melayang (*island floating bar*) modern dengan animasi *spring* yang responsif.
 * Tombol tengah mencolok (**Quick Log**) untuk pencatatan transaksi dalam hitungan detik.
 * Desain warna pastel lembut (*Mint, Coral, Lavender, Ochre*) yang ramah di mata untuk mode terang maupun gelap.
 
-### 3. 🎯 Savings Goals & Pockets (Sinking Funds)
+### 4. 🎯 Savings Goals & Pockets (Sinking Funds)
 * Buat target tabungan (Dana Darurat, Liburan, Beli Gadget, dll).
 * Progress bar visual interaktif lengkap dengan persentase dan sisa dana.
 * Dialog khusus untuk **Setor Tabungan (Deposit)** atau **Tarik Dana (Withdraw)** secara fleksibel.
 
-### 4. 🔁 Due Bills & Recurring Subscriptions
+### 5. 🔁 Due Bills & Recurring Subscriptions
 * Catat tagihan berkala (WiFi, Kos, Netflix, Listrik, PayLater).
 * **Auto-Rollover**: Ketika tagihan berulang ditandai **PAID/Lunas**, sistem otomatis menjadwalkan tagihan untuk periode berikutnya (*Weekly, Monthly, Yearly*).
 
-### 5. 👥 Smart Split Bill Calculator
+### 6. 👥 Smart Split Bill Calculator
 * Kalkulator patungan cerdas di layar transaksi.
 * Hitung bagi rata (*Equal Split*) lengkap dengan kalkulasi persentase pajak PB1 (10%) & service fee (5%).
 * **1-Click Share to WhatsApp**: Bagikan rincian patungan siap kirim langsung ke teman atau grup WhatsApp.
 
-### 6. 📷 ML Kit Receipt OCR (Snap Ledger)
+### 7. 📷 ML Kit Receipt OCR (Snap Ledger)
 * Pindai struk belanja fisik langsung dengan kamera Android.
 * Deteksi otomatis nama merchant, total nominal, dan saran kategori belanja.
 
-### 7. 🔒 Offline-First Architecture & Smart Sync
+### 8. 🔒 Offline-First Architecture & Smart Sync
 * Bekerja 100% secara offline menggunakan **Room SQLite Database**.
 * Otomatis melakukan sinkronisasi dua arah (*Two-Way Sync*) dengan backend REST API Go saat perangkat terhubung ke internet.
 * **Guest to Google Migration**: Mulai instan sebagai *Guest*, migrasikan seluruh data lokal ke Google Account saat login.
+
 
 ---
 

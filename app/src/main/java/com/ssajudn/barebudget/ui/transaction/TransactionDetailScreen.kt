@@ -23,8 +23,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ssajudn.barebudget.data.model.Transaction
 import com.ssajudn.barebudget.data.repository.BudgetRepository
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
-import com.ssajudn.barebudget.ui.components.getCategoryPastelColor
-import com.ssajudn.barebudget.ui.theme.PastelCoralLight
+import com.ssajudn.barebudget.ui.components.AppConfirmDialog
+import com.ssajudn.barebudget.ui.theme.AppShapes
+import com.ssajudn.barebudget.ui.theme.categoryColors
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -125,7 +126,7 @@ fun TransactionDetailScreen(
                             Icon(
                                 Icons.Default.Delete,
                                 contentDescription = "Delete",
-                                tint = PastelCoralLight
+                                tint = MaterialTheme.colorScheme.error
                             )
                         }
                     }
@@ -149,7 +150,9 @@ fun TransactionDetailScreen(
                 )
             } else if (uiState.transaction != null) {
                 val tx = uiState.transaction!!
-                val categoryColor = getCategoryPastelColor(tx.category)
+                val catColors = categoryColors
+                val container = catColors.container(tx.category)
+                val onContainer = catColors.onContainer(tx.category)
                 val categoryIcon = getCategoryIcon(tx.category)
 
                 Column(
@@ -159,12 +162,14 @@ fun TransactionDetailScreen(
                         .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(20.dp)
                 ) {
-                    // Header Amount Card
-                    Surface(
+                    // Header Amount Card (M3 ElevatedCard)
+                    ElevatedCard(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(20.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                        shape = MaterialTheme.shapes.extraLarge,
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        ),
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(
                             modifier = Modifier.padding(24.dp),
@@ -172,16 +177,16 @@ fun TransactionDetailScreen(
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(categoryColor.copy(alpha = 0.2f)),
+                                    .size(60.dp)
+                                    .clip(MaterialTheme.shapes.large)
+                                    .background(container),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
                                     imageVector = categoryIcon,
                                     contentDescription = null,
-                                    tint = categoryColor,
-                                    modifier = Modifier.size(28.dp)
+                                    tint = onContainer,
+                                    modifier = Modifier.size(30.dp)
                                 )
                             }
 
@@ -199,7 +204,7 @@ fun TransactionDetailScreen(
 
                             Text(
                                 text = "-${CurrencyFormatter.formatRupiah(tx.amount)}",
-                                style = MaterialTheme.typography.displayLarge.copy(
+                                style = MaterialTheme.typography.displayMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 32.sp
                                 ),
@@ -208,24 +213,26 @@ fun TransactionDetailScreen(
                         }
                     }
 
-                    // Metadata Card
-                    Surface(
+                    // Metadata Card (M3 ElevatedCard)
+                    ElevatedCard(
                         modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(16.dp),
-                        color = MaterialTheme.colorScheme.surface,
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                        shape = AppShapes.LargeIncreased,
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        ),
+                        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
                     ) {
                         Column(
-                            modifier = Modifier.padding(18.dp),
+                            modifier = Modifier.padding(20.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            DetailRow(label = "Category", value = tx.category.displayName)
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                            DetailRow(label = "Date", value = DateUtils.formatDisplayDate(tx.date))
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                            DetailRow(label = "Merchant", value = tx.merchant?.ifBlank { "-" } ?: "-")
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
-                            DetailRow(label = "Notes", value = tx.notes?.ifBlank { "-" } ?: "-")
+                            DetailRow(label = "Kategori", value = tx.category.displayName)
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            DetailRow(label = "Tanggal", value = DateUtils.formatDisplayDate(tx.date))
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            DetailRow(label = "Merchant / Toko", value = tx.merchant?.ifBlank { "-" } ?: "-")
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            DetailRow(label = "Catatan", value = tx.notes?.ifBlank { "-" } ?: "-")
                         }
                     }
                 }
@@ -237,7 +244,7 @@ fun TransactionDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Transaction not found",
+                        text = "Transaksi tidak ditemukan",
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -247,32 +254,13 @@ fun TransactionDetailScreen(
     }
 
     if (showDeleteConfirmDialog) {
-        AlertDialog(
+        AppConfirmDialog(
+            title = "Hapus Transaksi?",
+            message = "Apakah Anda yakin ingin menghapus catatan pengeluaran ini secara permanen?",
             onDismissRequest = { showDeleteConfirmDialog = false },
-            title = {
-                Text(
-                    text = "Delete Transaction",
-                    fontWeight = FontWeight.Bold
-                )
-            },
-            text = {
-                Text("Are you sure you want to delete this expense record?")
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        viewModel.deleteTransaction(transactionId)
-                        showDeleteConfirmDialog = false
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = PastelCoralLight)
-                ) {
-                    Text("Delete")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showDeleteConfirmDialog = false }) {
-                    Text("Cancel")
-                }
+            onConfirm = {
+                showDeleteConfirmDialog = false
+                viewModel.deleteTransaction(transactionId)
             }
         )
     }

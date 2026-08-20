@@ -1,25 +1,49 @@
 package com.ssajudn.barebudget.ui.navigation
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ReceiptLong
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
+import androidx.compose.material.icons.automirrored.outlined.TrendingUp
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material.icons.outlined.Payments
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.ssajudn.barebudget.data.local.UserSessionManager
+import com.ssajudn.barebudget.ui.analytics.AnalyticsScreen
 import com.ssajudn.barebudget.ui.bills.DueBillsScreen
-import com.ssajudn.barebudget.ui.components.FloatingBottomNavBar
+import com.ssajudn.barebudget.ui.budget.BudgetScreen
+import com.ssajudn.barebudget.ui.components.AppNavigationBar
+import com.ssajudn.barebudget.ui.components.NavigationBarItemData
 import com.ssajudn.barebudget.ui.dashboard.DashboardScreen
+import com.ssajudn.barebudget.ui.goals.GoalsScreen
 import com.ssajudn.barebudget.ui.onboarding.AuthScreen
 import com.ssajudn.barebudget.ui.onboarding.OnboardingScreen
+import com.ssajudn.barebudget.ui.settings.SettingsScreen
 import com.ssajudn.barebudget.ui.transaction.AddTransactionScreen
+import com.ssajudn.barebudget.ui.transaction.AllTransactionsScreen
+import com.ssajudn.barebudget.ui.transaction.TransactionDetailScreen
 
 sealed class Screen(val route: String) {
     object Onboarding : Screen("onboarding")
@@ -36,6 +60,43 @@ sealed class Screen(val route: String) {
         fun createRoute(transactionId: String) = "transaction_detail/$transactionId"
     }
 }
+
+/**
+ * The four destinations reachable from the bottom navigation bar.
+ *
+ * Declared once at file scope rather than rebuilt inside the Scaffold on every
+ * recomposition. Each pairs an outlined icon for the unselected state with a
+ * filled one for selected, per M3 — the previous code had a `selectedIcon` field
+ * that was never populated, so the distinction was silently dead.
+ */
+private val TopLevelDestinations = listOf(
+    NavigationBarItemData(
+        route = Screen.Dashboard.route,
+        label = "Beranda",
+        icon = Icons.Outlined.Dashboard,
+        selectedIcon = Icons.Filled.Dashboard,
+    ),
+    NavigationBarItemData(
+        route = Screen.DueBills.route,
+        label = "Tagihan",
+        icon = Icons.AutoMirrored.Outlined.ReceiptLong,
+        selectedIcon = Icons.AutoMirrored.Filled.ReceiptLong,
+    ),
+    NavigationBarItemData(
+        route = Screen.Goals.route,
+        label = "Target",
+        icon = Icons.Outlined.Payments,
+        selectedIcon = Icons.Filled.Payments,
+    ),
+    NavigationBarItemData(
+        route = Screen.Analytics.route,
+        label = "Analitik",
+        icon = Icons.AutoMirrored.Outlined.TrendingUp,
+        selectedIcon = Icons.AutoMirrored.Filled.TrendingUp,
+    ),
+)
+
+private val TopLevelRoutes = TopLevelDestinations.map { it.route }.toSet()
 
 @Composable
 fun AppNavigation(
@@ -59,42 +120,61 @@ fun AppNavigation(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Top-level destinations where the floating navbar is visible
-    val topLevelRoutes = listOf(
-        Screen.Dashboard.route,
-        Screen.DueBills.route,
-        Screen.Goals.route,
-        Screen.Analytics.route
-    )
-    val shouldShowFloatingNav = currentRoute in topLevelRoutes
+    val showNavigationBar = currentRoute in TopLevelRoutes
 
     Scaffold(
         bottomBar = {
-            if (shouldShowFloatingNav) {
-                FloatingBottomNavBar(
+            // AnimatedVisibility rather than `if`: the bar slides out instead of
+            // disappearing between frames, and keeping it in the composition means
+            // the Scaffold's bottom padding animates with it rather than jumping.
+            AnimatedVisibility(
+                visible = showNavigationBar,
+                enter = slideInVertically { it },
+                exit = slideOutVertically { it },
+            ) {
+                AppNavigationBar(
+                    items = TopLevelDestinations,
                     currentRoute = currentRoute,
                     onNavigate = { route ->
                         if (currentRoute != route) {
                             navController.navigate(route) {
-                                popUpTo(Screen.Dashboard.route) {
-                                    saveState = true
-                                }
+                                popUpTo(Screen.Dashboard.route) { saveState = true }
                                 launchSingleTop = true
                                 restoreState = true
                             }
                         }
                     },
-                    onAddClick = {
-                        navController.navigate(Screen.AddTransaction.route)
-                    }
                 )
             }
-        }
+        },
+        floatingActionButton = {
+            if (showNavigationBar) {
+                FloatingActionButton(
+                    onClick = { navController.navigate(Screen.AddTransaction.route) },
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Catat pengeluaran")
+                }
+            }
+        },
     ) { innerPadding ->
+        // padding() applies the inset; consumeWindowInsets() then marks it as
+        // handled.
+        //
+        // Both are needed because every screen has its own Scaffold. Without the
+        // consume, those inner Scaffolds would add the status- and navigation-bar
+        // insets a second time on top of the space already reserved here, pushing
+        // each top bar down by the height of the status bar.
+        //
+        // Previously the bottom inset was discarded whenever the nav bar was
+        // visible, so each top-level screen hardcoded a bottom contentPadding to
+        // clear it — 88dp on the dashboard, 100dp on three others, for the same
+        // bar — and the top inset was never applied on any route.
         NavHost(
             navController = navController,
             startDestination = startDestination,
-            modifier = Modifier.padding(bottom = if (shouldShowFloatingNav) 0.dp else innerPadding.calculateBottomPadding())
+            modifier = Modifier
+                .padding(innerPadding)
+                .consumeWindowInsets(innerPadding),
         ) {
             composable(Screen.Onboarding.route) {
                 OnboardingScreen(
@@ -122,10 +202,18 @@ fun AppNavigation(
                         navController.navigate(Screen.AddTransaction.route)
                     },
                     onNavigateToDueBills = {
-                        navController.navigate(Screen.DueBills.route)
+                        navController.navigate(Screen.DueBills.route) {
+                            popUpTo(Screen.Dashboard.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     },
                     onNavigateToGoals = {
-                        navController.navigate(Screen.Goals.route)
+                        navController.navigate(Screen.Goals.route) {
+                            popUpTo(Screen.Dashboard.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     },
                     onNavigateToBudget = {
                         navController.navigate(Screen.Budget.route)
@@ -137,7 +225,11 @@ fun AppNavigation(
                         navController.navigate(Screen.AllTransactions.route)
                     },
                     onNavigateToAnalytics = {
-                        navController.navigate(Screen.Analytics.route)
+                        navController.navigate(Screen.Analytics.route) {
+                            popUpTo(Screen.Dashboard.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
                     },
                     onNavigateToSettings = {
                         navController.navigate(Screen.Settings.route)
@@ -146,7 +238,7 @@ fun AppNavigation(
             }
 
             composable(Screen.Settings.route) {
-                com.ssajudn.barebudget.ui.settings.SettingsScreen(
+                SettingsScreen(
                     onNavigateBack = {
                         navController.popBackStack()
                     },
@@ -159,11 +251,11 @@ fun AppNavigation(
             }
 
             composable(Screen.Analytics.route) {
-                com.ssajudn.barebudget.ui.analytics.AnalyticsScreen()
+                AnalyticsScreen()
             }
 
             composable(Screen.AllTransactions.route) {
-                com.ssajudn.barebudget.ui.transaction.AllTransactionsScreen(
+                AllTransactionsScreen(
                     onNavigateBack = {
                         navController.popBackStack()
                     },
@@ -186,11 +278,11 @@ fun AppNavigation(
             }
 
             composable(Screen.Goals.route) {
-                com.ssajudn.barebudget.ui.goals.GoalsScreen()
+                GoalsScreen()
             }
 
             composable(Screen.Budget.route) {
-                com.ssajudn.barebudget.ui.budget.BudgetScreen(
+                BudgetScreen(
                     onNavigateBack = {
                         navController.popBackStack()
                     }
@@ -200,13 +292,13 @@ fun AppNavigation(
             composable(
                 route = Screen.TransactionDetail.route,
                 arguments = listOf(
-                    androidx.navigation.navArgument("transactionId") {
-                        type = androidx.navigation.NavType.StringType
+                    navArgument("transactionId") {
+                        type = NavType.StringType
                     }
                 )
             ) { backStackEntry ->
                 val transactionId = backStackEntry.arguments?.getString("transactionId") ?: ""
-                com.ssajudn.barebudget.ui.transaction.TransactionDetailScreen(
+                TransactionDetailScreen(
                     transactionId = transactionId,
                     onNavigateBack = {
                         navController.popBackStack()

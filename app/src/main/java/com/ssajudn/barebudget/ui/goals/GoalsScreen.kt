@@ -1,5 +1,6 @@
 package com.ssajudn.barebudget.ui.goals
 
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,6 +13,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material.icons.filled.Payments
 import androidx.compose.material.icons.filled.Savings
 import androidx.compose.material3.*
@@ -26,11 +28,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ssajudn.barebudget.data.model.Goal
-import com.ssajudn.barebudget.ui.components.CustomConfirmDeleteDialog
-import com.ssajudn.barebudget.ui.components.CustomDialog
+import com.ssajudn.barebudget.ui.components.AppConfirmDialog
+import com.ssajudn.barebudget.ui.components.AppFormDialog
 import com.ssajudn.barebudget.ui.theme.*
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
+import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
+import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -126,7 +131,7 @@ fun GoalsScreen(
                                 Icon(
                                     imageVector = Icons.Default.Payments,
                                     contentDescription = null,
-                                    tint = PastelMintLight,
+                                    tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(56.dp)
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
@@ -154,7 +159,7 @@ fun GoalsScreen(
                                 .fillMaxSize()
                                 .padding(horizontal = 20.dp),
                             verticalArrangement = Arrangement.spacedBy(14.dp),
-                            contentPadding = PaddingValues(top = 12.dp, bottom = 100.dp)
+                            contentPadding = PaddingValues(top = Spacing.MediumSmall, bottom = Spacing.FabClearance)
                         ) {
                             items(state.goals) { goal ->
                                 GoalCard(
@@ -194,11 +199,11 @@ fun GoalsScreen(
     }
 
     if (goalToDelete != null) {
-        CustomConfirmDeleteDialog(
+        AppConfirmDialog(
             title = "Delete Savings Goal?",
             message = "Are you sure you want to delete '${goalToDelete?.name}'? Your saved progress will be permanently removed.",
             onDismissRequest = { goalToDelete = null },
-            onConfirmDelete = {
+            onConfirm = {
                 goalToDelete?.id?.let { viewModel.deleteGoal(it) }
                 goalToDelete = null
             }
@@ -212,19 +217,30 @@ fun GoalCard(
     onDepositClick: () -> Unit,
     onDeleteClick: () -> Unit
 ) {
+    val haptic = androidx.compose.ui.platform.LocalHapticFeedback.current
     val isCompleted = goal.currentAmount >= goal.targetAmount
     val progressPercentInt = (goal.progressPercentage * 100).toInt()
 
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(20.dp)),
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+    val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
+        targetValue = goal.progressPercentage,
+        animationSpec = spring(
+            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioLowBouncy,
+            stiffness = androidx.compose.animation.core.Spring.StiffnessLow
+        ),
+        label = "goalProgress"
+    )
+
+    ElevatedCard(
+        modifier = Modifier.fillMaxWidth(),
+        shape = AppShapes.LargeIncreased,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = if (isCompleted) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f) else MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
     ) {
         Column(
-            modifier = Modifier.padding(18.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Top Row: Goal Title & Actions
             Row(
@@ -238,10 +254,10 @@ fun GoalCard(
                             .size(12.dp)
                             .clip(CircleShape)
                             .background(
-                                if (isCompleted) PastelMintLight else PastelBlueLight
+                                if (isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary
                             )
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = goal.name,
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
@@ -251,21 +267,26 @@ fun GoalCard(
                         Icon(
                             Icons.Default.CheckCircle,
                             contentDescription = "Achieved",
-                            tint = PastelMintLight,
-                            modifier = Modifier.size(16.dp)
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp)
                         )
                     }
                 }
 
                 IconButton(
-                    onClick = onDeleteClick,
-                    modifier = Modifier.size(24.dp)
+                    onClick = {
+                        haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.LongPress)
+                        onDeleteClick()
+                    },
+                    // 48dp is the minimum accessible touch target. This was 28dp
+                    // on a destructive action.
+                    modifier = Modifier.size(MinTouchTarget)
                 ) {
                     Icon(
-                        Icons.Default.Delete,
-                        contentDescription = "Delete",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
-                        modifier = Modifier.size(18.dp)
+                        Icons.Default.DeleteOutline,
+                        contentDescription = "Hapus target",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
@@ -279,14 +300,14 @@ fun GoalCard(
                 Column {
                     Text(
                         text = "Terkumpul",
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = CurrencyFormatter.formatRupiah(goal.currentAmount),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold,
-                            color = if (isCompleted) PastelMintLight else MaterialTheme.colorScheme.primary
+                            color = if (isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     )
                 }
@@ -294,7 +315,7 @@ fun GoalCard(
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
                         text = "Target: ${CurrencyFormatter.formatRupiah(goal.targetAmount)}",
-                        style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
+                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (!goal.targetDate.isNullOrBlank()) {
@@ -307,15 +328,15 @@ fun GoalCard(
                 }
             }
 
-            // Progress Bar
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            // Smooth Animated Progress Bar
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 LinearProgressIndicator(
-                    progress = { goal.progressPercentage },
+                    progress = { animatedProgress },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(10.dp)
-                        .clip(RoundedCornerShape(5.dp)),
-                    color = if (isCompleted) PastelMintLight else PastelBlueLight,
+                        .clip(MaterialTheme.shapes.extraSmall),
+                    color = if (isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.tertiary,
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
 
@@ -326,7 +347,7 @@ fun GoalCard(
                     Text(
                         text = if (isCompleted) "🎉 Target Tercapai!" else "Kurang ${CurrencyFormatter.formatRupiah(goal.remainingAmount)}",
                         style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = if (isCompleted) PastelMintLight else MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isCompleted) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Text(
                         text = "$progressPercentInt%",
@@ -336,15 +357,18 @@ fun GoalCard(
                 }
             }
 
-            // Quick Deposit Button
-            OutlinedButton(
-                onClick = onDepositClick,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+            // Quick Deposit/Withdraw Button
+            FilledTonalButton(
+                onClick = {
+                    haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
+                    onDepositClick()
+                },
+                shape = MaterialTheme.shapes.medium,
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(6.dp))
-                Text("Setor / Tarik Tabungan", fontWeight = FontWeight.SemiBold)
+                Text("Setor / Tarik Tabungan", style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold))
             }
         }
     }
@@ -360,13 +384,25 @@ fun AddGoalDialog(
     var targetDate by remember { mutableStateOf("") }
     var notes by remember { mutableStateOf("") }
 
+    var showDatePicker by remember { mutableStateOf(false) }
+
     val amount = rawAmount.toLongOrNull() ?: 0L
     val isValid = name.isNotBlank() && amount > 0
 
-    CustomDialog(
+    if (showDatePicker) {
+        AppDatePickerDialog(
+            initialDateMillis = if (targetDate.isNotBlank()) DateUtils.parseIsoToMillis(targetDate) else null,
+            onDateSelected = { millis ->
+                targetDate = DateUtils.formatMillisToIso(millis)
+            },
+            onDismiss = { showDatePicker = false }
+        )
+    }
+
+    AppFormDialog(
         title = "New Savings Goal",
         icon = Icons.Default.Payments,
-        iconTint = PastelMintLight,
+        iconTint = MaterialTheme.colorScheme.primary,
         confirmButtonText = "Create Goal",
         isConfirmEnabled = isValid,
         onDismissRequest = onDismiss,
@@ -382,7 +418,7 @@ fun AddGoalDialog(
             label = { Text("Goal Name") },
             placeholder = { Text("e.g. Dana Darurat, Liburan Bali") },
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -395,25 +431,32 @@ fun AddGoalDialog(
             },
             label = { Text("Target Amount") },
             placeholder = { Text("Rp 0") },
-            visualTransformation = com.ssajudn.barebudget.utils.CurrencyVisualTransformation(),
+            visualTransformation = CurrencyVisualTransformation(),
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                 keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
             ),
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
-            value = targetDate,
-            onValueChange = { targetDate = it },
-            label = { Text("Target Date (Optional: YYYY-MM-DD)") },
-            placeholder = { Text("2026-12-31") },
+            value = if (targetDate.isNotBlank()) DateUtils.formatDisplayDate(targetDate) else "",
+            onValueChange = { },
+            label = { Text("Target Date (Optional)") },
+            placeholder = { Text("Pilih tanggal (opsional)") },
+            readOnly = true,
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
-            modifier = Modifier.fillMaxWidth()
+            shape = MaterialTheme.shapes.medium,
+            modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
+            enabled = false,
+            colors = OutlinedTextFieldDefaults.colors(
+                disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                disabledBorderColor = MaterialTheme.colorScheme.outline,
+                disabledLabelColor = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         )
     }
 }
@@ -430,12 +473,12 @@ fun DepositGoalDialog(
     val amount = rawAmount.toLongOrNull() ?: 0L
     val isValid = amount > 0
 
-    CustomDialog(
+    AppFormDialog(
         title = if (isWithdraw) "Tarik Tabungan" else "Setor Tabungan",
         icon = if (isWithdraw) Icons.Default.Payments else Icons.Default.Savings,
-        iconTint = if (isWithdraw) PastelCoralLight else PastelMintLight,
+        iconTint = if (isWithdraw) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
         confirmButtonText = if (isWithdraw) "Tarik Dana" else "Setor Sekarang",
-        confirmButtonColor = if (isWithdraw) PastelCoralLight else MaterialTheme.colorScheme.primary,
+        confirmButtonContainerColor = if (isWithdraw) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
         isConfirmEnabled = isValid,
         onDismissRequest = onDismiss,
         onConfirm = {
@@ -472,12 +515,12 @@ fun DepositGoalDialog(
             },
             label = { Text("Nominal") },
             placeholder = { Text("Rp 0") },
-            visualTransformation = com.ssajudn.barebudget.utils.CurrencyVisualTransformation(),
+            visualTransformation = CurrencyVisualTransformation(),
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                 keyboardType = androidx.compose.ui.text.input.KeyboardType.Number
             ),
             singleLine = true,
-            shape = RoundedCornerShape(14.dp),
+            shape = MaterialTheme.shapes.medium,
             modifier = Modifier.fillMaxWidth()
         )
     }

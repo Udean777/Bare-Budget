@@ -26,7 +26,7 @@ import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ssajudn.barebudget.data.model.TransactionCategory
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
-import com.ssajudn.barebudget.ui.components.getCategoryPastelColor
+import com.ssajudn.barebudget.ui.theme.categoryColors
 import com.ssajudn.barebudget.ui.theme.*
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 
@@ -133,14 +133,17 @@ fun AnalyticsContent(state: AnalyticsUiState.Success) {
             .fillMaxSize()
             .padding(horizontal = 20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(top = 8.dp, bottom = 100.dp)
+        contentPadding = PaddingValues(top = Spacing.Small, bottom = Spacing.FabClearance)
     ) {
         // 1. SAVAGE STREAK BANNER (Gamification Badge)
         item {
-            Surface(
+            ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(20.dp),
-                color = PastelMintLightBg
+                shape = AppShapes.LargeIncreased,
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                ),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
             ) {
                 Row(
                     modifier = Modifier.padding(18.dp),
@@ -149,14 +152,14 @@ fun AnalyticsContent(state: AnalyticsUiState.Success) {
                     Box(
                         modifier = Modifier
                             .size(48.dp)
-                            .clip(RoundedCornerShape(14.dp))
-                            .background(PastelMintLight.copy(alpha = 0.25f)),
+                            .clip(MaterialTheme.shapes.medium)
+                            .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.LocalFireDepartment,
                             contentDescription = null,
-                            tint = PastelMintLight,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(28.dp)
                         )
                     }
@@ -165,17 +168,17 @@ fun AnalyticsContent(state: AnalyticsUiState.Success) {
 
                     Column {
                         Text(
-                            text = "${state.savageStreakDays} Days Savage Streak!",
+                            text = "${state.savageStreakDays} Hari Savage Streak!",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         )
                         Spacer(modifier = Modifier.height(2.dp))
                         Text(
-                            text = "Disciplined spending on F&B & entertainment.",
+                            text = "Pengeluaran disiplin & terkendali.",
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                         )
                     }
                 }
@@ -184,24 +187,28 @@ fun AnalyticsContent(state: AnalyticsUiState.Success) {
 
         // 2. HIGHEST SPENDING CATEGORY HIGHLIGHT
         item {
-            Surface(
+            ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(18.dp),
-                color = MaterialTheme.colorScheme.surface,
-                border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+                shape = AppShapes.LargeIncreased,
+                colors = CardDefaults.elevatedCardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
             ) {
                 Column(modifier = Modifier.padding(18.dp)) {
                     Text(
-                        text = "Biggest Money Drain",
-                        style = MaterialTheme.typography.labelLarge,
+                        text = "Pengeluaran Terbesar",
+                        style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Spacer(modifier = Modifier.height(8.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
 
                     if (state.topSpendingCategory != null) {
                         val topCat = state.topSpendingCategory
-                        val color = getCategoryPastelColor(topCat.category)
+                        val catColors = categoryColors
+                        val container = catColors.container(topCat.category)
+                        val onContainer = catColors.onContainer(topCat.category)
 
                         Row(
                             modifier = Modifier.fillMaxWidth(),
@@ -211,16 +218,16 @@ fun AnalyticsContent(state: AnalyticsUiState.Success) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Box(
                                     modifier = Modifier
-                                        .size(36.dp)
-                                        .clip(RoundedCornerShape(10.dp))
-                                        .background(color.copy(alpha = 0.2f)),
+                                        .size(40.dp)
+                                        .clip(MaterialTheme.shapes.medium)
+                                        .background(container),
                                     contentAlignment = Alignment.Center
                                 ) {
                                     Icon(
                                         imageVector = getCategoryIcon(topCat.category),
                                         contentDescription = null,
-                                        tint = color,
-                                        modifier = Modifier.size(20.dp)
+                                        tint = onContainer,
+                                        modifier = Modifier.size(22.dp)
                                     )
                                 }
                                 Spacer(modifier = Modifier.width(12.dp))
@@ -233,8 +240,8 @@ fun AnalyticsContent(state: AnalyticsUiState.Success) {
                                         color = MaterialTheme.colorScheme.onSurface
                                     )
                                     Text(
-                                        text = "${(topCat.percentage * 100).toInt()}% of total expenses",
-                                        style = MaterialTheme.typography.bodyMedium,
+                                        text = "${(topCat.percentage * 100).toInt()}% dari total pengeluaran",
+                                        style = MaterialTheme.typography.bodySmall,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
@@ -245,12 +252,12 @@ fun AnalyticsContent(state: AnalyticsUiState.Success) {
                                 style = MaterialTheme.typography.titleMedium.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
-                                color = PastelCoralLight
+                                color = MaterialTheme.colorScheme.error
                             )
                         }
                     } else {
                         Text(
-                            text = "No expenses recorded this month.",
+                            text = "Belum ada pengeluaran di bulan ini.",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -274,7 +281,7 @@ fun AnalyticsContent(state: AnalyticsUiState.Success) {
             item {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = MaterialTheme.shapes.large,
                     color = MaterialTheme.colorScheme.surfaceVariant
                 ) {
                     Box(
@@ -301,14 +308,19 @@ fun AnalyticsContent(state: AnalyticsUiState.Success) {
 
 @Composable
 fun CategoryBreakdownRow(item: CategoryBreakdownItem) {
-    val categoryColor = getCategoryPastelColor(item.category)
+    val catColors = categoryColors
+    val accent = catColors.accent(item.category)
+    val container = catColors.container(item.category)
+    val onContainer = catColors.onContainer(item.category)
     val percentageInt = (item.percentage * 100).toInt()
 
-    Surface(
+    ElevatedCard(
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline)
+        shape = MaterialTheme.shapes.large,
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
     ) {
         Column(
             modifier = Modifier.padding(16.dp),
@@ -322,15 +334,15 @@ fun CategoryBreakdownRow(item: CategoryBreakdownItem) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(
                         modifier = Modifier
-                            .size(32.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(categoryColor.copy(alpha = 0.2f)),
+                            .size(34.dp)
+                            .clip(MaterialTheme.shapes.small)
+                            .background(container),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = getCategoryIcon(item.category),
                             contentDescription = null,
-                            tint = categoryColor,
+                            tint = onContainer,
                             modifier = Modifier.size(18.dp)
                         )
                     }
@@ -353,21 +365,21 @@ fun CategoryBreakdownRow(item: CategoryBreakdownItem) {
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "$percentageInt% (${item.transactionCount} tx)",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "$percentageInt% (${item.transactionCount} transaksi)",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
             }
 
-            // Flat Progress Bar per Category
+            // M3 Category Progress Bar
             LinearProgressIndicator(
                 progress = { item.percentage.coerceIn(0f, 1f) },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(6.dp)
-                    .clip(RoundedCornerShape(3.dp)),
-                color = categoryColor,
+                    .clip(MaterialTheme.shapes.extraSmall),
+                color = accent,
                 trackColor = MaterialTheme.colorScheme.surfaceVariant
             )
         }

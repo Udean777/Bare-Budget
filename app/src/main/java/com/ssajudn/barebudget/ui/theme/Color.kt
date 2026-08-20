@@ -1,37 +1,109 @@
 package com.ssajudn.barebudget.ui.theme
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import com.ssajudn.barebudget.data.model.TransactionCategory
 
-// Light Mode Pastel Colors
-val PastelMintLight = Color(0xFF62A87C)       // Primary Mint Green (Soft & Refreshing)
-val PastelMintLightBg = Color(0xFFE8F5E9)     // Mint Container
-val PastelCoralLight = Color(0xFFE57373)      // Danger / Deficit (Soft Coral Red)
-val PastelCoralLightBg = Color(0xFFFFEBEE)    // Coral Container
-val PastelYellowLight = Color(0xFFFFB74D)     // Warning / PayLater (Soft Ochre)
-val PastelYellowLightBg = Color(0xFFFFF8E1)   // Soft Ochre / Yellow Container
-val PastelBlueLight = Color(0xFF64B5F6)       // Info / Social (Soft Sky Blue)
-val PastelLavenderLight = Color(0xFF9575CD)   // Accent / Entertainment (Soft Lavender)
+@Immutable
+class CategoryColors internal constructor(
+    private val accentSet: CategoryColorSet,
+    private val containerSet: CategoryColorSet,
+    private val onContainerSet: CategoryColorSet,
+) {
+    fun accent(category: TransactionCategory): Color = accentSet.pick(category)
+    fun container(category: TransactionCategory): Color = containerSet.pick(category)
+    fun onContainer(category: TransactionCategory): Color = onContainerSet.pick(category)
+}
 
-val LightBackground = Color(0xFFFBFBFC)       // Off-white / Cream clean surface
-val LightSurface = Color(0xFFFFFFFF)          // Pure White Card Surface
-val LightSurfaceVariant = Color(0xFFF1F3F5)   // Subtle gray container
-val LightTextPrimary = Color(0xFF1E232A)      // Deep Charcoal
-val LightTextSecondary = Color(0xFF6C757D)    // Muted Slate Gray
-val LightOutline = Color(0xFFE2E8F0)          // Soft border
+private fun CategoryColorSet.pick(category: TransactionCategory): Color = when (category) {
+    TransactionCategory.FOOD -> food
+    TransactionCategory.TRANSPORT -> transport
+    TransactionCategory.BILLS -> bills
+    TransactionCategory.SHOPPING -> shopping
+    TransactionCategory.ENTERTAINMENT -> entertainment
+    TransactionCategory.SOCIAL -> social
+    TransactionCategory.OTHER -> other
+}
 
-// Dark Mode Pastel Colors
-val PastelMintDark = Color(0xFF81C784)        // Softer Luminous Pastel Mint
-val PastelMintDarkBg = Color(0xFF1B2E24)      // Deep Mint Container
-val PastelCoralDark = Color(0xFFEF9A9A)       // Softer Coral Red
-val PastelCoralDarkBg = Color(0xFF3B1E22)     // Deep Coral Container
-val PastelYellowDark = Color(0xFFFFCC80)      // Soft Ochre / Orange
-val PastelYellowDarkBg = Color(0xFF3E2723)    // Dark Yellow/Amber Container
-val PastelBlueDark = Color(0xFF90CAF9)        // Soft Pastel Blue
-val PastelLavenderDark = Color(0xFFB39DDB)    // Soft Lavender Dark
+internal data class CategoryColorSet(
+    val food: Color,
+    val transport: Color,
+    val bills: Color,
+    val shopping: Color,
+    val entertainment: Color,
+    val social: Color,
+    val other: Color,
+)
 
-val DarkBackground = Color(0xFF121417)        // Deep Midnight Charcoal (Soft dark, not pitch black)
-val DarkSurface = Color(0xFF1A1D23)           // Card Surface Dark
-val DarkSurfaceVariant = Color(0xFF242830)    // Element Container Dark
-val DarkTextPrimary = Color(0xFFF3F4F6)       // Soft White
-val DarkTextSecondary = Color(0xFF9CA3AF)     // Muted Gray
-val DarkOutline = Color(0xFF2E3440)           // Dark Slate Border
+// Adapted to blend with the Red theme. 
+internal val LightCategoryAccent = CategoryColorSet(
+    food = Color(0xFFC0392B),
+    transport = Color(0xFF2980B9),
+    bills = Color(0xFFD35400),
+    shopping = Color(0xFF27AE60),
+    entertainment = Color(0xFF8E44AD),
+    social = Color(0xFF16A085),
+    other = Color(0xFF7F8C8D),
+)
+
+internal val DarkCategoryAccent = CategoryColorSet(
+    food = Color(0xFFE74C3C),
+    transport = Color(0xFF3498DB),
+    bills = Color(0xFFE67E22),
+    shopping = Color(0xFF2ECC71),
+    entertainment = Color(0xFF9B59B6),
+    social = Color(0xFF1ABC9C),
+    other = Color(0xFFBDC3C7),
+)
+
+internal val LightCategoryContainer = CategoryColorSet(
+    food = Color(0xFFFADBD8),
+    transport = Color(0xFFD4E6F1),
+    bills = Color(0xFFF5CBA7),
+    shopping = Color(0xFFD5F5E3),
+    entertainment = Color(0xFFEBDEF0),
+    social = Color(0xFFD1F2EB),
+    other = Color(0xFFE5E7E9),
+)
+
+internal val DarkCategoryContainer = CategoryColorSet(
+    food = Color(0xFF7B241C),
+    transport = Color(0xFF1A5276),
+    bills = Color(0xFF873600),
+    shopping = Color(0xFF186A3B),
+    entertainment = Color(0xFF512E5F),
+    social = Color(0xFF0E6251),
+    other = Color(0xFF515A5A),
+)
+
+internal val LightCategoryOnContainer = CategoryColorSet(
+    food = Color(0xFF641E16),
+    transport = Color(0xFF154360),
+    bills = Color(0xFF6E2C00),
+    shopping = Color(0xFF145A32),
+    entertainment = Color(0xFF4A235A),
+    social = Color(0xFF0B5345),
+    other = Color(0xFF424949),
+)
+
+internal val DarkCategoryOnContainer = CategoryColorSet(
+    food = Color(0xFFFADBD8),
+    transport = Color(0xFFD4E6F1),
+    bills = Color(0xFFF5CBA7),
+    shopping = Color(0xFFD5F5E3),
+    entertainment = Color(0xFFEBDEF0),
+    social = Color(0xFFD1F2EB),
+    other = Color(0xFFE5E7E9),
+)
+
+internal val LightCategoryColors = CategoryColors(
+    accentSet = LightCategoryAccent,
+    containerSet = LightCategoryContainer,
+    onContainerSet = LightCategoryOnContainer,
+)
+
+internal val DarkCategoryColors = CategoryColors(
+    accentSet = DarkCategoryAccent,
+    containerSet = DarkCategoryContainer,
+    onContainerSet = DarkCategoryOnContainer,
+)

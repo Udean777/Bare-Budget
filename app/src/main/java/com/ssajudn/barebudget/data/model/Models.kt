@@ -72,6 +72,7 @@ data class DueBill(
     @SerializedName("id") val id: String? = null,
     @SerializedName("user_id") val userId: String? = null,
     @SerializedName("provider_name") val providerName: String,
+    @SerializedName("provider_icon_url") val providerIconUrl: String? = null,
     @SerializedName("total_amount") val totalAmount: Long,
     @SerializedName("due_date") val dueDate: String,
     @SerializedName("status") val status: DueBillStatus = DueBillStatus.UNPAID,
@@ -83,6 +84,7 @@ data class DueBill(
 
 data class CreateDueBillRequest(
     @SerializedName("provider_name") val providerName: String,
+    @SerializedName("provider_icon_url") val providerIconUrl: String? = null,
     @SerializedName("total_amount") val totalAmount: Long,
     @SerializedName("due_date") val dueDate: String,
     @SerializedName("is_recurring") val isRecurring: Boolean = false,

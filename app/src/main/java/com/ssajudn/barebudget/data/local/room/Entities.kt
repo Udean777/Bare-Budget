@@ -56,6 +56,7 @@ data class LocalTransactionEntity(
 data class LocalDueBillEntity(
     @PrimaryKey val id: String,
     val providerName: String,
+    val providerIconUrl: String?,
     val totalAmount: Long,
     val dueDate: String,
     val status: String,
@@ -78,6 +79,7 @@ data class LocalDueBillEntity(
         return DueBill(
             id = id,
             providerName = providerName,
+            providerIconUrl = providerIconUrl,
             totalAmount = totalAmount,
             dueDate = dueDate,
             status = s,
@@ -92,6 +94,7 @@ data class LocalDueBillEntity(
             return LocalDueBillEntity(
                 id = bill.id ?: UUID.randomUUID().toString(),
                 providerName = bill.providerName,
+                providerIconUrl = bill.providerIconUrl,
                 totalAmount = bill.totalAmount,
                 dueDate = bill.dueDate,
                 status = bill.status.name,

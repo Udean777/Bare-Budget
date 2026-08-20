@@ -56,6 +56,7 @@ class DueBillsViewModel(
 
     fun addDueBill(
         providerName: String,
+        providerIconUrl: String?,
         totalAmount: Long,
         dueDate: String,
         isRecurring: Boolean = false,
@@ -65,6 +66,7 @@ class DueBillsViewModel(
         viewModelScope.launch {
             val request = CreateDueBillRequest(
                 providerName = providerName,
+                providerIconUrl = providerIconUrl,
                 totalAmount = totalAmount,
                 dueDate = dueDate,
                 isRecurring = isRecurring,

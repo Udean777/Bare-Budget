@@ -13,6 +13,13 @@ interface ApiService {
     @POST("api/v1/budget")
     suspend fun setBudget(@Body request: SetBudgetRequest): Response<Map<String, String>>
 
+    // Analytics
+    @GET("api/v1/analytics/cashflow")
+    suspend fun getCashflowAnalytics(): Response<CashflowResponse>
+
+    @GET("api/v1/analytics/networth")
+    suspend fun getNetWorthAnalytics(): Response<NetWorthResponse>
+
     // Wallets
     @GET("api/v1/wallets")
     suspend fun getWallets(): Response<List<Wallet>>

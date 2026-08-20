@@ -42,7 +42,9 @@ fun DueBillsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val wallets by viewModel.wallets.collectAsState()
     var showAddDialog by remember { mutableStateOf(false) }
+    var payingBill by remember { mutableStateOf<DueBill?>(null) }
 
     Scaffold(
         topBar = {
@@ -153,7 +155,13 @@ fun DueBillsScreen(
                             items(state.bills) { bill ->
                                 DueBillItem(
                                     bill = bill,
-                                    onToggleStatus = { viewModel.toggleBillStatus(bill) }
+                                    onToggleStatus = {
+                                        if (bill.status == DueBillStatus.UNPAID) {
+                                            payingBill = bill
+                                        } else {
+                                            viewModel.markBillAsUnpaid(bill)
+                                        }
+                                    }
                                 )
                             }
                         }
@@ -169,6 +177,19 @@ fun DueBillsScreen(
             onConfirm = { provider, iconUrl, amount, dueDate, isRecurring, interval, notes ->
                 viewModel.addDueBill(provider, iconUrl, amount, dueDate, isRecurring, interval, notes)
                 showAddDialog = false
+            }
+        )
+    }
+
+    if (payingBill != null) {
+        val billToPay = payingBill!!
+        PayDueBillDialog(
+            bill = billToPay,
+            wallets = wallets,
+            onDismiss = { payingBill = null },
+            onConfirm = { walletId ->
+                viewModel.payBill(billToPay, walletId)
+                payingBill = null
             }
         )
     }
@@ -502,5 +523,120 @@ fun AddDueBillDialog(
                 }
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PayDueBillDialog(
+    bill: DueBill,
+    wallets: List<com.ssajudn.barebudget.data.model.Wallet>,
+    onDismiss: () -> Unit,
+    onConfirm: (walletId: String) -> Unit
+) {
+    var selectedWallet by remember(wallets) { mutableStateOf(wallets.firstOrNull()) }
+    var walletDropdownExpanded by remember { mutableStateOf(false) }
+
+    AppFormDialog(
+        title = "Bayar Tagihan",
+        icon = Icons.Default.AccountBalanceWallet,
+        iconTint = MaterialTheme.colorScheme.primary,
+        confirmButtonText = "Bayar Sekarang",
+        isConfirmEnabled = selectedWallet?.id != null,
+        onDismissRequest = onDismiss,
+        onConfirm = {
+            selectedWallet?.id?.let { onConfirm(it) }
+        }
+    ) {
+        // Bill Info Card
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = MaterialTheme.shapes.medium,
+            color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = bill.providerName,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = CurrencyFormatter.formatRupiah(bill.totalAmount),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Text(
+                    text = "Jatuh tempo: ${DateUtils.formatDisplayDate(bill.dueDate)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Text(
+            text = "Pilih Sumber Dompet",
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurface
+        )
+
+        ExposedDropdownMenuBox(
+            expanded = walletDropdownExpanded,
+            onExpandedChange = { walletDropdownExpanded = !walletDropdownExpanded },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            val selectedWalletText = selectedWallet?.let { "${it.name} (${CurrencyFormatter.formatRupiah(it.balance)})" } ?: "Pilih Dompet"
+            OutlinedTextField(
+                value = selectedWalletText,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Dompet") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = walletDropdownExpanded) },
+                modifier = Modifier.menuAnchor().fillMaxWidth(),
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+            )
+            ExposedDropdownMenu(
+                expanded = walletDropdownExpanded,
+                onDismissRequest = { walletDropdownExpanded = false }
+            ) {
+                wallets.forEach { wallet ->
+                    DropdownMenuItem(
+                        text = {
+                            Column {
+                                Text(
+                                    text = wallet.name,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Saldo: ${CurrencyFormatter.formatRupiah(wallet.balance)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        },
+                        onClick = {
+                            selectedWallet = wallet
+                            walletDropdownExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = "💡 Saldo dompet akan otomatis terpotong dan dicatat sebagai pengeluaran.",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }

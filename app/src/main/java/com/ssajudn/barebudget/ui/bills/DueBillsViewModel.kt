@@ -28,8 +28,20 @@ class DueBillsViewModel(
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    private val _wallets = MutableStateFlow<List<com.ssajudn.barebudget.data.model.Wallet>>(emptyList())
+    val wallets: StateFlow<List<com.ssajudn.barebudget.data.model.Wallet>> = _wallets.asStateFlow()
+
     init {
         loadDueBills()
+        loadWallets()
+    }
+
+    fun loadWallets() {
+        viewModelScope.launch {
+            repository.getWallets().onSuccess {
+                _wallets.value = it
+            }
+        }
     }
 
     fun loadDueBills(isPullToRefresh: Boolean = false) {
@@ -39,6 +51,8 @@ class DueBillsViewModel(
             } else if (_uiState.value !is DueBillsUiState.Success) {
                 _uiState.value = DueBillsUiState.Loading
             }
+
+            loadWallets()
 
             repository.getDueBills()
                 .onSuccess { bills ->
@@ -80,14 +94,13 @@ class DueBillsViewModel(
         }
     }
 
-    fun toggleBillStatus(bill: DueBill) {
-        val nextStatus = if (bill.status == DueBillStatus.UNPAID) DueBillStatus.PAID else DueBillStatus.UNPAID
+    fun payBill(bill: DueBill, walletId: String) {
         viewModelScope.launch {
             if (bill.id != null) {
-                repository.updateDueBillStatus(bill.id, nextStatus)
+                repository.updateDueBillStatus(bill.id, DueBillStatus.PAID, walletId)
                     .onSuccess {
                         // Auto-rollover: If marked as PAID and it's a recurring bill, create the next period's bill automatically
-                        if (nextStatus == DueBillStatus.PAID && bill.isRecurring && bill.recurringInterval != com.ssajudn.barebudget.data.model.RecurringInterval.NONE) {
+                        if (bill.isRecurring && bill.recurringInterval != com.ssajudn.barebudget.data.model.RecurringInterval.NONE) {
                             val nextDueDate = DateUtils.calculateNextDueDate(bill.dueDate, bill.recurringInterval.name)
                             val nextBillRequest = CreateDueBillRequest(
                                 providerName = bill.providerName,
@@ -100,8 +113,28 @@ class DueBillsViewModel(
                             repository.createDueBill(nextBillRequest)
                         }
                         loadDueBills()
+                        loadWallets()
                     }
             }
+        }
+    }
+
+    fun markBillAsUnpaid(bill: DueBill) {
+        viewModelScope.launch {
+            if (bill.id != null) {
+                repository.updateDueBillStatus(bill.id, DueBillStatus.UNPAID)
+                    .onSuccess {
+                        loadDueBills()
+                    }
+            }
+        }
+    }
+
+    fun toggleBillStatus(bill: DueBill, walletId: String? = null) {
+        if (bill.status == DueBillStatus.UNPAID && walletId != null) {
+            payBill(bill, walletId)
+        } else if (bill.status == DueBillStatus.PAID) {
+            markBillAsUnpaid(bill)
         }
     }
 

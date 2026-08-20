@@ -67,6 +67,10 @@ func main() {
 	api.Get("/dashboard/summary", h.GetDashboardSummary)
 	api.Post("/budget", h.SetBudget)
 
+	// Analytics
+	api.Get("/analytics/cashflow", h.GetCashflowAnalytics)
+	api.Get("/analytics/networth", h.GetNetWorthAnalytics)
+
 	// Transactions
 	// Wallets
 	api.Get("/wallets", h.GetWallets)

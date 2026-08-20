@@ -227,13 +227,14 @@ func (h *Handler) UpdateDueBillStatus(c *fiber.Ctx) error {
 	}
 
 	var req struct {
-		Status models.DueBillStatus `json:"status"`
+		Status   models.DueBillStatus `json:"status"`
+		WalletID *string              `json:"wallet_id"`
 	}
 	if err := c.BodyParser(&req); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
 	}
 
-	if err := h.svc.UpdateDueBillStatus(userID, id, req.Status); err != nil {
+	if err := h.svc.UpdateDueBillStatus(userID, id, req.Status, req.WalletID); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 
@@ -447,4 +448,23 @@ func (h *Handler) DeleteWallet(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 	return c.JSON(fiber.Map{"success": true})
+}
+
+// Analytics Handlers
+func (h *Handler) GetCashflowAnalytics(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	data, err := h.svc.GetCashflowAnalytics(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"data": data})
+}
+
+func (h *Handler) GetNetWorthAnalytics(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	data, err := h.svc.GetNetWorthAnalytics(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"data": data})
 }

@@ -47,7 +47,11 @@ class BudgetRepository(
 
                 // Only count EXPENSE for total spent
                 val expensesTx = currentMonthTx.filter {
-                    val t = try { com.ssajudn.barebudget.data.model.TransactionType.valueOf(it.type) } catch(e: Exception) { com.ssajudn.barebudget.data.model.TransactionType.EXPENSE }
+                    val t = try {
+                        com.ssajudn.barebudget.data.model.TransactionType.valueOf(it.type)
+                    } catch (e: Exception) {
+                        com.ssajudn.barebudget.data.model.TransactionType.EXPENSE
+                    }
                     t == com.ssajudn.barebudget.data.model.TransactionType.EXPENSE
                 }
                 val totalSpent = expensesTx.sumOf { it.amount }
@@ -66,7 +70,8 @@ class BudgetRepository(
                     runwayMsg = "Monthly budget not set yet. Tap here to set your target budget."
                 } else if (remainingBudget <= 0) {
                     estimatedDeathDay = daysPassed
-                    runwayMsg = "CRITICAL: You have exhausted your budget for this month! Stop all non-essential spending."
+                    runwayMsg =
+                        "CRITICAL: You have exhausted your budget for this month! Stop all non-essential spending."
                 } else if (avgDaily <= 0) {
                     estimatedDeathDay = daysInMonth
                     runwayMsg = "GREAT: No expenses recorded yet this month. Keep it up!"
@@ -76,7 +81,8 @@ class BudgetRepository(
                     estimatedDeathDay = calculatedDeathDay.coerceAtMost(daysInMonth)
 
                     if (calculatedDeathDay < daysInMonth) {
-                        runwayMsg = "WARNING: At your current burn rate, your money runs out on day $calculatedDeathDay ($daysRemainingFromRunway days left)!"
+                        runwayMsg =
+                            "WARNING: At your current burn rate, your money runs out on day $calculatedDeathDay ($daysRemainingFromRunway days left)!"
                     } else {
                         runwayMsg = "HEALTHY: Your financial runway is safe until the end of the month."
                     }
@@ -85,7 +91,11 @@ class BudgetRepository(
                 // Category breakdown
                 val catMap = currentMonthTx.groupBy { it.category }
                 val topCategories = catMap.map { (catStr, list) ->
-                    val cat = try { TransactionCategory.valueOf(catStr) } catch (e: Exception) { TransactionCategory.OTHER }
+                    val cat = try {
+                        TransactionCategory.valueOf(catStr)
+                    } catch (e: Exception) {
+                        TransactionCategory.OTHER
+                    }
                     CategorySummary(
                         category = cat,
                         total = list.sumOf { it.amount },
@@ -163,99 +173,106 @@ class BudgetRepository(
     // ==========================================
     // 3. TRANSACTIONS
     // ==========================================
-    suspend fun getTransactions(category: String? = null, page: Int = 1, limit: Int = 50): Result<List<Transaction>> = withContext(Dispatchers.IO) {
-        try {
-            if (isGuest) {
-                val entities = if (category.isNullOrBlank()) {
-                    db.transactionDao().getAllTransactions()
-                } else {
-                    db.transactionDao().getTransactionsByCategory(category)
-                }
-                Result.success(entities.map { it.toTransaction() })
-            } else {
-                val response = api.getTransactions(category = category, page = page, limit = limit)
-                if (response.isSuccessful && response.body() != null) {
-                    val list = response.body()!!.data
-                    // Cache to local Room
-                    db.transactionDao().insertTransactions(list.map { LocalTransactionEntity.fromTransaction(it, true) })
-                    Result.success(list)
-                } else {
-                    // Offline fallback from Room Cache
-                    val entities = db.transactionDao().getAllTransactions()
-                    if (entities.isNotEmpty()) {
-                        Result.success(entities.map { it.toTransaction() })
+    suspend fun getTransactions(category: String? = null, page: Int = 1, limit: Int = 50): Result<List<Transaction>> =
+        withContext(Dispatchers.IO) {
+            try {
+                if (isGuest) {
+                    val entities = if (category.isNullOrBlank()) {
+                        db.transactionDao().getAllTransactions()
                     } else {
-                        Result.failure(Exception(response.errorBody()?.string() ?: "Failed to fetch transactions"))
+                        db.transactionDao().getTransactionsByCategory(category)
+                    }
+                    Result.success(entities.map { it.toTransaction() })
+                } else {
+                    val response = api.getTransactions(category = category, page = page, limit = limit)
+                    if (response.isSuccessful && response.body() != null) {
+                        val list = response.body()!!.data
+                        // Cache to local Room
+                        db.transactionDao()
+                            .insertTransactions(list.map { LocalTransactionEntity.fromTransaction(it, true) })
+                        Result.success(list)
+                    } else {
+                        // Offline fallback from Room Cache
+                        val entities = db.transactionDao().getAllTransactions()
+                        if (entities.isNotEmpty()) {
+                            Result.success(entities.map { it.toTransaction() })
+                        } else {
+                            Result.failure(Exception(response.errorBody()?.string() ?: "Failed to fetch transactions"))
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                // Local fallback
+                val entities = db.transactionDao().getAllTransactions()
+                if (entities.isNotEmpty()) {
+                    Result.success(entities.map { it.toTransaction() })
+                } else {
+                    Result.failure(e)
+                }
             }
-        } catch (e: Exception) {
-            // Local fallback
-            val entities = db.transactionDao().getAllTransactions()
-            if (entities.isNotEmpty()) {
-                Result.success(entities.map { it.toTransaction() })
-            } else {
+        }
+
+    suspend fun createTransaction(request: CreateTransactionRequest): Result<Transaction> =
+        withContext(Dispatchers.IO) {
+            try {
+                val dateStr = request.date.ifBlank {
+                    SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
+                }
+                val newTx = Transaction(
+                    id = UUID.randomUUID().toString(),
+                    amount = request.amount,
+                    type = request.type,
+                    category = request.category,
+                    merchant = request.merchant,
+                    date = dateStr,
+                    notes = request.notes,
+                    receiptUrl = request.receiptUrl,
+                    walletId = request.walletId
+                )
+
+                // Adjust local wallet balance if provided
+                if (request.walletId != null) {
+                    val amountAdj =
+                        if (request.type == com.ssajudn.barebudget.data.model.TransactionType.INCOME) request.amount else -request.amount
+                    db.walletDao().updateBalance(request.walletId, amountAdj)
+                }
+
+                if (isGuest) {
+                    db.transactionDao().insertTransaction(
+                        LocalTransactionEntity.fromTransaction(newTx, isSynced = false)
+                    )
+                    Result.success(newTx)
+                } else {
+                    val response = api.createTransaction(request)
+                    if (response.isSuccessful && response.body() != null) {
+                        val created = response.body()!!
+                        db.transactionDao()
+                            .insertTransaction(LocalTransactionEntity.fromTransaction(created, isSynced = true))
+                        Result.success(created)
+                    } else {
+                        // Save offline to Room with isSynced = false
+                        db.transactionDao()
+                            .insertTransaction(LocalTransactionEntity.fromTransaction(newTx, isSynced = false))
+                        Result.success(newTx)
+                    }
+                }
+            } catch (e: Exception) {
                 Result.failure(e)
             }
         }
-    }
-
-    suspend fun createTransaction(request: CreateTransactionRequest): Result<Transaction> = withContext(Dispatchers.IO) {
-        try {
-            val dateStr = request.date.ifBlank {
-                SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date())
-            }
-            val newTx = Transaction(
-                id = UUID.randomUUID().toString(),
-                amount = request.amount,
-                type = request.type,
-                category = request.category,
-                merchant = request.merchant,
-                date = dateStr,
-                notes = request.notes,
-                receiptUrl = request.receiptUrl,
-                walletId = request.walletId
-            )
-
-            // Adjust local wallet balance if provided
-            if (request.walletId != null) {
-                val amountAdj = if (request.type == com.ssajudn.barebudget.data.model.TransactionType.INCOME) request.amount else -request.amount
-                db.walletDao().updateBalance(request.walletId, amountAdj)
-            }
-
-            if (isGuest) {
-                db.transactionDao().insertTransaction(
-                    LocalTransactionEntity.fromTransaction(newTx, isSynced = false)
-                )
-                Result.success(newTx)
-            } else {
-                val response = api.createTransaction(request)
-                if (response.isSuccessful && response.body() != null) {
-                    val created = response.body()!!
-                    db.transactionDao().insertTransaction(LocalTransactionEntity.fromTransaction(created, isSynced = true))
-                    Result.success(created)
-                } else {
-                    // Save offline to Room with isSynced = false
-                    db.transactionDao().insertTransaction(LocalTransactionEntity.fromTransaction(newTx, isSynced = false))
-                    Result.success(newTx)
-                }
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
 
     suspend fun deleteTransaction(id: String): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
             val tx = db.transactionDao().getTransactionById(id)
             if (tx != null && tx.walletId != null) {
-                val txType = try { 
-                    com.ssajudn.barebudget.data.model.TransactionType.valueOf(tx.type) 
-                } catch (e: Exception) { 
-                    com.ssajudn.barebudget.data.model.TransactionType.EXPENSE 
+                val txType = try {
+                    com.ssajudn.barebudget.data.model.TransactionType.valueOf(tx.type)
+                } catch (e: Exception) {
+                    com.ssajudn.barebudget.data.model.TransactionType.EXPENSE
                 }
                 // Reverse the balance
-                val amountAdj = if (txType == com.ssajudn.barebudget.data.model.TransactionType.INCOME) -tx.amount else tx.amount
+                val amountAdj =
+                    if (txType == com.ssajudn.barebudget.data.model.TransactionType.INCOME) -tx.amount else tx.amount
                 db.walletDao().updateBalance(tx.walletId, amountAdj)
             }
 
@@ -328,17 +345,41 @@ class BudgetRepository(
         }
     }
 
-    suspend fun updateDueBillStatus(id: String, status: DueBillStatus): Result<Boolean> = withContext(Dispatchers.IO) {
-        try {
-            db.dueBillDao().updateDueBillStatus(id, status.name)
-            if (!isGuest) {
-                api.updateDueBillStatus(id, UpdateDueBillStatusRequest(status))
+    suspend fun updateDueBillStatus(id: String, status: DueBillStatus, walletId: String? = null): Result<Boolean> =
+        withContext(Dispatchers.IO) {
+            try {
+                // If paying the bill and wallet is specified, create an expense transaction & deduct wallet balance
+                if (status == DueBillStatus.PAID && walletId != null) {
+                    val bill = db.dueBillDao().getDueBillById(id)
+                    if (bill != null) {
+                        val newTx = Transaction(
+                            id = UUID.randomUUID().toString(),
+                            amount = bill.totalAmount,
+                            type = com.ssajudn.barebudget.data.model.TransactionType.EXPENSE,
+                            category = com.ssajudn.barebudget.data.model.TransactionCategory.BILLS,
+                            merchant = bill.providerName,
+                            date = com.ssajudn.barebudget.utils.DateUtils.getCurrentDateISO(),
+                            notes = "Pembayaran tagihan: ${bill.providerName}",
+                            walletId = walletId
+                        )
+                        // Deduct wallet balance
+                        db.walletDao().updateBalance(walletId, -bill.totalAmount)
+                        // Insert transaction
+                        db.transactionDao().insertTransaction(
+                            LocalTransactionEntity.fromTransaction(newTx, isSynced = !isGuest)
+                        )
+                    }
+                }
+
+                db.dueBillDao().updateDueBillStatus(id, status.name)
+                if (!isGuest) {
+                    api.updateDueBillStatus(id, UpdateDueBillStatusRequest(status = status, walletId = walletId))
+                }
+                Result.success(true)
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-            Result.success(true)
-        } catch (e: Exception) {
-            Result.failure(e)
         }
-    }
 
     suspend fun deleteDueBill(id: String): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
@@ -463,7 +504,11 @@ class BudgetRepository(
                 api.createTransaction(
                     CreateTransactionRequest(
                         amount = tx.amount,
-                        category = try { TransactionCategory.valueOf(tx.category) } catch (e: Exception) { TransactionCategory.OTHER },
+                        category = try {
+                            TransactionCategory.valueOf(tx.category)
+                        } catch (e: Exception) {
+                            TransactionCategory.OTHER
+                        },
                         merchant = tx.merchant ?: "",
                         date = tx.date,
                         notes = tx.notes ?: "",
@@ -519,7 +564,7 @@ class BudgetRepository(
 
     // ==========================================
     // ==========================================
-        suspend fun getWallets(): Result<List<Wallet>> = withContext(Dispatchers.IO) {
+    suspend fun getWallets(): Result<List<Wallet>> = withContext(Dispatchers.IO) {
         try {
             if (isGuest) {
                 val local = db.walletDao().getAllWallets().map { it.toWallet() }
@@ -531,7 +576,12 @@ class BudgetRepository(
                         colorHex = "#2ECC71",
                         iconName = "account_balance_wallet"
                     )
-                    db.walletDao().insertWallet(com.ssajudn.barebudget.data.local.room.LocalWalletEntity.fromWallet(defaultWallet, isSynced = false))
+                    db.walletDao().insertWallet(
+                        com.ssajudn.barebudget.data.local.room.LocalWalletEntity.fromWallet(
+                            defaultWallet,
+                            isSynced = false
+                        )
+                    )
                     Result.success(listOf(defaultWallet))
                 } else {
                     Result.success(local)
@@ -559,7 +609,12 @@ class BudgetRepository(
                     colorHex = request.colorHex,
                     iconName = request.iconName
                 )
-                db.walletDao().insertWallet(com.ssajudn.barebudget.data.local.room.LocalWalletEntity.fromWallet(wallet, isSynced = false))
+                db.walletDao().insertWallet(
+                    com.ssajudn.barebudget.data.local.room.LocalWalletEntity.fromWallet(
+                        wallet,
+                        isSynced = false
+                    )
+                )
                 Result.success(wallet)
             } else {
                 val response = api.createWallet(request)
@@ -591,5 +646,89 @@ class BudgetRepository(
             Result.failure(e)
         }
     }
-}
 
+    // ==========================================
+    // 7. ANALYTICS (CASHFLOW & NET WORTH)
+    // ==========================================
+    suspend fun getCashflowAnalytics(): Result<List<CashflowDataPoint>> = withContext(Dispatchers.IO) {
+        try {
+            if (!isGuest) {
+                val response = api.getCashflowAnalytics()
+                if (response.isSuccessful && response.body() != null) {
+                    return@withContext Result.success(response.body()!!.data)
+                }
+            }
+
+            // Local Calculation for Guest or Fallback
+            val transactions = db.transactionDao().getAllTransactions()
+            val points = mutableListOf<CashflowDataPoint>()
+            val monthFormat = SimpleDateFormat("yyyy-MM", Locale.getDefault())
+            val labelFormat = SimpleDateFormat("MMM", Locale("id", "ID"))
+
+            for (i in 5 downTo 0) {
+                val cal = Calendar.getInstance()
+                cal.add(Calendar.MONTH, -i)
+                val monthKey = monthFormat.format(cal.time)
+                val label = labelFormat.format(cal.time)
+
+                val monthTxs = transactions.filter { it.date.startsWith(monthKey) }
+                val income = monthTxs
+                    .filter { it.type == TransactionType.INCOME.name }
+                    .sumOf { it.amount }
+                val expense = monthTxs
+                    .filter { it.type == TransactionType.EXPENSE.name || it.type.isBlank() }
+                    .sumOf { it.amount }
+
+                points.add(
+                    CashflowDataPoint(
+                        month = monthKey,
+                        label = label,
+                        income = income,
+                        expense = expense
+                    )
+                )
+            }
+
+            Result.success(points)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getNetWorthAnalytics(): Result<List<NetWorthDataPoint>> = withContext(Dispatchers.IO) {
+        try {
+            if (!isGuest) {
+                val response = api.getNetWorthAnalytics()
+                if (response.isSuccessful && response.body() != null) {
+                    return@withContext Result.success(response.body()!!.data)
+                }
+            }
+
+            // Local Calculation for Guest or Fallback
+            val wallets = db.walletDao().getAllWallets()
+            val currentNetWorth = wallets.sumOf { it.balance }
+            val cashflowResult = getCashflowAnalytics()
+            val cashflow = cashflowResult.getOrDefault(emptyList())
+
+            val points = ArrayList<NetWorthDataPoint>(cashflow.size)
+            for (i in cashflow.indices) {
+                points.add(NetWorthDataPoint("", "", 0L))
+            }
+            var runningNetWorth = currentNetWorth
+
+            for (i in cashflow.indices.reversed()) {
+                points[i] = NetWorthDataPoint(
+                    month = cashflow[i].month,
+                    label = cashflow[i].label,
+                    netWorth = runningNetWorth
+                )
+                val netChange = cashflow[i].income - cashflow[i].expense
+                runningNetWorth -= netChange
+            }
+
+            Result.success(points)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+}

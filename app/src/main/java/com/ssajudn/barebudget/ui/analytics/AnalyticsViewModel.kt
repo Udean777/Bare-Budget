@@ -11,6 +11,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+enum class AnalyticsTab(val title: String) {
+    CASHFLOW("Arus Kas"),
+    NET_WORTH("Kekayaan"),
+    CATEGORIES("Kategori")
+}
+
 data class CategoryBreakdownItem(
     val category: TransactionCategory,
     val totalAmount: Long,
@@ -22,12 +28,18 @@ sealed interface AnalyticsUiState {
     object Loading : AnalyticsUiState
     data class Success(
         val totalSpent: Long,
+        val totalIncome: Long,
+        val netWorth: Long,
         val monthlyBudget: Long,
         val dailyAverage: Long,
         val topSpendingCategory: CategoryBreakdownItem?,
         val categories: List<CategoryBreakdownItem>,
-        val savageStreakDays: Int
+        val savageStreakDays: Int,
+        val cashflowTrend: List<com.ssajudn.barebudget.data.model.CashflowDataPoint>,
+        val netWorthTrend: List<com.ssajudn.barebudget.data.model.NetWorthDataPoint>,
+        val selectedTab: AnalyticsTab = AnalyticsTab.CASHFLOW
     ) : AnalyticsUiState
+
     data class Error(val message: String) : AnalyticsUiState
 }
 
@@ -45,6 +57,13 @@ class AnalyticsViewModel(
         loadAnalyticsData()
     }
 
+    fun selectTab(tab: AnalyticsTab) {
+        val current = _uiState.value
+        if (current is AnalyticsUiState.Success) {
+            _uiState.value = current.copy(selectedTab = tab)
+        }
+    }
+
     fun loadAnalyticsData(isPullToRefresh: Boolean = false) {
         viewModelScope.launch {
             if (isPullToRefresh) {
@@ -55,16 +74,22 @@ class AnalyticsViewModel(
 
             val summaryResult = repository.getDashboardSummary()
             val transactionsResult = repository.getTransactions(limit = 100)
+            val cashflowResult = repository.getCashflowAnalytics()
+            val netWorthResult = repository.getNetWorthAnalytics()
 
             if (summaryResult.isSuccess) {
                 val summary = summaryResult.getOrNull()!!
                 val transactions = transactionsResult.getOrDefault(emptyList())
+                val cashflow = cashflowResult.getOrDefault(emptyList())
+                val netWorthTrend = netWorthResult.getOrDefault(emptyList())
 
-                val total = summary.totalSpent
+                val totalSpent = summary.totalSpent
+                val totalIncome = cashflow.lastOrNull()?.income ?: 0L
+                val netWorth = summary.netWorth
                 val topCategoriesRaw = summary.topCategories ?: emptyList()
 
                 val breakdownItems = topCategoriesRaw.map { catSummary ->
-                    val pct = if (total > 0) (catSummary.total.toFloat() / total.toFloat()) else 0f
+                    val pct = if (totalSpent > 0) (catSummary.total.toFloat() / totalSpent.toFloat()) else 0f
                     CategoryBreakdownItem(
                         category = catSummary.category,
                         totalAmount = catSummary.total,
@@ -76,13 +101,20 @@ class AnalyticsViewModel(
                 val topCat = breakdownItems.firstOrNull()
                 val streak = calculateSavageStreak(transactions)
 
+                val prevTab = (_uiState.value as? AnalyticsUiState.Success)?.selectedTab ?: AnalyticsTab.CASHFLOW
+
                 _uiState.value = AnalyticsUiState.Success(
-                    totalSpent = total,
+                    totalSpent = totalSpent,
+                    totalIncome = totalIncome,
+                    netWorth = netWorth,
                     monthlyBudget = summary.monthlyBudget,
                     dailyAverage = summary.averageDailySpend,
                     topSpendingCategory = topCat,
                     categories = breakdownItems,
-                    savageStreakDays = streak
+                    savageStreakDays = streak,
+                    cashflowTrend = cashflow,
+                    netWorthTrend = netWorthTrend,
+                    selectedTab = prevTab
                 )
                 _isRefreshing.value = false
             } else {

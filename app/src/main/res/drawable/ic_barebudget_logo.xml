@@ -1,0 +1,58 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="1000"
+    android:viewportHeight="1000">
+
+    <!-- Background (Dark Slate) -->
+    <path
+        android:fillColor="#181A20"
+        android:pathData="M0,0h1000v1000h-1000z" />
+
+    <!-- Red Runway Arrow Tail Accent -->
+    <path
+        android:fillColor="#ED5564"
+        android:pathData="M380,435 C460,430 520,380 580,300 L595,335 C530,405 460,455 380,455 Z" />
+
+    <!-- Red Arrow Head -->
+    <path
+        android:fillColor="#ED5564"
+        android:pathData="M650,250 L560,275 L590,320 L630,355 Z" />
+
+    <!-- Stem of 'b' -->
+    <path
+        android:fillColor="#50E392"
+        android:pathData="M350,316 C350,307 357,300 366,300 L370,300 C379,300 386,307 386,316 L386,624 C386,633 379,640 370,640 L366,640 C357,640 350,633 350,624 Z" />
+
+    <!-- Mint Green Upward Arc -->
+    <path
+        android:strokeColor="#50E392"
+        android:strokeWidth="36"
+        android:strokeLineCap="round"
+        android:pathData="M368,435 C430,435 510,390 575,305" />
+
+    <!-- Wallet Top Flap -->
+    <path
+        android:strokeColor="#50E392"
+        android:strokeWidth="36"
+        android:strokeLineCap="round"
+        android:pathData="M380,440 L560,440 C595,440 624,469 624,504 L624,510" />
+
+    <!-- Wallet Bottom Flap -->
+    <path
+        android:strokeColor="#50E392"
+        android:strokeWidth="36"
+        android:strokeLineCap="round"
+        android:pathData="M624,570 L624,606 C624,625 609,640 590,640 L350,640" />
+
+    <!-- Wallet Clasp -->
+    <path
+        android:fillColor="#50E392"
+        android:pathData="M555,495 L620,495 C636.5,495 650,508.5 650,525 C650,541.5 636.5,555 620,555 L555,555 C538.5,555 525,541.5 525,525 C525,508.5 538.5,495 555,495 Z" />
+
+    <!-- Clasp Button Hole -->
+    <path
+        android:fillColor="#181A20"
+        android:pathData="M556,512 C563.7,512 570,518.3 570,526 C570,533.7 563.7,540 556,540 C548.3,540 542,533.7 542,526 C542,518.3 548.3,512 556,512 Z" />
+
+</vector>

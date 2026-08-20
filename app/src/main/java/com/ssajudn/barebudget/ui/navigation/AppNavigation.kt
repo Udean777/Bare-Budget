@@ -1,6 +1,11 @@
 package com.ssajudn.barebudget.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -41,11 +46,13 @@ import com.ssajudn.barebudget.ui.goals.GoalsScreen
 import com.ssajudn.barebudget.ui.onboarding.AuthScreen
 import com.ssajudn.barebudget.ui.onboarding.OnboardingScreen
 import com.ssajudn.barebudget.ui.settings.SettingsScreen
+import com.ssajudn.barebudget.ui.splash.SplashScreen
 import com.ssajudn.barebudget.ui.transaction.AddTransactionScreen
 import com.ssajudn.barebudget.ui.transaction.AllTransactionsScreen
 import com.ssajudn.barebudget.ui.transaction.TransactionDetailScreen
 
 sealed class Screen(val route: String) {
+    object Splash : Screen("splash")
     object Onboarding : Screen("onboarding")
     object Auth : Screen("auth")
     object Dashboard : Screen("dashboard")
@@ -150,7 +157,11 @@ fun AppNavigation(
             }
         },
         floatingActionButton = {
-            if (showNavigationBar) {
+            AnimatedVisibility(
+                visible = showNavigationBar,
+                enter = scaleIn(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
+                exit = scaleOut(animationSpec = tween(200)) + fadeOut(animationSpec = tween(200)),
+            ) {
                 FloatingActionButton(
                     onClick = { navController.navigate(Screen.AddTransaction.route) },
                 ) {
@@ -173,11 +184,25 @@ fun AppNavigation(
         // bar — and the top inset was never applied on any route.
         NavHost(
             navController = navController,
-            startDestination = startDestination,
+            startDestination = Screen.Splash.route,
+            enterTransition = { fadeIn(animationSpec = tween(350)) },
+            exitTransition = { fadeOut(animationSpec = tween(350)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(350)) },
+            popExitTransition = { fadeOut(animationSpec = tween(350)) },
             modifier = Modifier
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding),
         ) {
+            composable(Screen.Splash.route) {
+                SplashScreen(
+                    onSplashFinished = { destination ->
+                        navController.navigate(destination) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable(Screen.Onboarding.route) {
                 OnboardingScreen(
                     onFinishOnboarding = {

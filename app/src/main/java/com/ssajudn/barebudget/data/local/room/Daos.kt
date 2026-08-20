@@ -37,6 +37,9 @@ interface DueBillDao {
     @Query("SELECT * FROM local_due_bills WHERE status = :status ORDER BY dueDate ASC")
     fun getDueBillsByStatus(status: String): List<LocalDueBillEntity>
 
+    @Query("SELECT * FROM local_due_bills WHERE id = :id LIMIT 1")
+    fun getDueBillById(id: String): LocalDueBillEntity?
+
     @Query("SELECT * FROM local_due_bills WHERE isSynced = 0")
     fun getUnsyncedDueBills(): List<LocalDueBillEntity>
 
@@ -111,7 +114,7 @@ interface WalletDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertWallets(wallets: List<LocalWalletEntity>)
-    
+
     @Query("UPDATE local_wallets SET balance = balance + :amount WHERE id = :id")
     fun updateBalance(id: String, amount: Long)
 

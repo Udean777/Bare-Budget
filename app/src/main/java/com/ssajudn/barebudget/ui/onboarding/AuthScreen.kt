@@ -17,6 +17,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.ssajudn.barebudget.R
 import com.ssajudn.barebudget.data.auth.AuthManager
 import com.ssajudn.barebudget.data.auth.AuthResult
 import com.ssajudn.barebudget.ui.theme.*
@@ -56,21 +59,14 @@ fun AuthScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // App Icon / Logo
-            Box(
+            // App Icon / Official Logo
+            Image(
+                painter = painterResource(id = R.drawable.ic_app_logo),
+                contentDescription = "BareBudget Logo",
                 modifier = Modifier
-                    .size(80.dp)
+                    .size(88.dp)
                     .clip(MaterialTheme.shapes.extraLarge)
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AccountBalanceWallet,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.size(40.dp)
-                )
-            }
+            )
 
             Spacer(modifier = Modifier.height(28.dp))
 

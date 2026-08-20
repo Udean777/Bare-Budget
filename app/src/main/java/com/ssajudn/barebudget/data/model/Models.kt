@@ -5,10 +5,10 @@ import com.google.gson.annotations.SerializedName
 enum class TransactionType {
     @SerializedName("INCOME")
     INCOME,
-    
+
     @SerializedName("EXPENSE")
     EXPENSE,
-    
+
     @SerializedName("TRANSFER")
     TRANSFER
 }
@@ -133,7 +133,8 @@ data class CreateDueBillRequest(
 )
 
 data class UpdateDueBillStatusRequest(
-    @SerializedName("status") val status: DueBillStatus
+    @SerializedName("status") val status: DueBillStatus,
+    @SerializedName("wallet_id") val walletId: String? = null
 )
 
 data class SetBudgetRequest(
@@ -206,4 +207,25 @@ data class DepositGoalRequest(
 
 data class GoalListResponse(
     @SerializedName("data") val data: List<Goal>
+)
+
+data class CashflowDataPoint(
+    @SerializedName("month") val month: String, // "2026-06"
+    @SerializedName("label") val label: String, // "Jun"
+    @SerializedName("income") val income: Long,
+    @SerializedName("expense") val expense: Long
+)
+
+data class NetWorthDataPoint(
+    @SerializedName("month") val month: String,
+    @SerializedName("label") val label: String,
+    @SerializedName("net_worth") val netWorth: Long
+)
+
+data class CashflowResponse(
+    @SerializedName("data") val data: List<CashflowDataPoint>
+)
+
+data class NetWorthResponse(
+    @SerializedName("data") val data: List<NetWorthDataPoint>
 )

@@ -219,9 +219,7 @@ fun DueBillItem(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
                 ),
                 shape = MaterialTheme.shapes.medium,
-                // Was 38dp, below the 48dp accessible minimum, on the primary
-                // action of the screen.
-                modifier = Modifier.size(MinTouchTarget)
+                modifier = Modifier.size(32.dp)
             ) {
                 Icon(
                     Icons.Default.Check,
@@ -396,7 +394,6 @@ fun AddDueBillDialog(
         }
 
         if (selectedProvider.isCustom) {
-            Spacer(modifier = Modifier.height(10.dp))
             OutlinedTextField(
                 value = customProviderName,
                 onValueChange = { customProviderName = it },
@@ -419,7 +416,6 @@ fun AddDueBillDialog(
             }
         }
 
-        Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
             value = rawAmount,
@@ -437,7 +433,6 @@ fun AddDueBillDialog(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
             value = DateUtils.formatDisplayDate(dueDate),

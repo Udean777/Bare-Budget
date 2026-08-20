@@ -97,3 +97,27 @@ interface GoalDao {
     @Query("DELETE FROM local_goals")
     fun clearAll()
 }
+
+@Dao
+interface WalletDao {
+    @Query("SELECT * FROM local_wallets ORDER BY createdAt ASC")
+    fun getAllWallets(): List<LocalWalletEntity>
+
+    @Query("SELECT * FROM local_wallets WHERE id = :id LIMIT 1")
+    fun getWalletById(id: String): LocalWalletEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertWallet(wallet: LocalWalletEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertWallets(wallets: List<LocalWalletEntity>)
+    
+    @Query("UPDATE local_wallets SET balance = balance + :amount WHERE id = :id")
+    fun updateBalance(id: String, amount: Long)
+
+    @Query("DELETE FROM local_wallets WHERE id = :id")
+    fun deleteWallet(id: String)
+
+    @Query("DELETE FROM local_wallets")
+    fun clearAll()
+}

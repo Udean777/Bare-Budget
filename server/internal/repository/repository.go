@@ -27,9 +27,50 @@ func (r *Repository) GetUserByID(id string) (*models.User, error) {
 	return &user, err
 }
 
+// Wallet Repo
+func (r *Repository) CreateWallet(w *models.Wallet) error {
+	return r.db.Create(w).Error
+}
+
+func (r *Repository) GetWalletsByUserID(userID string) ([]models.Wallet, error) {
+	var list []models.Wallet
+	err := r.db.Where("user_id = ?", userID).Order("created_at asc").Find(&list).Error
+	return list, err
+}
+
+func (r *Repository) UpdateWallet(w *models.Wallet) error {
+	return r.db.Save(w).Error
+}
+
+func (r *Repository) DeleteWallet(userID string, id uuid.UUID) error {
+	return r.db.Where("id = ? AND user_id = ?", id, userID).Delete(&models.Wallet{}).Error
+}
+
 // Transaction Repo
 func (r *Repository) CreateTransaction(t *models.Transaction) error {
-	return r.db.Create(t).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Create(t).Error; err != nil {
+			return err
+		}
+		
+		if t.WalletID != nil && *t.WalletID != "" {
+			var wallet models.Wallet
+			if err := tx.First(&wallet, "id = ?", *t.WalletID).Error; err != nil {
+				return err
+			}
+			
+			if t.Type == models.TypeIncome {
+				wallet.Balance += t.Amount
+			} else if t.Type == models.TypeExpense || t.Type == "" {
+				wallet.Balance -= t.Amount
+			}
+			
+			if err := tx.Save(&wallet).Error; err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (r *Repository) GetTransactionsByUserID(userID string, startDate, endDate time.Time, category string, limit, offset int) ([]models.Transaction, int64, error) {
@@ -41,32 +82,51 @@ func (r *Repository) GetTransactionsByUserID(userID string, startDate, endDate t
 	if !startDate.IsZero() && !endDate.IsZero() {
 		query = query.Where("date >= ? AND date <= ?", startDate, endDate)
 	}
+
 	if category != "" {
 		query = query.Where("category = ?", category)
 	}
 
-	err := query.Count(&total).Error
-	if err != nil {
-		return nil, 0, err
-	}
+	query.Count(&total)
 
-	err = query.Order("date desc").Limit(limit).Offset(offset).Find(&list).Error
+	err := query.Order("date desc, created_at desc").Limit(limit).Offset(offset).Find(&list).Error
 	return list, total, err
 }
 
 func (r *Repository) DeleteTransaction(userID string, id uuid.UUID) error {
-	return r.db.Where("id = ? AND user_id = ?", id, userID).Delete(&models.Transaction{}).Error
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var t models.Transaction
+		if err := tx.Where("id = ? AND user_id = ?", id, userID).First(&t).Error; err != nil {
+			return err
+		}
+		
+		if t.WalletID != nil && *t.WalletID != "" {
+			var wallet models.Wallet
+			if err := tx.First(&wallet, "id = ?", *t.WalletID).Error; err == nil {
+				if t.Type == models.TypeIncome {
+					wallet.Balance -= t.Amount
+				} else if t.Type == models.TypeExpense || t.Type == "" {
+					wallet.Balance += t.Amount
+				}
+				if err := tx.Save(&wallet).Error; err != nil {
+					return err
+				}
+			}
+		}
+		
+		return tx.Delete(&t).Error
+	})
 }
 
 func (r *Repository) GetMonthlySpent(userID string, startOfMonth, endOfMonth time.Time) (int64, error) {
 	var total int64
 	err := r.db.Model(&models.Transaction{}).
-		Where("user_id = ? AND date >= ? AND date <= ?", userID, startOfMonth, endOfMonth).
+		Where("user_id = ? AND date >= ? AND date <= ? AND (type = ? OR type IS NULL OR type = '')", userID, startOfMonth, endOfMonth, models.TypeExpense).
 		Select("COALESCE(SUM(amount), 0)").
 		Scan(&total).Error
 	return total, err
 }
-
+// DueBill Repo
 type CategorySummary struct {
 	Category models.TransactionCategory `json:"category"`
 	Total    int64                      `json:"total"`
@@ -84,7 +144,6 @@ func (r *Repository) GetMonthlyCategoryBreakdown(userID string, startOfMonth, en
 	return result, err
 }
 
-// DueBill Repo
 func (r *Repository) CreateDueBill(d *models.DueBill) error {
 	return r.db.Create(d).Error
 }

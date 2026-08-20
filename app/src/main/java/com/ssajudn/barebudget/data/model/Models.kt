@@ -2,6 +2,17 @@ package com.ssajudn.barebudget.data.model
 
 import com.google.gson.annotations.SerializedName
 
+enum class TransactionType {
+    @SerializedName("INCOME")
+    INCOME,
+    
+    @SerializedName("EXPENSE")
+    EXPENSE,
+    
+    @SerializedName("TRANSFER")
+    TRANSFER
+}
+
 enum class TransactionCategory(val displayName: String, val iconName: String) {
     @SerializedName("FOOD")
     FOOD("Food & Beverage", "restaurant"),
@@ -21,29 +32,58 @@ enum class TransactionCategory(val displayName: String, val iconName: String) {
     @SerializedName("SOCIAL")
     SOCIAL("Social & Gatherings", "groups"),
 
+    @SerializedName("SALARY")
+    SALARY("Salary & Wage", "payments"),
+
+    @SerializedName("BONUS")
+    BONUS("Bonus & Reward", "redeem"),
+
+    @SerializedName("INVESTMENT")
+    INVESTMENT("Investment Returns", "trending_up"),
+
     @SerializedName("OTHER")
     OTHER("Other", "category")
 }
+
+data class Wallet(
+    @SerializedName("id") val id: String? = null,
+    @SerializedName("name") val name: String,
+    @SerializedName("balance") val balance: Long = 0L,
+    @SerializedName("color_hex") val colorHex: String = "#4E73DF",
+    @SerializedName("icon_name") val iconName: String = "account_balance_wallet",
+    @SerializedName("created_at") val createdAt: String? = null
+)
+
+data class CreateWalletRequest(
+    @SerializedName("name") val name: String,
+    @SerializedName("balance") val balance: Long = 0L,
+    @SerializedName("color_hex") val colorHex: String = "#4E73DF",
+    @SerializedName("icon_name") val iconName: String = "account_balance_wallet"
+)
 
 data class Transaction(
     @SerializedName("id") val id: String? = null,
     @SerializedName("user_id") val userId: String? = null,
     @SerializedName("amount") val amount: Long,
+    @SerializedName("type") val type: TransactionType = TransactionType.EXPENSE,
     @SerializedName("category") val category: TransactionCategory,
     @SerializedName("merchant") val merchant: String? = null,
     @SerializedName("date") val date: String,
     @SerializedName("notes") val notes: String? = null,
     @SerializedName("receipt_url") val receiptUrl: String? = null,
+    @SerializedName("wallet_id") val walletId: String? = null,
     @SerializedName("created_at") val createdAt: String? = null
 )
 
 data class CreateTransactionRequest(
     @SerializedName("amount") val amount: Long,
+    @SerializedName("type") val type: TransactionType = TransactionType.EXPENSE,
     @SerializedName("category") val category: TransactionCategory,
     @SerializedName("merchant") val merchant: String,
     @SerializedName("date") val date: String,
     @SerializedName("notes") val notes: String = "",
-    @SerializedName("receipt_url") val receiptUrl: String = ""
+    @SerializedName("receipt_url") val receiptUrl: String = "",
+    @SerializedName("wallet_id") val walletId: String? = null
 )
 
 enum class DueBillStatus {
@@ -118,6 +158,8 @@ data class DashboardSummary(
     @SerializedName("runway_message") val runwayMessage: String,
     @SerializedName("top_categories") val topCategories: List<CategorySummary>?,
     @SerializedName("unpaid_due_bills_sum") val unpaidDueBillsSum: Long,
+    @SerializedName("net_worth") val netWorth: Long = 0L,
+
     @SerializedName("recent_transactions") val recentTransactions: List<Transaction>?
 )
 

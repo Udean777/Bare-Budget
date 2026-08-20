@@ -35,6 +35,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 @Composable
 fun DashboardScreen(
     onNavigateToAddManual: () -> Unit,
+    onNavigateToWallets: () -> Unit,
     onNavigateToDueBills: () -> Unit,
     onNavigateToGoals: () -> Unit,
     onNavigateToBudget: () -> Unit,
@@ -134,6 +135,7 @@ fun DashboardScreen(
                         summary = state.summary,
                         onSetBudgetClick = onNavigateToBudget,
                         onAddManualClick = onNavigateToAddManual,
+                        onWalletsClick = onNavigateToWallets,
                         onDueBillsClick = onNavigateToDueBills,
                         onGoalsClick = onNavigateToGoals,
                         onTransactionClick = onNavigateToTransactionDetail,
@@ -151,6 +153,7 @@ fun DashboardContent(
     summary: DashboardSummary,
     onSetBudgetClick: () -> Unit,
     onAddManualClick: () -> Unit,
+    onWalletsClick: () -> Unit,
     onDueBillsClick: () -> Unit,
     onGoalsClick: () -> Unit,
     onTransactionClick: (String) -> Unit,
@@ -168,6 +171,7 @@ fun DashboardContent(
         item {
             FinancialRunwayCard(
                 remainingBudget = summary.remainingBudget,
+                netWorth = summary.netWorth,
                 totalBudget = summary.monthlyBudget,
                 estimatedDeathDay = summary.estimatedDeathDay,
                 daysInMonth = summary.daysInMonth,
@@ -183,13 +187,13 @@ fun DashboardContent(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 QuickActionCard(
-                    title = "Catat",
-                    subtitle = "Manual",
-                    icon = Icons.Default.EditNote,
+                    title = "Dompet",
+                    subtitle = "Manajemen",
+                    icon = Icons.Default.AccountBalanceWallet,
                     bgColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     tintColor = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.weight(1f),
-                    onClick = onAddManualClick
+                    onClick = onWalletsClick
                 )
 
                 QuickActionCard(

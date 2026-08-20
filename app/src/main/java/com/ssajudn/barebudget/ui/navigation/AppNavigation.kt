@@ -56,6 +56,8 @@ sealed class Screen(val route: String) {
     object DueBills : Screen("due_bills")
     object Goals : Screen("goals")
     object Budget : Screen("budget")
+    object Wallets : Screen("wallets")
+
     object TransactionDetail : Screen("transaction_detail/{transactionId}") {
         fun createRoute(transactionId: String) = "transaction_detail/$transactionId"
     }
@@ -201,6 +203,14 @@ fun AppNavigation(
                     onNavigateToAddManual = {
                         navController.navigate(Screen.AddTransaction.route)
                     },
+                    onNavigateToWallets = {
+                        navController.navigate(Screen.Wallets.route) {
+                            popUpTo(Screen.Dashboard.route) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                    },
+
                     onNavigateToDueBills = {
                         navController.navigate(Screen.DueBills.route) {
                             popUpTo(Screen.Dashboard.route) { saveState = true }
@@ -276,6 +286,13 @@ fun AppNavigation(
             composable(Screen.DueBills.route) {
                 DueBillsScreen()
             }
+
+            composable(Screen.Wallets.route) {
+                com.ssajudn.barebudget.ui.wallets.WalletsScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+
 
             composable(Screen.Goals.route) {
                 GoalsScreen()

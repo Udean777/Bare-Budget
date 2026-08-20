@@ -44,10 +44,20 @@ class BudgetRepository(
 
                 val allTx = db.transactionDao().getAllTransactions()
                 val currentMonthTx = allTx.filter { it.date.startsWith(monthYear) }
-                val totalSpent = currentMonthTx.sumOf { it.amount }
+
+                // Only count EXPENSE for total spent
+                val expensesTx = currentMonthTx.filter {
+                    val t = try { com.ssajudn.barebudget.data.model.TransactionType.valueOf(it.type) } catch(e: Exception) { com.ssajudn.barebudget.data.model.TransactionType.EXPENSE }
+                    t == com.ssajudn.barebudget.data.model.TransactionType.EXPENSE
+                }
+                val totalSpent = expensesTx.sumOf { it.amount }
 
                 val remainingBudget = monthlyBudget - totalSpent
-                val avgDaily = totalSpent / daysPassed
+                val avgDaily = if (daysPassed > 0) totalSpent / daysPassed else 0L
+
+                // Calculate Net Worth from local Wallets
+                val wallets = db.walletDao().getAllWallets()
+                val currentNetWorth = wallets.sumOf { it.balance }
 
                 var estimatedDeathDay = daysInMonth
                 var runwayMsg: String
@@ -99,6 +109,7 @@ class BudgetRepository(
                     runwayMessage = runwayMsg,
                     topCategories = topCategories,
                     unpaidDueBillsSum = unpaidSum,
+                    netWorth = currentNetWorth,
                     recentTransactions = currentMonthTx.take(5).map { it.toTransaction() }
                 )
                 Result.success(summary)
@@ -197,12 +208,20 @@ class BudgetRepository(
             val newTx = Transaction(
                 id = UUID.randomUUID().toString(),
                 amount = request.amount,
+                type = request.type,
                 category = request.category,
                 merchant = request.merchant,
                 date = dateStr,
                 notes = request.notes,
-                receiptUrl = request.receiptUrl
+                receiptUrl = request.receiptUrl,
+                walletId = request.walletId
             )
+
+            // Adjust local wallet balance if provided
+            if (request.walletId != null) {
+                val amountAdj = if (request.type == com.ssajudn.barebudget.data.model.TransactionType.INCOME) request.amount else -request.amount
+                db.walletDao().updateBalance(request.walletId, amountAdj)
+            }
 
             if (isGuest) {
                 db.transactionDao().insertTransaction(
@@ -228,6 +247,18 @@ class BudgetRepository(
 
     suspend fun deleteTransaction(id: String): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
+            val tx = db.transactionDao().getTransactionById(id)
+            if (tx != null && tx.walletId != null) {
+                val txType = try { 
+                    com.ssajudn.barebudget.data.model.TransactionType.valueOf(tx.type) 
+                } catch (e: Exception) { 
+                    com.ssajudn.barebudget.data.model.TransactionType.EXPENSE 
+                }
+                // Reverse the balance
+                val amountAdj = if (txType == com.ssajudn.barebudget.data.model.TransactionType.INCOME) -tx.amount else tx.amount
+                db.walletDao().updateBalance(tx.walletId, amountAdj)
+            }
+
             db.transactionDao().deleteTransaction(id)
             if (!isGuest) {
                 api.deleteTransaction(id)
@@ -479,11 +510,86 @@ class BudgetRepository(
             }
 
             // 5. Trigger backend DB migration endpoint as secondary safety
-            api.migrateGuestData(mapOf("guest_user_id" to guestUserId))
 
             Result.success(true)
         } catch (e: Exception) {
             Result.failure(e)
         }
     }
+
+    // ==========================================
+    // ==========================================
+        suspend fun getWallets(): Result<List<Wallet>> = withContext(Dispatchers.IO) {
+        try {
+            if (isGuest) {
+                val local = db.walletDao().getAllWallets().map { it.toWallet() }
+                if (local.isEmpty()) {
+                    val defaultWallet = Wallet(
+                        id = UUID.randomUUID().toString(),
+                        name = "Uang Tunai",
+                        balance = 0L,
+                        colorHex = "#2ECC71",
+                        iconName = "account_balance_wallet"
+                    )
+                    db.walletDao().insertWallet(com.ssajudn.barebudget.data.local.room.LocalWalletEntity.fromWallet(defaultWallet, isSynced = false))
+                    Result.success(listOf(defaultWallet))
+                } else {
+                    Result.success(local)
+                }
+            } else {
+                val response = api.getWallets()
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.errorBody()?.string() ?: "Failed to fetch wallets"))
+                }
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createWallet(request: CreateWalletRequest): Result<Wallet> = withContext(Dispatchers.IO) {
+        try {
+            if (isGuest) {
+                val wallet = Wallet(
+                    id = UUID.randomUUID().toString(),
+                    name = request.name,
+                    balance = request.balance,
+                    colorHex = request.colorHex,
+                    iconName = request.iconName
+                )
+                db.walletDao().insertWallet(com.ssajudn.barebudget.data.local.room.LocalWalletEntity.fromWallet(wallet, isSynced = false))
+                Result.success(wallet)
+            } else {
+                val response = api.createWallet(request)
+                if (response.isSuccessful && response.body() != null) {
+                    Result.success(response.body()!!)
+                } else {
+                    Result.failure(Exception(response.errorBody()?.string() ?: "Failed to create wallet"))
+                }
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteWallet(id: String): Result<Boolean> = withContext(Dispatchers.IO) {
+        try {
+            if (isGuest) {
+                db.walletDao().deleteWallet(id)
+                Result.success(true)
+            } else {
+                val response = api.deleteWallet(id)
+                if (response.isSuccessful) {
+                    Result.success(true)
+                } else {
+                    Result.failure(Exception(response.errorBody()?.string() ?: "Failed to delete wallet"))
+                }
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
+

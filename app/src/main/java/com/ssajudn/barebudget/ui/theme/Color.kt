@@ -23,6 +23,7 @@ private fun CategoryColorSet.pick(category: TransactionCategory): Color = when (
     TransactionCategory.ENTERTAINMENT -> entertainment
     TransactionCategory.SOCIAL -> social
     TransactionCategory.OTHER -> other
+    else -> other
 }
 
 internal data class CategoryColorSet(

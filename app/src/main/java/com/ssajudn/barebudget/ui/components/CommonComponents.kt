@@ -27,6 +27,10 @@ import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.Redeem
+import androidx.compose.material.icons.filled.TrendingUp
+
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
@@ -60,6 +64,7 @@ import com.ssajudn.barebudget.utils.DateUtils
 @Composable
 fun FinancialRunwayCard(
     remainingBudget: Long,
+    netWorth: Long,
     totalBudget: Long,
     estimatedDeathDay: Int,
     daysInMonth: Int,
@@ -165,6 +170,25 @@ fun FinancialRunwayCard(
                 text = "dari ${CurrencyFormatter.formatRupiah(totalBudget)} anggaran bulanan",
                 style = MaterialTheme.typography.bodyMedium,
             )
+
+            Spacer(Modifier.height(Spacing.Medium))
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "TOTAL KEKAYAAN",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Text(
+                    text = CurrencyFormatter.formatRupiah(netWorth),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            }
 
             Spacer(Modifier.height(Spacing.Medium))
 
@@ -314,7 +338,11 @@ fun getCategoryIcon(category: TransactionCategory): ImageVector = when (category
     TransactionCategory.SHOPPING -> Icons.Default.ShoppingBag
     TransactionCategory.ENTERTAINMENT -> Icons.Default.SportsEsports
     TransactionCategory.SOCIAL -> Icons.Default.Groups
+    TransactionCategory.SALARY -> Icons.Default.Payments
+    TransactionCategory.BONUS -> Icons.Default.Redeem
+    TransactionCategory.INVESTMENT -> Icons.Default.TrendingUp
     TransactionCategory.OTHER -> Icons.Default.Category
+    else -> Icons.Default.Category
 }
 
 private val ProgressBarHeight = 8.dp

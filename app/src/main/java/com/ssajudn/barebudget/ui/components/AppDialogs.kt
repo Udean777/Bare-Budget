@@ -1,35 +1,27 @@
 package com.ssajudn.barebudget.ui.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.ssajudn.barebudget.ui.theme.Spacing
 
 /**
  * A form dialog: title, optional icon, arbitrary content, confirm/dismiss.
  *
- * Thin wrapper over M3 [AlertDialog] — it only supplies house defaults for
- * spacing and button labels.
- *
- * @param confirmButtonContainerColor container colour for the confirm button.
- *   Use [MaterialTheme.colorScheme.error] for destructive actions.
- * @param contentSpacing vertical gap between children of [content]. Callers
- *   should rely on this rather than inserting their own `Spacer`s; doing both is
- *   what previously produced ~20dp gaps where 10dp was intended.
+ * Uses a custom [Dialog] to provide larger spacing, a wider form factor,
+ * and a more refined Material 3 Expressive look than standard AlertDialogs.
  */
 @Composable
 fun AppFormDialog(
@@ -44,54 +36,83 @@ fun AppFormDialog(
     confirmButtonContainerColor: Color = MaterialTheme.colorScheme.primary,
     confirmButtonContentColor: Color = contentColorForContainer(confirmButtonContainerColor),
     isConfirmEnabled: Boolean = true,
-    contentSpacing: androidx.compose.ui.unit.Dp = Spacing.MediumSmall,
+    contentSpacing: androidx.compose.ui.unit.Dp = Spacing.Medium,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismissRequest,
-        modifier = modifier,
-        icon = icon?.let {
-            {
-                Icon(imageVector = it, contentDescription = null, tint = iconTint)
-            }
-        },
-        title = { Text(text = title) },
-        text = {
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = modifier
+                .fillMaxWidth(0.92f) // Makes it wider and less cramped
+                .wrapContentHeight(),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp
+        ) {
             Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(contentSpacing),
-                content = content,
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                enabled = isConfirmEnabled,
-                // The previous version accepted a confirmButtonColor parameter and
-                // then never passed it to the Button, so a destructive confirm
-                // ("Tarik Dana") silently rendered in primary instead of error.
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = confirmButtonContainerColor,
-                    contentColor = confirmButtonContentColor,
-                ),
+                modifier = Modifier.padding(Spacing.Large), // 24dp padding for breathing room
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(confirmButtonText)
+                if (icon != null) {
+                    Icon(
+                        imageVector = icon,
+                        contentDescription = null,
+                        tint = iconTint,
+                        modifier = Modifier
+                            .size(32.dp)
+                            .padding(bottom = Spacing.Small)
+                    )
+                }
+
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.Large))
+
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(contentSpacing),
+                    content = content
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.Large))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    if (dismissButtonText != null) {
+                        TextButton(
+                            onClick = onDismissRequest,
+                            modifier = Modifier.padding(end = Spacing.Small)
+                        ) {
+                            Text(dismissButtonText)
+                        }
+                    }
+                    Button(
+                        onClick = onConfirm,
+                        enabled = isConfirmEnabled,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = confirmButtonContainerColor,
+                            contentColor = confirmButtonContentColor,
+                        )
+                    ) {
+                        Text(confirmButtonText)
+                    }
+                }
             }
-        },
-        dismissButton = dismissButtonText?.let {
-            {
-                TextButton(onClick = onDismissRequest) { Text(it) }
-            }
-        },
-    )
+        }
+    }
 }
 
 /**
  * Confirmation dialog for a destructive or otherwise irreversible action.
- *
- * [confirmButtonText] is a parameter, not a constant. It used to be hardcoded to
- * "Hapus" while title and message were overridable, so the Settings sign-out
- * dialog asked the user to confirm by pressing "Hapus" (Delete).
  */
 @Composable
 fun AppConfirmDialog(
@@ -110,42 +131,76 @@ fun AppConfirmDialog(
         MaterialTheme.colorScheme.primary
     }
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismissRequest,
-        icon = {
-            Icon(
-                imageVector = icon,
-                contentDescription = null,
-                tint = containerColor,
-            )
-        },
-        title = { Text(text = title) },
-        text = {
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        },
-        confirmButton = {
-            Button(
-                onClick = onConfirm,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = containerColor,
-                    contentColor = contentColorForContainer(containerColor),
-                ),
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth(0.9f)
+                .wrapContentHeight(),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp
+        ) {
+            Column(
+                modifier = Modifier.padding(Spacing.Large),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(confirmButtonText)
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = containerColor,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .padding(bottom = Spacing.Small)
+                )
+
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.Medium))
+
+                Text(
+                    text = message,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center
+                )
+
+                Spacer(modifier = Modifier.height(Spacing.Large))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = onDismissRequest,
+                        modifier = Modifier.padding(end = Spacing.Small)
+                    ) {
+                        Text(dismissButtonText)
+                    }
+                    Button(
+                        onClick = onConfirm,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = containerColor,
+                            contentColor = contentColorForContainer(containerColor),
+                        )
+                    ) {
+                        Text(confirmButtonText)
+                    }
+                }
             }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismissRequest) { Text(dismissButtonText) }
-        },
-    )
+        }
+    }
 }
 
 /**
- * Picks the matching `on*` role for a container colour, so callers get readable
- * text without having to pass both halves of the pair.
+ * Picks the matching `on*` role for a container colour.
  */
 @Composable
 private fun contentColorForContainer(container: Color): Color {

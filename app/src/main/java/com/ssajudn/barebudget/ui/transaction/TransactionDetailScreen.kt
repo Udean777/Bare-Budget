@@ -35,6 +35,7 @@ import kotlinx.coroutines.launch
 
 data class TransactionDetailUiState(
     val transaction: Transaction? = null,
+    val walletName: String? = null,
     val isLoading: Boolean = false,
     val isDeleted: Boolean = false,
     val errorMessage: String? = null
@@ -53,9 +54,16 @@ class TransactionDetailViewModel(
             repository.getTransactions()
                 .onSuccess { transactions ->
                     val found = transactions.find { it.id == transactionId }
+                    var wName: String? = null
+                    if (found != null && found.walletId != null) {
+                        repository.getWallets().onSuccess { wallets ->
+                            wName = wallets.find { it.id == found.walletId }?.name
+                        }
+                    }
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        transaction = found
+                        transaction = found,
+                        walletName = wName
                     )
                 }
                 .onFailure { error ->
@@ -107,14 +115,7 @@ fun TransactionDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        text = "Transaction Detail",
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                },
+                title = { Text("Detail Transaksi", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -155,13 +156,19 @@ fun TransactionDetailScreen(
                 val onContainer = catColors.onContainer(tx.category)
                 val categoryIcon = getCategoryIcon(tx.category)
 
+                val isIncome = tx.type == com.ssajudn.barebudget.data.model.TransactionType.INCOME
+                val amountColor = if (isIncome) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
+                val amountPrefix = if (isIncome) "+" else "-"
+
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 20.dp)
                         .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    
                     // Header Amount Card (M3 ElevatedCard)
                     ElevatedCard(
                         modifier = Modifier.fillMaxWidth(),
@@ -172,13 +179,13 @@ fun TransactionDetailScreen(
                         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(
-                            modifier = Modifier.padding(24.dp),
+                            modifier = Modifier.padding(32.dp).fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(60.dp)
-                                    .clip(MaterialTheme.shapes.large)
+                                    .size(72.dp)
+                                    .clip(MaterialTheme.shapes.extraLarge)
                                     .background(container),
                                 contentAlignment = Alignment.Center
                             ) {
@@ -186,29 +193,30 @@ fun TransactionDetailScreen(
                                     imageVector = categoryIcon,
                                     contentDescription = null,
                                     tint = onContainer,
-                                    modifier = Modifier.size(30.dp)
+                                    modifier = Modifier.size(36.dp)
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(14.dp))
+                            Spacer(modifier = Modifier.height(20.dp))
 
                             Text(
                                 text = tx.merchant?.takeIf { it.isNotBlank() } ?: tx.category.displayName,
-                                style = MaterialTheme.typography.titleLarge.copy(
+                                style = MaterialTheme.typography.headlineSmall.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = MaterialTheme.colorScheme.onSurface,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
 
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(8.dp))
 
                             Text(
-                                text = "-${CurrencyFormatter.formatRupiah(tx.amount)}",
-                                style = MaterialTheme.typography.displayMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 32.sp
+                                text = "$amountPrefix${CurrencyFormatter.formatRupiah(tx.amount)}",
+                                style = MaterialTheme.typography.displaySmall.copy(
+                                    fontWeight = FontWeight.Bold
                                 ),
-                                color = MaterialTheme.colorScheme.onSurface
+                                color = amountColor,
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
                             )
                         }
                     }
@@ -224,17 +232,37 @@ fun TransactionDetailScreen(
                     ) {
                         Column(
                             modifier = Modifier.padding(20.dp),
-                            verticalArrangement = Arrangement.spacedBy(14.dp)
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
+                            DetailRow(label = "Tipe Transaksi", value = if (isIncome) "Pemasukan" else "Pengeluaran")
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            DetailRow(label = "Sumber / Dompet", value = uiState.walletName ?: "Uang Tunai")
+                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                             DetailRow(label = "Kategori", value = tx.category.displayName)
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                             DetailRow(label = "Tanggal", value = DateUtils.formatDisplayDate(tx.date))
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                             DetailRow(label = "Merchant / Toko", value = tx.merchant?.ifBlank { "-" } ?: "-")
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                            DetailRow(label = "Catatan", value = tx.notes?.ifBlank { "-" } ?: "-")
+                            
+                            if (!tx.notes.isNullOrBlank()) {
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                    Text(
+                                        text = "Catatan",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                    Text(
+                                        text = tx.notes,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                }
+                            }
                         }
                     }
+                    
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             } else {
                 Box(
@@ -252,7 +280,6 @@ fun TransactionDetailScreen(
             }
         }
     }
-
     if (showDeleteConfirmDialog) {
         AppConfirmDialog(
             title = "Hapus Transaksi?",

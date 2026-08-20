@@ -17,6 +17,33 @@ type User struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
+type Wallet struct {
+	ID        uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
+	UserID    string         `gorm:"type:varchar(128);index;not null" json:"user_id"`
+	Name      string         `gorm:"type:varchar(100);not null" json:"name"`
+	Balance   int64          `gorm:"default:0" json:"balance"`
+	ColorHex  string         `gorm:"type:varchar(20);default:'#4E73DF'" json:"color_hex"`
+	IconName  string         `gorm:"type:varchar(100);default:'account_balance_wallet'" json:"icon_name"`
+	CreatedAt time.Time      `json:"created_at"`
+	UpdatedAt time.Time      `json:"updated_at"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
+}
+
+func (w *Wallet) BeforeCreate(tx *gorm.DB) (err error) {
+	if w.ID == uuid.Nil {
+		w.ID = uuid.New()
+	}
+	return
+}
+
+type TransactionType string
+
+const (
+	TypeIncome   TransactionType = "INCOME"
+	TypeExpense  TransactionType = "EXPENSE"
+	TypeTransfer TransactionType = "TRANSFER"
+)
+
 type TransactionCategory string
 
 const (
@@ -26,21 +53,26 @@ const (
 	CategoryShopping      TransactionCategory = "SHOPPING"
 	CategoryEntertainment TransactionCategory = "ENTERTAINMENT"
 	CategorySocial        TransactionCategory = "SOCIAL"
+	CategorySalary        TransactionCategory = "SALARY"
+	CategoryBonus         TransactionCategory = "BONUS"
+	CategoryInvestment    TransactionCategory = "INVESTMENT"
 	CategoryOther         TransactionCategory = "OTHER"
 )
 
 type Transaction struct {
-	ID          uuid.UUID           `gorm:"type:uuid;primaryKey" json:"id"`
-	UserID      string              `gorm:"type:varchar(128);index;not null" json:"user_id"`
-	Amount      int64               `gorm:"not null" json:"amount"`
-	Category    TransactionCategory `gorm:"type:varchar(50);not null" json:"category"`
-	Merchant    string              `gorm:"type:varchar(255)" json:"merchant"`
-	Date        time.Time           `gorm:"not null;index" json:"date"`
-	Notes       string              `gorm:"type:text" json:"notes"`
-	ReceiptURL  string              `gorm:"type:text" json:"receipt_url,omitempty"`
-	CreatedAt   time.Time           `json:"created_at"`
-	UpdatedAt   time.Time           `json:"updated_at"`
-	DeletedAt   gorm.DeletedAt      `gorm:"index" json:"-"`
+	ID         uuid.UUID           `gorm:"type:uuid;primaryKey" json:"id"`
+	UserID     string              `gorm:"type:varchar(128);index;not null" json:"user_id"`
+	Amount     int64               `gorm:"not null" json:"amount"`
+	Type       TransactionType     `gorm:"type:varchar(20);default:'EXPENSE'" json:"type"`
+	WalletID   *string             `gorm:"type:varchar(128)" json:"wallet_id,omitempty"`
+	Category   TransactionCategory `gorm:"type:varchar(50);not null" json:"category"`
+	Merchant   string              `gorm:"type:varchar(255)" json:"merchant"`
+	Date       time.Time           `gorm:"not null;index" json:"date"`
+	Notes      string              `gorm:"type:text" json:"notes"`
+	ReceiptURL string              `gorm:"type:text" json:"receipt_url,omitempty"`
+	CreatedAt  time.Time           `json:"created_at"`
+	UpdatedAt  time.Time           `json:"updated_at"`
+	DeletedAt  gorm.DeletedAt      `gorm:"index" json:"-"`
 }
 
 func (t *Transaction) BeforeCreate(tx *gorm.DB) (err error) {
@@ -106,17 +138,17 @@ func (b *Budget) BeforeCreate(tx *gorm.DB) (err error) {
 }
 
 type Goal struct {
-	ID           uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
-	UserID       string         `gorm:"type:varchar(128);index;not null" json:"user_id"`
-	Name         string         `gorm:"type:varchar(150);not null" json:"name"`
-	TargetAmount int64          `gorm:"not null" json:"target_amount"`
-	CurrentAmount int64         `gorm:"default:0" json:"current_amount"`
-	TargetDate   time.Time      `json:"target_date"`
-	ColorHex     string         `gorm:"type:varchar(20);default:'#4E73DF'" json:"color_hex"`
-	Notes        string         `gorm:"type:text" json:"notes"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
-	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
+	ID            uuid.UUID      `gorm:"type:uuid;primaryKey" json:"id"`
+	UserID        string         `gorm:"type:varchar(128);index;not null" json:"user_id"`
+	Name          string         `gorm:"type:varchar(150);not null" json:"name"`
+	TargetAmount  int64          `gorm:"not null" json:"target_amount"`
+	CurrentAmount int64          `gorm:"default:0" json:"current_amount"`
+	TargetDate    time.Time      `json:"target_date"`
+	ColorHex      string         `gorm:"type:varchar(20);default:'#4E73DF'" json:"color_hex"`
+	Notes         string         `gorm:"type:text" json:"notes"`
+	CreatedAt     time.Time      `json:"created_at"`
+	UpdatedAt     time.Time      `json:"updated_at"`
+	DeletedAt     gorm.DeletedAt `gorm:"index" json:"-"`
 }
 
 func (g *Goal) BeforeCreate(tx *gorm.DB) (err error) {
@@ -125,4 +157,3 @@ func (g *Goal) BeforeCreate(tx *gorm.DB) (err error) {
 	}
 	return
 }
-

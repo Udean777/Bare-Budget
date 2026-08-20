@@ -24,6 +24,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.ssajudn.barebudget.data.model.TransactionCategory
+import com.ssajudn.barebudget.data.model.TransactionType
+import com.ssajudn.barebudget.data.model.Wallet
+
 import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
 import com.ssajudn.barebudget.ui.theme.categoryColors
@@ -111,6 +114,57 @@ fun AddTransactionScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            // 0. TRANSACTION TYPE (Income/Expense)
+            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                SegmentedButton(
+                    selected = uiState.transactionType == TransactionType.EXPENSE,
+                    onClick = { viewModel.onTransactionTypeChange(TransactionType.EXPENSE) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                ) {
+                    Text("Pengeluaran")
+                }
+                SegmentedButton(
+                    selected = uiState.transactionType == TransactionType.INCOME,
+                    onClick = { viewModel.onTransactionTypeChange(TransactionType.INCOME) },
+                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                ) {
+                    Text("Pemasukan")
+                }
+            }
+
+            // 0.5. WALLET SELECTION
+            var walletDropdownExpanded by remember { mutableStateOf(false) }
+            ExposedDropdownMenuBox(
+                expanded = walletDropdownExpanded,
+                onExpandedChange = { walletDropdownExpanded = !walletDropdownExpanded },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val selectedWalletName = uiState.wallets.find { it.id == uiState.selectedWalletId }?.name ?: "Pilih Dompet"
+                OutlinedTextField(
+                    value = selectedWalletName,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Dompet") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = walletDropdownExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth(),
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                )
+                ExposedDropdownMenu(
+                    expanded = walletDropdownExpanded,
+                    onDismissRequest = { walletDropdownExpanded = false }
+                ) {
+                    uiState.wallets.forEach { wallet ->
+                        DropdownMenuItem(
+                            text = { Text(wallet.name) },
+                            onClick = {
+                                viewModel.onWalletChange(wallet.id!!)
+                                walletDropdownExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
             // 1. AMOUNT INPUT (Prominent M3 Display Card with Quick Presets)
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -125,7 +179,7 @@ fun AddTransactionScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Nominal Pengeluaran",
+                        text = if (uiState.transactionType == TransactionType.INCOME) "Nominal Pemasukan" else "Nominal Pengeluaran",
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -211,7 +265,9 @@ fun AddTransactionScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     contentPadding = PaddingValues(vertical = 4.dp)
                 ) {
-                    items(TransactionCategory.entries) { category ->
+                    val incomeCats = listOf(TransactionCategory.SALARY, TransactionCategory.BONUS, TransactionCategory.INVESTMENT)
+                    val filteredCats = TransactionCategory.entries.filter { if (uiState.transactionType == TransactionType.INCOME) it in incomeCats else it !in incomeCats }
+                    items(filteredCats) { category ->
                         val isSelected = category == uiState.selectedCategory
                         val catColors = categoryColors
 

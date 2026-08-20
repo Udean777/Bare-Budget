@@ -13,6 +13,16 @@ interface ApiService {
     @POST("api/v1/budget")
     suspend fun setBudget(@Body request: SetBudgetRequest): Response<Map<String, String>>
 
+    // Wallets
+    @GET("api/v1/wallets")
+    suspend fun getWallets(): Response<List<Wallet>>
+
+    @POST("api/v1/wallets")
+    suspend fun createWallet(@Body request: CreateWalletRequest): Response<Wallet>
+
+    @DELETE("api/v1/wallets/{id}")
+    suspend fun deleteWallet(@Path("id") id: String): Response<Map<String, String>>
+
     // Transactions
     @GET("api/v1/transactions")
     suspend fun getTransactions(

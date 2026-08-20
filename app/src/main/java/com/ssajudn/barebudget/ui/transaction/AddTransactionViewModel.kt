@@ -4,8 +4,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ssajudn.barebudget.data.model.CreateTransactionRequest
 import com.ssajudn.barebudget.data.model.TransactionCategory
+import com.ssajudn.barebudget.data.model.TransactionType
+import com.ssajudn.barebudget.data.model.Wallet
 import com.ssajudn.barebudget.data.repository.BudgetRepository
-import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +14,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 data class AddTransactionUiState(
+    val transactionType: TransactionType = TransactionType.EXPENSE,
+    val wallets: List<Wallet> = emptyList(),
+    val selectedWalletId: String? = null,
     val rawAmount: String = "",
     val parsedAmount: Long = 0L,
     val merchant: String = "",
@@ -30,6 +34,36 @@ class AddTransactionViewModel(
 
     private val _uiState = MutableStateFlow(AddTransactionUiState())
     val uiState: StateFlow<AddTransactionUiState> = _uiState.asStateFlow()
+
+    init {
+        loadWallets()
+    }
+
+    private fun loadWallets() {
+        viewModelScope.launch {
+            val result = repository.getWallets()
+            if (result.isSuccess) {
+                val wallets = result.getOrNull() ?: emptyList()
+                val defaultWallet = wallets.firstOrNull()?.id
+                _uiState.value = _uiState.value.copy(
+                    wallets = wallets,
+                    selectedWalletId = defaultWallet
+                )
+            }
+        }
+    }
+
+    fun onTransactionTypeChange(type: TransactionType) {
+        val newCategory = if (type == TransactionType.INCOME) TransactionCategory.SALARY else TransactionCategory.FOOD
+        _uiState.value = _uiState.value.copy(
+            transactionType = type,
+            selectedCategory = newCategory
+        )
+    }
+
+    fun onWalletChange(walletId: String) {
+        _uiState.value = _uiState.value.copy(selectedWalletId = walletId)
+    }
 
     fun onAmountChange(input: String) {
         val digitsOnly = input.filter { it.isDigit() }.take(12) // Limit up to hundreds of billions
@@ -59,7 +93,11 @@ class AddTransactionViewModel(
     fun saveTransaction() {
         val state = _uiState.value
         if (state.parsedAmount <= 0) {
-            _uiState.value = state.copy(errorMessage = "Please enter an amount")
+            _uiState.value = state.copy(errorMessage = "Tolong masukkan jumlah nominal yang valid")
+            return
+        }
+        if (state.selectedWalletId == null) {
+            _uiState.value = state.copy(errorMessage = "Tolong pilih dompet terlebih dahulu")
             return
         }
 
@@ -67,6 +105,8 @@ class AddTransactionViewModel(
             _uiState.value = state.copy(isLoading = true, errorMessage = null)
             val request = CreateTransactionRequest(
                 amount = state.parsedAmount,
+                type = state.transactionType,
+                walletId = state.selectedWalletId,
                 category = state.selectedCategory,
                 merchant = state.merchant.ifBlank { state.selectedCategory.displayName },
                 date = state.date,

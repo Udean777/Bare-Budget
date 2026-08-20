@@ -422,7 +422,6 @@ fun AddGoalDialog(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
             value = rawAmount,
@@ -440,7 +439,6 @@ fun AddGoalDialog(
             modifier = Modifier.fillMaxWidth()
         )
 
-        Spacer(modifier = Modifier.height(10.dp))
 
         OutlinedTextField(
             value = if (targetDate.isNotBlank()) DateUtils.formatDisplayDate(targetDate) else "",

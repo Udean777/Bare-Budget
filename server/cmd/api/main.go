@@ -68,6 +68,11 @@ func main() {
 	api.Post("/budget", h.SetBudget)
 
 	// Transactions
+	// Wallets
+	api.Get("/wallets", h.GetWallets)
+	api.Post("/wallets", h.CreateWallet)
+	api.Put("/wallets/:id", h.UpdateWallet)
+	api.Delete("/wallets/:id", h.DeleteWallet)
 	api.Get("/transactions", h.GetTransactions)
 	api.Post("/transactions", h.CreateTransaction)
 	api.Delete("/transactions/:id", h.DeleteTransaction)

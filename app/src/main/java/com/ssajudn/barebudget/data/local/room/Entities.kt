@@ -4,19 +4,26 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.ssajudn.barebudget.data.model.DueBill
 import com.ssajudn.barebudget.data.model.DueBillStatus
+import com.ssajudn.barebudget.data.model.Goal
+import com.ssajudn.barebudget.data.model.RecurringInterval
 import com.ssajudn.barebudget.data.model.Transaction
 import com.ssajudn.barebudget.data.model.TransactionCategory
 import java.util.UUID
+
+import com.ssajudn.barebudget.data.model.TransactionType
+import com.ssajudn.barebudget.data.model.Wallet
 
 @Entity(tableName = "local_transactions")
 data class LocalTransactionEntity(
     @PrimaryKey val id: String,
     val amount: Long,
+    val type: String = TransactionType.EXPENSE.name,
     val category: String,
     val merchant: String?,
     val date: String,
     val notes: String?,
     val receiptUrl: String?,
+    val walletId: String? = null,
     val isSynced: Boolean = false
 ) {
     fun toTransaction(): Transaction {
@@ -25,14 +32,21 @@ data class LocalTransactionEntity(
         } catch (e: Exception) {
             TransactionCategory.OTHER
         }
+        val txType = try {
+            TransactionType.valueOf(type)
+        } catch (e: Exception) {
+            TransactionType.EXPENSE
+        }
         return Transaction(
             id = id,
             amount = amount,
+            type = txType,
             category = cat,
             merchant = merchant,
             date = date,
             notes = notes,
-            receiptUrl = receiptUrl
+            receiptUrl = receiptUrl,
+            walletId = walletId
         )
     }
 
@@ -41,11 +55,13 @@ data class LocalTransactionEntity(
             return LocalTransactionEntity(
                 id = tx.id ?: UUID.randomUUID().toString(),
                 amount = tx.amount,
+                type = tx.type.name,
                 category = tx.category.name,
                 merchant = tx.merchant,
                 date = tx.date,
                 notes = tx.notes,
                 receiptUrl = tx.receiptUrl,
+                walletId = tx.walletId,
                 isSynced = isSynced
             )
         }
@@ -72,9 +88,9 @@ data class LocalDueBillEntity(
             DueBillStatus.UNPAID
         }
         val interval = try {
-            com.ssajudn.barebudget.data.model.RecurringInterval.valueOf(recurringInterval)
+            RecurringInterval.valueOf(recurringInterval)
         } catch (e: Exception) {
-            com.ssajudn.barebudget.data.model.RecurringInterval.NONE
+            RecurringInterval.NONE
         }
         return DueBill(
             id = id,
@@ -125,8 +141,8 @@ data class LocalGoalEntity(
     val notes: String?,
     val isSynced: Boolean = false
 ) {
-    fun toGoal(): com.ssajudn.barebudget.data.model.Goal {
-        return com.ssajudn.barebudget.data.model.Goal(
+    fun toGoal(): Goal {
+        return Goal(
             id = id,
             name = name,
             targetAmount = targetAmount,
@@ -138,7 +154,7 @@ data class LocalGoalEntity(
     }
 
     companion object {
-        fun fromGoal(goal: com.ssajudn.barebudget.data.model.Goal, isSynced: Boolean = false): LocalGoalEntity {
+        fun fromGoal(goal: Goal, isSynced: Boolean = false): LocalGoalEntity {
             return LocalGoalEntity(
                 id = goal.id ?: UUID.randomUUID().toString(),
                 name = goal.name,
@@ -147,6 +163,42 @@ data class LocalGoalEntity(
                 targetDate = goal.targetDate,
                 colorHex = goal.colorHex,
                 notes = goal.notes,
+                isSynced = isSynced
+            )
+        }
+    }
+}
+
+@Entity(tableName = "local_wallets")
+data class LocalWalletEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val balance: Long,
+    val colorHex: String,
+    val iconName: String,
+    val createdAt: String,
+    val isSynced: Boolean = false
+) {
+    fun toWallet(): Wallet {
+        return Wallet(
+            id = id,
+            name = name,
+            balance = balance,
+            colorHex = colorHex,
+            iconName = iconName,
+            createdAt = createdAt
+        )
+    }
+
+    companion object {
+        fun fromWallet(wallet: Wallet, isSynced: Boolean = false): LocalWalletEntity {
+            return LocalWalletEntity(
+                id = wallet.id ?: UUID.randomUUID().toString(),
+                name = wallet.name,
+                balance = wallet.balance,
+                colorHex = wallet.colorHex,
+                iconName = wallet.iconName,
+                createdAt = wallet.createdAt ?: com.ssajudn.barebudget.utils.DateUtils.getCurrentDateISO(),
                 isSynced = isSynced
             )
         }

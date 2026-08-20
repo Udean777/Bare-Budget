@@ -86,6 +86,8 @@ func (h *Handler) CreateTransaction(c *fiber.Ctx) error {
 
 	var req struct {
 		Amount     int64                      `json:"amount"`
+		Type       models.TransactionType     `json:"type"`
+		WalletID   *string                    `json:"wallet_id"`
 		Category   models.TransactionCategory `json:"category"`
 		Merchant   string                     `json:"merchant"`
 		Date       string                     `json:"date"` // RFC3339 or "2006-01-02"
@@ -108,6 +110,8 @@ func (h *Handler) CreateTransaction(c *fiber.Ctx) error {
 	tx := &models.Transaction{
 		UserID:     userID,
 		Amount:     req.Amount,
+		Type:       req.Type,
+		WalletID:   req.WalletID,
 		Category:   req.Category,
 		Merchant:   req.Merchant,
 		Date:       txDate,
@@ -371,4 +375,76 @@ func (h *Handler) DeleteGoal(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"status": "deleted"})
+}
+
+// Wallet Handlers
+func (h *Handler) GetWallets(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	wallets, err := h.svc.GetWallets(userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(wallets)
+}
+
+func (h *Handler) CreateWallet(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	var wallet models.Wallet
+	if err := c.BodyParser(&wallet); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid payload"})
+	}
+	wallet.UserID = userID
+	if err := h.svc.CreateWallet(&wallet); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(wallet)
+}
+
+func (h *Handler) UpdateWallet(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	idParam := c.Params("id")
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid uuid"})
+	}
+
+	var payload models.Wallet
+	if err := c.BodyParser(&payload); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid payload"})
+	}
+
+	wallets, _ := h.svc.GetWallets(userID)
+	var existing *models.Wallet
+	for _, w := range wallets {
+		if w.ID == id {
+			existing = &w
+			break
+		}
+	}
+	if existing == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "wallet not found"})
+	}
+
+	existing.Name = payload.Name
+	existing.ColorHex = payload.ColorHex
+	existing.IconName = payload.IconName
+
+	if err := h.svc.UpdateWallet(existing); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(existing)
+}
+
+func (h *Handler) DeleteWallet(c *fiber.Ctx) error {
+	userID := middleware.GetUserID(c)
+	idParam := c.Params("id")
+	id, err := uuid.Parse(idParam)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid uuid"})
+	}
+
+	if err := h.svc.DeleteWallet(userID, id); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+	return c.JSON(fiber.Map{"success": true})
 }

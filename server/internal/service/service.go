@@ -27,6 +27,22 @@ func (s *Service) MigrateGuestData(guestUserID, targetUserID string) error {
 }
 
 // Transaction Services
+// Wallet Services
+func (s *Service) CreateWallet(w *models.Wallet) error {
+	return s.repo.CreateWallet(w)
+}
+
+func (s *Service) GetWallets(userID string) ([]models.Wallet, error) {
+	return s.repo.GetWalletsByUserID(userID)
+}
+
+func (s *Service) UpdateWallet(w *models.Wallet) error {
+	return s.repo.UpdateWallet(w)
+}
+
+func (s *Service) DeleteWallet(userID string, id uuid.UUID) error {
+	return s.repo.DeleteWallet(userID, id)
+}
 func (s *Service) CreateTransaction(t *models.Transaction) error {
 	return s.repo.CreateTransaction(t)
 }
@@ -92,6 +108,7 @@ type DashboardSummary struct {
 	RunwayMessage      string                       `json:"runway_message"`
 	TopCategories      []repository.CategorySummary `json:"top_categories"`
 	UnpaidDueBillsSum  int64                        `json:"unpaid_due_bills_sum"`
+	NetWorth           int64                        `json:"net_worth"`
 	RecentTransactions []models.Transaction         `json:"recent_transactions"`
 }
 
@@ -172,6 +189,13 @@ func (s *Service) GetDashboardSummary(userID string, now time.Time) (*DashboardS
 	// 6. Get Recent 5 Transactions
 	recentTxs, _, _ := s.repo.GetTransactionsByUserID(userID, time.Time{}, time.Time{}, "", 5, 0)
 
+		// 7. Get Net Worth (Sum of Wallets)
+	wallets, _ := s.repo.GetWalletsByUserID(userID)
+	var netWorth int64 = 0
+	for _, w := range wallets {
+		netWorth += w.Balance
+	}
+
 	return &DashboardSummary{
 		MonthlyBudget:      monthlyBudget,
 		TotalSpent:         totalSpent,
@@ -183,8 +207,10 @@ func (s *Service) GetDashboardSummary(userID string, now time.Time) (*DashboardS
 		RunwayMessage:      runwayMsg,
 		TopCategories:      categories,
 		UnpaidDueBillsSum:  unpaidSum,
+		NetWorth:           netWorth,
 		RecentTransactions: recentTxs,
 	}, nil
+
 }
 
 func formatCurrency(amount int64) string {

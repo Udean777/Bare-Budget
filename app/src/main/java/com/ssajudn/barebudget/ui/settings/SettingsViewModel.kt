@@ -78,6 +78,43 @@ class SettingsViewModel(
         }
     }
 
+    private val backupManager = com.ssajudn.barebudget.data.local.BackupRestoreManager(context)
+
+    fun exportBackup(uri: android.net.Uri) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            val result = backupManager.exportBackupToUri(uri)
+            _uiState.value = _uiState.value.copy(isLoading = false)
+            if (result.isSuccess) {
+                _uiState.value = _uiState.value.copy(
+                    successMessage = "Backup berhasil diekspor ke file! Simpan file ini untuk restore kapan saja."
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Gagal mengekspor backup: ${result.exceptionOrNull()?.localizedMessage}"
+                )
+            }
+        }
+    }
+
+    fun importBackup(uri: android.net.Uri) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            val result = backupManager.importBackupFromUri(uri)
+            _uiState.value = _uiState.value.copy(isLoading = false)
+            if (result.isSuccess) {
+                val count = result.getOrNull() ?: 0
+                _uiState.value = _uiState.value.copy(
+                    successMessage = "Berhasil memulihkan $count data dari file backup!"
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Gagal memulihkan backup. Pastikan format file benar: ${result.exceptionOrNull()?.localizedMessage}"
+                )
+            }
+        }
+    }
+
     fun signOut() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true)

@@ -61,6 +61,9 @@ interface DueBillDao {
 
 @Dao
 interface BudgetDao {
+    @Query("SELECT * FROM local_budgets ORDER BY monthYear DESC")
+    fun getAllBudgets(): List<LocalBudgetEntity>
+
     @Query("SELECT * FROM local_budgets WHERE monthYear = :monthYear LIMIT 1")
     fun getBudget(monthYear: String): LocalBudgetEntity?
 
@@ -69,6 +72,9 @@ interface BudgetDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertBudget(budget: LocalBudgetEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertBudgets(budgets: List<LocalBudgetEntity>)
 
     @Query("DELETE FROM local_budgets")
     fun clearAll()

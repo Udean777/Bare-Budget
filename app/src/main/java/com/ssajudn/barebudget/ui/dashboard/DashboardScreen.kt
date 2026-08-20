@@ -95,8 +95,95 @@ fun DashboardScreen(
                     }
                 },
                 actions = {
+                    var showThemeDialog by remember { mutableStateOf(false) }
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    val themePrefs = remember { com.ssajudn.barebudget.data.local.ThemePreferences.getInstance(context) }
+                    val currentDarkMode by themePrefs.darkMode.collectAsState()
+
+                    val themeIcon = when (currentDarkMode) {
+                        ThemeDarkMode.Dark -> Icons.Default.DarkMode
+                        ThemeDarkMode.Light -> Icons.Default.LightMode
+                        ThemeDarkMode.FollowSystem -> Icons.Default.BrightnessAuto
+                    }
+
+                    IconButton(onClick = { showThemeDialog = true }) {
+                        Icon(
+                            imageVector = themeIcon,
+                            contentDescription = "Tema Tampilan"
+                        )
+                    }
+
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
+
+                    if (showThemeDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showThemeDialog = false },
+                            title = {
+                                Text(
+                                    text = "Pilih Tema Tampilan",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+                            },
+                            text = {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    val options = listOf(
+                                        Triple(ThemeDarkMode.FollowSystem, "Ikuti Sistem", Icons.Default.BrightnessAuto),
+                                        Triple(ThemeDarkMode.Light, "Mode Terang", Icons.Default.LightMode),
+                                        Triple(ThemeDarkMode.Dark, "Mode Gelap", Icons.Default.DarkMode)
+                                    )
+
+                                    options.forEach { (mode, label, icon) ->
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(MaterialTheme.shapes.medium)
+                                                .clickable {
+                                                    themePrefs.setDarkMode(mode)
+                                                    showThemeDialog = false
+                                                },
+                                            color = if (currentDarkMode == mode) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+                                            shape = MaterialTheme.shapes.medium
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = icon,
+                                                    contentDescription = null,
+                                                    tint = if (currentDarkMode == mode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                Text(
+                                                    text = label,
+                                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                                        fontWeight = if (currentDarkMode == mode) FontWeight.Bold else FontWeight.Normal
+                                                    ),
+                                                    color = if (currentDarkMode == mode) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                                if (currentDarkMode == mode) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(onClick = { showThemeDialog = false }) {
+                                    Text("Tutup")
+                                }
+                            }
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

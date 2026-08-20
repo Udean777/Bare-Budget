@@ -405,7 +405,7 @@ fun FinalAuthChoiceStep(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "No login required. Note: If you uninstall the app or clear data, your history will not be restored and you will start from zero.",
+                    text = "100% Offline & tanpa login. Semua data tersimpan di perangkat dan dapat dicadangkan/dipulihkan kapan saja lewat file backup JSON.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

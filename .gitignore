@@ -58,3 +58,6 @@ server/.env
 server/build-errors.log
 server/main
 server/barebudget-api
+
+# Google Services
+app/google-services.json

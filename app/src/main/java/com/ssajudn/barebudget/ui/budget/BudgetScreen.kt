@@ -64,7 +64,7 @@ fun BudgetScreen(
             ) {
                 Button(
                     onClick = { viewModel.saveBudget() },
-                    enabled = !uiState.isLoading && uiState.parsedAmount > 0,
+                    enabled = !uiState.isLoading && uiState.parsedAmount > 0 && !uiState.isLocked,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp, vertical = 16.dp)
@@ -82,7 +82,7 @@ fun BudgetScreen(
                         )
                     } else {
                         Text(
-                            text = "Save Monthly Budget",
+                            text = if (uiState.isLocked) "Budget Terkunci Bulan Ini" else "Save Monthly Budget",
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold
                             )
@@ -127,6 +127,30 @@ fun BudgetScreen(
                 }
             }
 
+            if (uiState.isLocked) {
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = AppShapes.LargeIncreased,
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Budget bulan ini sudah terkunci",
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                            color = MaterialTheme.colorScheme.onTertiaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "Saat ini ${CurrencyFormatter.formatRupiah(uiState.currentLimit)}. Kamu hanya bisa mengubah budget 1x per bulan. Budget akan bisa diubah lagi bulan depan.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
+                        )
+                    }
+                }
+            }
+
             // Amount Input (M3 Display Card)
             ElevatedCard(
                 modifier = Modifier.fillMaxWidth(),
@@ -148,7 +172,8 @@ fun BudgetScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     OutlinedTextField(
                         value = uiState.rawAmount,
-                        onValueChange = { viewModel.onAmountChange(it) },
+                        onValueChange = { if (!uiState.isLocked) viewModel.onAmountChange(it) },
+                        enabled = !uiState.isLocked,
                         placeholder = {
                             Text(
                                 "Rp 0",
@@ -190,7 +215,8 @@ fun BudgetScreen(
             ) {
                 listOf(2_000_000L, 3_500_000L, 5_000_000L).forEach { preset ->
                     SuggestionChip(
-                        onClick = { viewModel.onAmountChange(preset.toString()) },
+                        onClick = { if (!uiState.isLocked) viewModel.onAmountChange(preset.toString()) },
+                        enabled = !uiState.isLocked,
                         label = {
                             Text(
                                 CurrencyFormatter.formatCompact(preset),

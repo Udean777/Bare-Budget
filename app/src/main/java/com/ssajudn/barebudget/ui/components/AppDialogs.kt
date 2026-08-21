@@ -1,7 +1,9 @@
 package com.ssajudn.barebudget.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DeleteOutline
 import androidx.compose.material3.*
@@ -45,14 +47,14 @@ fun AppFormDialog(
     ) {
         Surface(
             modifier = modifier
-                .fillMaxWidth(0.92f) // Makes it wider and less cramped
-                .wrapContentHeight(),
+                .fillMaxWidth(0.92f)
+                .heightIn(max = 640.dp),
             shape = MaterialTheme.shapes.extraLarge,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 6.dp
         ) {
             Column(
-                modifier = Modifier.padding(Spacing.Large), // 24dp padding for breathing room
+                modifier = Modifier.padding(Spacing.Large),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 if (icon != null) {
@@ -76,7 +78,10 @@ fun AppFormDialog(
                 Spacer(modifier = Modifier.height(Spacing.Large))
 
                 Column(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
                     verticalArrangement = Arrangement.spacedBy(contentSpacing),
                     content = content
                 )

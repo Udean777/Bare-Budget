@@ -37,17 +37,29 @@ class BudgetRemoteDataSource @Inject constructor(
     suspend fun setBudget(monthlyLimit: Long, monthYear: String): Result<Boolean> =
         withContext(Dispatchers.IO) {
             try {
-                val response = api.setBudget(SetBudgetRequest(monthlyLimit, monthYear))
+                val my = if (monthYear.isBlank()) {
+                    SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(java.util.Calendar.getInstance().time)
+                } else monthYear
+                // optimistic local check to avoid round-trip
+                if (db.budgetDao().getBudget(my) != null) {
+                    return@withContext Result.failure(
+                        com.ssajudn.barebudget.domain.error.AppException.DataException(
+                            "Budget bulan $my sudah diatur. Hanya bisa diubah bulan depan."
+                        )
+                    )
+                }
+                val response = api.setBudget(SetBudgetRequest(monthlyLimit, my))
                 if (response.isSuccessful) {
                     db.budgetDao().insertBudget(
-                        LocalBudgetEntity(monthYear = monthYear, monthlyLimit = monthlyLimit, isSynced = true)
+                        LocalBudgetEntity(monthYear = my, monthlyLimit = monthlyLimit, isSynced = true)
                     )
                     Result.success(true)
                 } else {
                     Result.failure(ApiErrorParser.parse(response))
                 }
             } catch (e: Exception) {
-                Result.failure(ApiErrorParser.fromThrowable(e))
+                if (e is com.ssajudn.barebudget.domain.error.AppException) Result.failure(e)
+                else Result.failure(ApiErrorParser.fromThrowable(e))
             }
         }
 

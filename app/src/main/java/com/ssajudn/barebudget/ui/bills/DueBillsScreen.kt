@@ -20,7 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.domain.model.DueBill
 import com.ssajudn.barebudget.domain.model.DueBillStatus
 import com.ssajudn.barebudget.domain.model.Wallet
@@ -40,7 +40,7 @@ import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 @Composable
 fun DueBillsScreen(
     onNavigateBack: (() -> Unit)? = null,
-    viewModel: DueBillsViewModel = viewModel()
+    viewModel: DueBillsViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing by viewModel.isRefreshing.collectAsState()
@@ -548,26 +548,38 @@ fun DueBillItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (bill.providerIconUrl != null) {
-                        if (bill.providerIconUrl.startsWith("res://")) {
-                            val resId = bill.providerIconUrl.removePrefix("res://").toIntOrNull()
-                            if (resId != null) {
-                                Icon(
-                                    painter = androidx.compose.ui.res.painterResource(id = resId),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(24.dp).clip(MaterialTheme.shapes.small),
-                                    tint = Color.Unspecified
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                            }
-                        } else {
-                            AsyncImage(
-                                model = bill.providerIconUrl,
-                                contentDescription = null,
-                                modifier = Modifier.size(24.dp).clip(MaterialTheme.shapes.small)
-                            )
-                            Spacer(modifier = Modifier.width(8.dp))
+                    val resolvedResId: Int? = if (bill.providerIconUrl != null && bill.providerIconUrl.startsWith("res://")) {
+                        bill.providerIconUrl.removePrefix("res://").toIntOrNull()
+                    } else when {
+                        bill.providerName.contains("Shopee", ignoreCase = true) -> R.drawable.logo_shopee
+                        bill.providerName.contains("Kredivo", ignoreCase = true) -> R.drawable.logo_kredivo
+                        bill.providerName.contains("GoPay", ignoreCase = true) -> R.drawable.logo_gopay
+                        else -> null
+                    }
+
+                    if (resolvedResId != null) {
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(id = resolvedResId),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(MaterialTheme.shapes.small)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                    } else if (bill.providerIconUrl != null && !bill.providerIconUrl.startsWith("res://")) {
+                        val iconModel: Any = when {
+                            bill.providerIconUrl.startsWith("/") -> java.io.File(bill.providerIconUrl)
+                            bill.providerIconUrl.startsWith("file://") -> java.io.File(bill.providerIconUrl.removePrefix("file://"))
+                            else -> bill.providerIconUrl
                         }
+                        AsyncImage(
+                            model = iconModel,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(28.dp)
+                                .clip(MaterialTheme.shapes.small)
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
                     }
 
                     Text(
@@ -576,40 +588,18 @@ fun DueBillItem(
                             fontWeight = FontWeight.SemiBold,
                             textDecoration = if (isPaid) androidx.compose.ui.text.style.TextDecoration.LineThrough else null
                         ),
-                        color = if (isPaid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
+                        color = if (isPaid) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
-                    if (bill.isRecurring) {
-                        Spacer(modifier = Modifier.width(6.dp))
-                        Surface(
-                            shape = MaterialTheme.shapes.extraSmall,
-                            color = MaterialTheme.colorScheme.primaryContainer
-                        ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Repeat,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(10.dp)
-                                )
-                                Spacer(modifier = Modifier.width(3.dp))
-                                Text(
-                                    text = bill.recurringInterval.displayName,
-                                    style = MaterialTheme.typography.labelSmall.copy(
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 10.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer
-                                )
-                            }
-                        }
-                    }
                 }
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(6.dp))
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
                     // Visual Status Badge
                     Surface(
                         shape = MaterialTheme.shapes.extraSmall,
@@ -626,14 +616,44 @@ fun DueBillItem(
                         )
                     }
 
-                    Spacer(modifier = Modifier.width(8.dp))
-
-                    Text(
-                        text = "Due ${DateUtils.formatDisplayDate(bill.dueDate)}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    // Recurring Interval Badge (clean pill style)
+                    if (bill.isRecurring) {
+                        Surface(
+                            shape = MaterialTheme.shapes.extraSmall,
+                            color = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(3.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Repeat,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier = Modifier.size(11.dp)
+                                )
+                                Text(
+                                    text = bill.recurringInterval.displayName,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.SemiBold,
+                                        fontSize = 10.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            }
+                        }
+                    }
                 }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "Jatuh tempo: ${DateUtils.formatDisplayDate(bill.dueDate)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 11.sp
+                )
             }
 
             Text(
@@ -664,9 +684,9 @@ fun DueBillFormDialog(
 ) {
     data class BillProvider(val name: String, val iconRes: Int? = null, val isCustom: Boolean = false)
     val builtinProviders = listOf(
-        BillProvider("Shopee PayLater", R.drawable.ic_provider_shopee),
-        BillProvider("Kredivo", R.drawable.ic_provider_kredivo),
-        BillProvider("GoPay Later", R.drawable.ic_provider_gopay),
+        BillProvider("Shopee PayLater", R.drawable.logo_shopee),
+        BillProvider("Kredivo", R.drawable.logo_kredivo),
+        BillProvider("GoPay Later", R.drawable.logo_gopay),
         BillProvider("Lainnya (Custom)", null, isCustom = true)
     )
 
@@ -677,10 +697,14 @@ fun DueBillFormDialog(
     var customProviderName by remember { mutableStateOf(if (existingProvider == null && initialBill != null) initialBill.providerName else "") }
     var customProviderIconUrl by remember { mutableStateOf<String?>(initialBill?.providerIconUrl) }
 
+    val context = androidx.compose.ui.platform.LocalContext.current
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: android.net.Uri? ->
-        customProviderIconUrl = uri?.toString()
+        if (uri != null) {
+            // ponytail: copy to internal storage so icon survives restart (content:// permission is transient)
+            customProviderIconUrl = persistPickedImage(context, uri) ?: uri.toString()
+        }
     }
 
     var rawAmount by remember { mutableStateOf(initialBill?.totalAmount?.toString() ?: "") }
@@ -726,23 +750,92 @@ fun DueBillFormDialog(
             )
         }
     ) {
-        // Provider Selection Chips
-        Text(
-            text = "Penyedia / Tagihan",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.SemiBold
-        )
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        // Provider Selection Dropdown (Combobox)
+        var providerDropdownExpanded by remember { mutableStateOf(false) }
+
+        ExposedDropdownMenuBox(
+            expanded = providerDropdownExpanded,
+            onExpandedChange = { providerDropdownExpanded = !providerDropdownExpanded },
+            modifier = Modifier.fillMaxWidth()
         ) {
-            builtinProviders.forEach { provider ->
-                FilterChip(
-                    selected = selectedProvider == provider,
-                    onClick = { selectedProvider = provider },
-                    label = { Text(provider.name, fontSize = 11.sp) },
-                    modifier = Modifier.weight(1f)
-                )
+            OutlinedTextField(
+                value = selectedProvider.name,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Penyedia / Kategori Tagihan") },
+                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = providerDropdownExpanded) },
+                leadingIcon = {
+                    if (selectedProvider.iconRes != null) {
+                        androidx.compose.foundation.Image(
+                            painter = androidx.compose.ui.res.painterResource(id = selectedProvider.iconRes!!),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(MaterialTheme.shapes.extraSmall)
+                        )
+                    } else if (selectedProvider.isCustom && customProviderIconUrl != null) {
+                        val previewModel: Any = when {
+                            customProviderIconUrl!!.startsWith("/") -> java.io.File(customProviderIconUrl!!)
+                            customProviderIconUrl!!.startsWith("file://") -> java.io.File(customProviderIconUrl!!.removePrefix("file://"))
+                            else -> customProviderIconUrl!!
+                        }
+                        AsyncImage(
+                            model = previewModel,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(24.dp)
+                                .clip(MaterialTheme.shapes.extraSmall)
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.Business,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                },
+                modifier = Modifier
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                    .fillMaxWidth(),
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+            )
+            ExposedDropdownMenu(
+                expanded = providerDropdownExpanded,
+                onDismissRequest = { providerDropdownExpanded = false }
+            ) {
+                builtinProviders.forEach { provider ->
+                    DropdownMenuItem(
+                        leadingIcon = {
+                            if (provider.iconRes != null) {
+                                androidx.compose.foundation.Image(
+                                    painter = androidx.compose.ui.res.painterResource(id = provider.iconRes),
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(24.dp)
+                                        .clip(MaterialTheme.shapes.extraSmall)
+                                )
+                            } else {
+                                Icon(
+                                    imageVector = Icons.Default.Category,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(24.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        },
+                        text = {
+                            Text(
+                                text = provider.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = if (selectedProvider == provider) FontWeight.Bold else FontWeight.Normal
+                            )
+                        },
+                        onClick = {
+                            selectedProvider = provider
+                            providerDropdownExpanded = false
+                        }
+                    )
+                }
             }
         }
 
@@ -985,4 +1078,18 @@ fun PayDueBillDialog(
             )
         }
     }
+}
+
+// ponytail: content:// uri permission hilang setelah restart, copy ke filesDir
+private fun persistPickedImage(context: android.content.Context, uri: android.net.Uri): String? {
+    return try {
+        val input = context.contentResolver.openInputStream(uri) ?: return null
+        val dir = java.io.File(context.filesDir, "duebill_icons").apply { mkdirs() }
+        val mime = context.contentResolver.getType(uri)
+        val ext = android.webkit.MimeTypeMap.getSingleton().getExtensionFromMimeType(mime) ?: "jpg"
+        val file = java.io.File(dir, "duebill_${System.currentTimeMillis()}_${java.util.UUID.randomUUID()}.$ext")
+        file.outputStream().use { input.copyTo(it) }
+        input.close()
+        file.absolutePath
+    } catch (_: Exception) { null }
 }

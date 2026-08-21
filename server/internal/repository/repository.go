@@ -122,7 +122,7 @@ func (r *Repository) DeleteTransaction(userID string, id uuid.UUID) error {
 func (r *Repository) GetMonthlySpent(userID string, startOfMonth, endOfMonth time.Time) (int64, error) {
 	var total int64
 	err := r.db.Model(&models.Transaction{}).
-		Where("user_id = ? AND date >= ? AND date <= ? AND (type = ? OR type IS NULL OR type = '')", userID, startOfMonth, endOfMonth, models.TypeExpense).
+		Where("user_id = ? AND date >= ? AND date <= ? AND (type = ? OR type IS NULL OR type = '') AND category != ?", userID, startOfMonth, endOfMonth, models.TypeExpense, models.CategoryBills).
 		Select("COALESCE(SUM(amount), 0)").
 		Scan(&total).Error
 	return total, err

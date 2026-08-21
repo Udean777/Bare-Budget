@@ -121,6 +121,10 @@ type DashboardSummary struct {
 }
 
 func (s *Service) SetBudget(userID string, limit int64, monthYear string) error {
+	existing, err := s.repo.GetBudget(userID, monthYear)
+	if err == nil && existing != nil {
+		return fmt.Errorf("budget already set for %s: only one update per month allowed", monthYear)
+	}
 	b := &models.Budget{
 		UserID:       userID,
 		MonthlyLimit: limit,

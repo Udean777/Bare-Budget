@@ -19,7 +19,9 @@ data class BudgetUiState(
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
     val errorMessage: String? = null
-)
+) {
+    val isLocked: Boolean get() = currentLimit > 0
+}
 
 @HiltViewModel
 class BudgetViewModel @Inject constructor(
@@ -62,6 +64,10 @@ class BudgetViewModel @Inject constructor(
 
     fun saveBudget() {
         val state = _uiState.value
+        if (state.isLocked) {
+            _uiState.value = state.copy(errorMessage = "Budget bulan ini sudah terkunci. Hanya bisa diubah bulan depan.")
+            return
+        }
         if (state.parsedAmount <= 0) {
             _uiState.value = state.copy(errorMessage = "Please enter a valid budget amount")
             return

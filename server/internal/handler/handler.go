@@ -2,6 +2,7 @@ package handler
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -331,6 +332,9 @@ func (h *Handler) SetBudget(c *fiber.Ctx) error {
 	}
 
 	if err := h.svc.SetBudget(userID, req.MonthlyLimit, req.MonthYear); err != nil {
+		if strings.Contains(err.Error(), "already set") {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{"error": err.Error()})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}
 

@@ -37,9 +37,10 @@ class BudgetLocalDataSource @Inject constructor(
             val allTx = db.transactionDao().getAllTransactions()
             val currentMonthTx = allTx.filter { it.date.startsWith(monthYear) }
 
-            // Only count EXPENSE for total spent
+            // Only count EXPENSE for total spent — exclude BILLS (due-bill payments) per opsi B
             val expensesTx = currentMonthTx.filter {
                 DomainMappers.safeTransactionType(it.type) == TransactionType.EXPENSE
+                    && DomainMappers.safeCategory(it.category) != com.ssajudn.barebudget.domain.model.TransactionCategory.BILLS
             }
             val totalSpent = expensesTx.sumOf { it.amount }
 
@@ -102,7 +103,10 @@ class BudgetLocalDataSource @Inject constructor(
                 topCategories = topCategories,
                 unpaidDueBillsSum = unpaidSum,
                 netWorth = currentNetWorth,
-                recentTransactions = currentMonthTx.take(5).map { it.toTransaction() }
+                recentTransactions = currentMonthTx
+                    .reversed()
+                    .sortedByDescending { it.date }
+                    .take(5).map { it.toTransaction() }
             )
             Result.success(summary)
         } catch (e: Exception) {
@@ -113,16 +117,28 @@ class BudgetLocalDataSource @Inject constructor(
     suspend fun setBudget(monthlyLimit: Long, monthYear: String): Result<Boolean> =
         withContext(Dispatchers.IO) {
             try {
+                val my = if (monthYear.isBlank()) {
+                    SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(java.util.Calendar.getInstance().time)
+                } else monthYear
+                val existing = db.budgetDao().getBudget(my)
+                if (existing != null) {
+                    return@withContext Result.failure(
+                        com.ssajudn.barebudget.domain.error.AppException.DataException(
+                            "Budget bulan $my sudah diatur. Hanya bisa diubah bulan depan."
+                        )
+                    )
+                }
                 db.budgetDao().insertBudget(
                     LocalBudgetEntity(
-                        monthYear = monthYear,
+                        monthYear = my,
                         monthlyLimit = monthlyLimit,
                         isSynced = false
                     )
                 )
                 Result.success(true)
             } catch (e: Exception) {
-                Result.failure(ApiErrorParser.fromThrowable(e))
+                if (e is com.ssajudn.barebudget.domain.error.AppException) Result.failure(e)
+                else Result.failure(ApiErrorParser.fromThrowable(e))
             }
         }
 

@@ -2,13 +2,20 @@ package com.ssajudn.barebudget.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.ssajudn.barebudget.data.network.ApiClient
+import com.ssajudn.barebudget.domain.AppConfig
 import java.util.UUID
 import androidx.core.content.edit
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class UserSessionManager(context: Context) {
+@Singleton
+class UserSessionManager @Inject constructor(
+    @ApplicationContext context: Context
+) {
 
-    private val prefs: SharedPreferences = context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.applicationContext
+        .getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
     companion object {
         private const val PREF_NAME = "bare_budget_session"
@@ -27,33 +34,30 @@ class UserSessionManager(context: Context) {
         get() = prefs.getBoolean(KEY_IS_GUEST, false)
         set(value) = prefs.edit { putBoolean(KEY_IS_GUEST, value) }
 
+    /**
+     * The current user id. Read by [com.ssajudn.barebudget.data.network.AuthInterceptor]
+     * on every request, so a login/logout takes effect immediately without
+     * the old `ApiClient.authToken` mutable global.
+     */
     var userId: String
         get() = prefs.getString(KEY_USER_ID, "") ?: ""
-        set(value) {
-            prefs.edit { putString(KEY_USER_ID, value) }
-            ApiClient.authToken = value
-        }
+        set(value) = prefs.edit { putString(KEY_USER_ID, value) }
 
     var userEmail: String
         get() = prefs.getString(KEY_USER_EMAIL, "") ?: ""
-        set(value) {
-            prefs.edit { putString(KEY_USER_EMAIL, value) }
-            ApiClient.userEmail = value
-        }
+        set(value) = prefs.edit { putString(KEY_USER_EMAIL, value) }
 
     var userName: String
         get() = prefs.getString(KEY_USER_NAME, "") ?: ""
         set(value) = prefs.edit { putString(KEY_USER_NAME, value) }
 
     fun startGuestSession() {
-        val guestId = "guest_" + UUID.randomUUID().toString().take(12)
+        val guestId = AppConfig.GUEST_PREFIX + UUID.randomUUID().toString().take(12)
         isOnboardingCompleted = true
         isGuestMode = true
         userId = guestId
-        userEmail = "guest@barebudget.app"
+        userEmail = AppConfig.GUEST_EMAIL
         userName = "Guest User"
-        ApiClient.authToken = guestId
-        ApiClient.userEmail = userEmail
     }
 
     fun startUserSession(uid: String, email: String, name: String) {
@@ -62,16 +66,6 @@ class UserSessionManager(context: Context) {
         userId = uid
         userEmail = email
         userName = name
-        ApiClient.authToken = uid
-        ApiClient.userEmail = email
-    }
-
-    fun initSession() {
-        val currentUid = userId
-        if (currentUid.isNotBlank()) {
-            ApiClient.authToken = currentUid
-            ApiClient.userEmail = userEmail
-        }
     }
 
     fun clearSession(preserveOnboarding: Boolean = true) {
@@ -80,7 +74,6 @@ class UserSessionManager(context: Context) {
         if (onboardingDone) {
             isOnboardingCompleted = true
         }
-        ApiClient.authToken = ""
-        ApiClient.userEmail = ""
     }
 }
+

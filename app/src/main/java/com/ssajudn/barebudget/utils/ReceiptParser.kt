@@ -1,6 +1,6 @@
 package com.ssajudn.barebudget.utils
 
-import com.ssajudn.barebudget.data.model.TransactionCategory
+import com.ssajudn.barebudget.domain.model.TransactionCategory
 import java.util.regex.Pattern
 
 data class ParsedReceipt(

@@ -20,20 +20,17 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.R
-import com.ssajudn.barebudget.data.local.UserSessionManager
 import com.ssajudn.barebudget.ui.navigation.Screen
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 fun SplashScreen(
-    onSplashFinished: (String) -> Unit
+    onSplashFinished: (String) -> Unit,
+    viewModel: SplashViewModel = hiltViewModel()
 ) {
-    val context = LocalContext.current
-    val sessionManager = remember {
-        UserSessionManager(context).apply { initSession() }
-    }
 
     val scale = remember { Animatable(0.6f) }
     val overallAlpha = remember { Animatable(1f) }
@@ -71,11 +68,7 @@ fun SplashScreen(
         )
 
         // Determine destination
-        val destination = when {
-            !sessionManager.isOnboardingCompleted -> Screen.Onboarding.route
-            sessionManager.userId.isNotBlank() -> Screen.Dashboard.route
-            else -> Screen.Auth.route
-        }
+        val destination = viewModel.computeStartDestination()
 
         onSplashFinished(destination)
     }

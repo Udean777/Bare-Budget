@@ -22,10 +22,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ssajudn.barebudget.ui.components.AppConfirmDialog
 import com.ssajudn.barebudget.ui.theme.*
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ssajudn.barebudget.BuildConfig
 import com.ssajudn.barebudget.data.local.ThemePreferences
-import com.ssajudn.barebudget.utils.AppConfig
+import com.ssajudn.barebudget.domain.AppConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,12 +38,12 @@ fun SettingsScreen(
     // viewModel { } rather than remember { }: a ViewModel created with remember is
     // not lifecycle-scoped, so it was destroyed and recreated on every
     // configuration change and its viewModelScope was not managed by the framework.
-    val viewModel: SettingsViewModel = viewModel { SettingsViewModel(context) }
-    val uiState by viewModel.uiState.collectAsState()
+    val viewModel: SettingsViewModel = hiltViewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val themePrefs = remember { ThemePreferences.getInstance(context) }
-    val colorMode by themePrefs.colorMode.collectAsState()
-    val darkMode by themePrefs.darkMode.collectAsState()
+    val colorMode by themePrefs.colorMode.collectAsStateWithLifecycle()
+    val darkMode by themePrefs.darkMode.collectAsStateWithLifecycle()
     var showSignOutConfirmDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }

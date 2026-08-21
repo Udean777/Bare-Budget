@@ -21,8 +21,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ssajudn.barebudget.data.model.DueBill
-import com.ssajudn.barebudget.data.model.DueBillStatus
+import com.ssajudn.barebudget.domain.model.DueBill
+import com.ssajudn.barebudget.domain.model.DueBillStatus
+import com.ssajudn.barebudget.domain.model.Wallet
 import com.ssajudn.barebudget.ui.theme.*
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
@@ -30,7 +31,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import coil.compose.AsyncImage
 import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
 import com.ssajudn.barebudget.ui.components.AppFormDialog
-import com.ssajudn.barebudget.data.model.RecurringInterval
+import com.ssajudn.barebudget.domain.model.RecurringInterval
 import androidx.activity.result.contract.ActivityResultContracts
 import com.ssajudn.barebudget.R
 import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
@@ -863,7 +864,7 @@ fun DueBillFormDialog(
 @Composable
 fun PayDueBillDialog(
     bill: DueBill,
-    wallets: List<com.ssajudn.barebudget.data.model.Wallet>,
+    wallets: List<Wallet>,
     onDismiss: () -> Unit,
     onConfirm: (walletId: String) -> Unit
 ) {

@@ -2,7 +2,7 @@ package com.ssajudn.barebudget.ui.theme
 
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
-import com.ssajudn.barebudget.data.model.TransactionCategory
+import com.ssajudn.barebudget.domain.model.TransactionCategory
 
 @Immutable
 class CategoryColors internal constructor(

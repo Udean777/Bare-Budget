@@ -2,16 +2,21 @@ package com.ssajudn.barebudget.ui.transaction
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ssajudn.barebudget.data.model.CreateTransactionRequest
-import com.ssajudn.barebudget.data.model.TransactionCategory
-import com.ssajudn.barebudget.data.model.TransactionType
-import com.ssajudn.barebudget.data.model.Wallet
-import com.ssajudn.barebudget.data.repository.BudgetRepository
+import com.ssajudn.barebudget.domain.model.CreateTransactionRequest
+import com.ssajudn.barebudget.domain.model.TransactionCategory
+import com.ssajudn.barebudget.domain.model.TransactionType
+import com.ssajudn.barebudget.domain.model.Wallet
+import com.ssajudn.barebudget.domain.repository.TransactionRepository
+import com.ssajudn.barebudget.domain.repository.WalletRepository
 import com.ssajudn.barebudget.utils.DateUtils
+import com.ssajudn.barebudget.domain.error.AppException
+import com.ssajudn.barebudget.domain.error.userMessage
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class AddTransactionUiState(
     val transactionType: TransactionType = TransactionType.EXPENSE,
@@ -29,8 +34,10 @@ data class AddTransactionUiState(
     val isSuccess: Boolean = false
 )
 
-class AddTransactionViewModel(
-    private val repository: BudgetRepository = BudgetRepository()
+@HiltViewModel
+class AddTransactionViewModel @Inject constructor(
+    private val walletRepository: WalletRepository,
+    private val transactionRepository: TransactionRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AddTransactionUiState())
@@ -42,7 +49,7 @@ class AddTransactionViewModel(
 
     private fun loadWallets() {
         viewModelScope.launch {
-            val result = repository.getWallets()
+            val result = walletRepository.getWallets()
             if (result.isSuccess) {
                 val wallets = result.getOrNull() ?: emptyList()
                 val defaultWallet = wallets.firstOrNull()?.id
@@ -145,14 +152,14 @@ class AddTransactionViewModel(
                 notes = state.notes
             )
 
-            repository.createTransaction(request)
+            transactionRepository.createTransaction(request)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
                 }
                 .onFailure { error ->
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        errorMessage = error.localizedMessage ?: "Failed to save transaction"
+                        errorMessage = (error as? AppException)?.userMessage() ?: error.localizedMessage ?: "Failed to save transaction"
                     )
                 }
         }

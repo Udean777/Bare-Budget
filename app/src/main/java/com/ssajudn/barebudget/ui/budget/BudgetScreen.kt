@@ -9,6 +9,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -16,95 +17,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ssajudn.barebudget.data.repository.BudgetRepository
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.utils.CurrencyFormatter
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-
-data class BudgetUiState(
-    val currentLimit: Long = 0L,
-    val rawAmount: String = "",
-    val parsedAmount: Long = 0L,
-    val isLoading: Boolean = false,
-    val isSuccess: Boolean = false,
-    val errorMessage: String? = null
-)
-
-class BudgetViewModel(
-    private val repository: BudgetRepository = BudgetRepository()
-) : ViewModel() {
-
-    private val _uiState = MutableStateFlow(BudgetUiState())
-    val uiState: StateFlow<BudgetUiState> = _uiState.asStateFlow()
-
-    init {
-        loadCurrentBudget()
-    }
-
-    private fun loadCurrentBudget() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
-            repository.getDashboardSummary()
-                .onSuccess { summary ->
-                    val existing = summary.monthlyBudget
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        currentLimit = existing,
-                        rawAmount = if (existing > 0) existing.toString() else "",
-                        parsedAmount = existing
-                    )
-                }
-                .onFailure {
-                    _uiState.value = _uiState.value.copy(isLoading = false)
-                }
-        }
-    }
-
-    fun onAmountChange(input: String) {
-        val digitsOnly = input.filter { it.isDigit() }.take(12)
-        val parsed = digitsOnly.toLongOrNull() ?: 0L
-        _uiState.value = _uiState.value.copy(
-            rawAmount = digitsOnly,
-            parsedAmount = parsed
-        )
-    }
-
-    fun saveBudget() {
-        val state = _uiState.value
-        if (state.parsedAmount <= 0) {
-            _uiState.value = state.copy(errorMessage = "Please enter a valid budget amount")
-            return
-        }
-
-        viewModelScope.launch {
-            _uiState.value = state.copy(isLoading = true, errorMessage = null)
-            repository.setBudget(state.parsedAmount)
-                .onSuccess {
-                    _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
-                }
-                .onFailure { error ->
-                    _uiState.value = _uiState.value.copy(
-                        isLoading = false,
-                        errorMessage = error.localizedMessage ?: "Failed to set budget"
-                    )
-                }
-        }
-    }
-}
+import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BudgetScreen(
     onNavigateBack: () -> Unit,
-    viewModel: BudgetViewModel = viewModel()
+    viewModel: BudgetViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(uiState.isSuccess) {
         if (uiState.isSuccess) {
@@ -240,7 +164,7 @@ fun BudgetScreen(
                             fontSize = 32.sp
                         ),
                         singleLine = true,
-                        visualTransformation = com.ssajudn.barebudget.utils.CurrencyVisualTransformation(),
+                        visualTransformation = CurrencyVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = Color.Transparent,

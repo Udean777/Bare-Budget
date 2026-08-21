@@ -39,39 +39,47 @@ Dengan arsitektur **Offline-First**, BareBudget dapat langsung digunakan seketik
 * Memprediksi tanggal persis kapan saldo budget Anda akan habis di bulan berjalan.
 * Memberikan indikator status kesehatan keuangan secara real-time (*Aman*, *Waspada*, atau *Kritis*).
 
-### 2. 👛 Multi-Wallet & Arus Kas Lengkap
+### 2. 🔄 Multi-Wallet Transfer & Arus Kas Real-Time
 * Lacak transaksi harian dengan kategori lengkap: **Pemasukan (Income)**, **Pengeluaran (Expense)**, dan **Transfer Antar Dompet**.
-* Kelola berbagai rekening dan e-wallet (Tunai, BCA, Mandiri, GoPay, OVO, ShopeePay, dll).
-* Kalkulasi total kekayaan bersih (**Net Worth**) otomatis dari akumulasi seluruh saldo aktif.
+* **Layar & Tab Navigasi "Transfer" Khusus**: Menu transfer ditempatkan di tengah *Bottom Navigation Bar* untuk akses instan transfer antar dompet (Tunai, BCA, Mandiri, GoPay, OVO, ShopeePay, dll).
+* Kalkulasi total kekayaan bersih (**Net Worth**) otomatis dan pembaruan saldo real-time pada seluruh layar tanpa perlu refresh manual.
 
-### 3. 🎨 100% Material Design 3 UI & Dynamic Theming
-* Dibangun secara native dengan komponen standar **Material 3 (M3)**: *M3 Navigation Bar, M3 Floating Action Button, M3 Cards, dan M3 Dialogs*.
-* **Dynamic Color (Material You)**: Warna antarmuka dapat otomatis beradaptasi dengan warna wallpaper sistem pada Android 12+.
-* **Brand Theme & Dark Mode**: Pilihan tema *Coral Red* khas BareBudget dan dukungan penuh mode Terang / Gelap (*Light/Dark/System Default*).
+### 3. 🎯 Smart Savings Goals & Pockets (With Wallet Integration)
+* Buat dan kelola pos target tabungan (Dana Darurat, Liburan, Gadget, Kendaraan, dll).
+* **Integrasi Saldo Dompet (Deposit & Withdraw)**:
+  * **Setor (Deposit)**: Memotong saldo dompet pilihan & mencatat pengeluaran alokasi tabungan.
+  * **Tarik (Withdraw)**: Mengurangi saldo target & mengembalikan saldo ke dompet pilihan.
+* **Smart Calculator & Color Picker**: Kalkulasi otomatis rekomendasi nominal tabungan per bulan/hari untuk mencapai target tepat waktu serta pemilih warna aksen kartu.
+* Visualisasi progress bar interaktif dengan persentase dan badge status (*Tercapai 100%*, *Mendekati Deadline*, *On Track*).
 
-### 4. 🚀 Animated Splash Screen & Illustrated Onboarding
-* **Branded Splash Screen**: Transisi *fade & spring scale* yang mulus serta dukungan penuh *Android 12+ SplashScreen API*.
-* **3D Vector Illustrated Onboarding**: Alur pengenalan aplikasi interaktif dengan ilustrasi *semi-3D cartoonish* yang modern dan ramah pengguna.
-
-### 5. 🎯 Savings Goals & Pockets (Sinking Funds)
-* Buat pos target tabungan (Dana Darurat, Liburan, Gadget, Kendaraan, dll).
-* Visualisasi progress bar interaktif dengan persentase dan estimasi sisa dana yang dibutuhkan.
-* Dialog fleksibel untuk **Setor Tabungan (Deposit)** maupun **Tarik Dana (Withdraw)**.
-
-### 6. 🔁 Due Bills & Recurring Subscriptions
+### 4. 📋 Due Bills, Recurring Subscriptions & Refund System
 * Catat dan pantau pengingat tagihan berkala (WiFi, Kos, Listrik, Streaming, PayLater).
 * **Auto-Rollover**: Ketika tagihan ditandai **Lunas (PAID)**, sistem otomatis menjadwalkan tagihan untuk periode berikutnya (*Weekly, Monthly, Yearly*).
+* **Refund Batal Bayar**: Saat status tagihan lunas dikembalikan ke **Belum Lunas**, saldo dompet yang digunakan sebelumnya otomatis dikembalikan (*refund*) dan dicatat sebagai transaksi koreksi tanpa merusak audit pengeluaran.
 
-### 7. 👥 Smart Split Bill Calculator
+### 5. ⚡ Modern Quick Action Bottom Sheets
+* Tap pada kartu Tagihan atau Target Tabungan untuk membuka **Modal Bottom Sheet Quick Action** yang lega dan informatif.
+* Rincian tagihan/target lengkap dengan tombol aksi berbasis rounded surface card dan deskripsi penjelasan yang intuitif.
+
+### 6. 👥 Smart Split Bill Calculator
 * Kalkulator patungan cerdas langsung di dalam aplikasi.
 * Hitung pembagian rata (*Equal Split*) lengkap dengan opsi penyesuaian pajak restoran (PB1 10%) dan service charge (5%).
 * **1-Click Share to WhatsApp**: Rincian tagihan siap kirim langsung ke teman atau grup pesan singkat.
 
-### 8. 📊 Financial Analytics & Visual Breakdown
-* Grafik perbandingan arus kas pemasukan vs pengeluaran.
-* Distribusi pengeluaran per kategori untuk evaluasi pos pengeluaran bulanan.
+### 7. 🎨 100% Material Design 3 UI & Dynamic Theming
+* Dibangun secara native dengan komponen standar **Material 3 (M3)**: *5-Item M3 Navigation Bar (dengan Transfer di tengah), M3 Floating Action Button, M3 Cards, dan M3 Dialogs*.
+* **Dynamic Color (Material You)**: Warna antarmuka dapat otomatis beradaptasi dengan warna wallpaper sistem pada Android 12+.
+* **Brand Theme & Dark Mode**: Pilihan tema *Coral Red* khas BareBudget dan dukungan penuh mode Terang / Gelap (*Light/Dark/System Default*).
 
-### 9. 🔒 Offline-First Architecture & Cloud Sync
+### 8. 📦 Offline JSON Backup & Restore
+* Ekspor seluruh data transaksi, dompet, tagihan, dan target tabungan ke file `.json` lokal sebagai salinan cadangan.
+* Impor kembali data JSON kapan saja dengan pemulihan database Room instan.
+
+### 9. 🚀 Animated Splash Screen & Illustrated Onboarding
+* **Branded Splash Screen**: Transisi *fade & spring scale* yang mulus serta dukungan penuh *Android 12+ SplashScreen API*.
+* **3D Vector Illustrated Onboarding**: Alur pengenalan aplikasi interaktif dengan ilustrasi *semi-3D cartoonish* yang modern dan ramah pengguna.
+
+### 10. 🔒 Offline-First Architecture & Cloud Sync
 * Seluruh fitur bekerja 100% secara offline menggunakan **Room SQLite Database**.
 * Sinkronisasi dua arah (*Two-Way Sync*) dengan backend REST API Go saat terkoneksi internet.
 * **Guest to Google Migration**: Mulai instan sebagai *Guest*, migrasikan seluruh data lokal ke Google Account saat login.
@@ -86,23 +94,23 @@ BareBudget/
 │   ├── src/main/java/com/ssajudn/barebudget/
 │   │   ├── data/
 │   │   │   ├── auth/           # Firebase Authentication & Credential Manager
-│   │   │   ├── local/          # Room DB (Entities, DAOs) & ThemePreferences
+│   │   │   ├── local/          # Room DB (Entities, DAOs), BackupRestoreManager & ThemePreferences
 │   │   │   ├── model/          # DTOs & Domain Models
 │   │   │   ├── network/        # Retrofit Client & ApiService
 │   │   │   └── repository/     # Offline-First BudgetRepository
 │   │   ├── ui/
 │   │   │   ├── analytics/      # Financial Breakdown & Category Charts
-│   │   │   ├── bills/          # Due Bills & Recurring Subscriptions
+│   │   │   ├── bills/          # Due Bills & Refund System
 │   │   │   ├── budget/         # Monthly Spending Target Setup
 │   │   │   ├── components/     # M3 Dialogs, AppNavigationBar, M3 Settings
 │   │   │   ├── dashboard/      # Financial Runway Card & Recent Feeds
-│   │   │   ├── goals/          # Savings Goals & Pockets
-│   │   │   ├── navigation/     # AppNavigation & Screen Routes
+│   │   │   ├── goals/          # Savings Goals, Pockets & Smart Calculator
+│   │   │   ├── navigation/     # AppNavigation & 5-Item TopLevelDestinations
 │   │   │   ├── onboarding/     # 3D Illustrated Onboarding & Auth Screens
-│   │   │   ├── settings/       # Appearance (Material You), Sync & Profile
+│   │   │   ├── settings/       # Appearance (Material You), JSON Backup/Restore, Sync & Profile
 │   │   │   ├── splash/         # Animated Branded Splash Screen
 │   │   │   ├── theme/          # Material 3 Color Schemes, Typography & Shapes
-│   │   │   ├── transaction/    # Add Expense, Detail & Split Bill BottomSheet
+│   │   │   ├── transaction/    # Add Expense, Dedicated TransferScreen, Detail & Split Bill BottomSheet
 │   │   │   └── wallets/        # Multi-Wallet Management
 │   │   └── utils/              # CurrencyFormatter, DateUtils, AppConfig
 │   └── build.gradle.kts
@@ -112,10 +120,10 @@ BareBudget/
     ├── internal/
     │   ├── config/             # Environment configurations
     │   ├── database/           # PostgreSQL connection & GORM AutoMigrate
-    │   ├── handler/            # HTTP Request Handlers
+    │   ├── handler/            # HTTP Request Handlers (Deposit, Refund, Goals, Bills)
     │   ├── middleware/         # Auth & Header Middlewares
     │   ├── models/             # Database Models & Entities
-    │   ├── repository/         # Database Queries & GORM Operations
+    │   ├── repository/         # Transactional Database Queries & GORM Operations
     │   └── service/            # Business Logic & Runway Calculations
     └── go.mod
 ```

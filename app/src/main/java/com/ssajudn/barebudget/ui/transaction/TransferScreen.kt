@@ -11,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,8 +19,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ssajudn.barebudget.data.model.TransactionType
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ssajudn.barebudget.domain.model.TransactionType
 import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
@@ -30,9 +31,9 @@ import com.ssajudn.barebudget.utils.DateUtils
 fun TransferScreen(
     onNavigateBack: (() -> Unit)? = null,
     onTransferSuccess: (() -> Unit)? = null,
-    viewModel: AddTransactionViewModel = viewModel()
+    viewModel: AddTransactionViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
     // Set transaction type to TRANSFER on open

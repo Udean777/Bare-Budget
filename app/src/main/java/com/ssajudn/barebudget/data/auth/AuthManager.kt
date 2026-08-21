@@ -14,9 +14,12 @@ import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.auth.GoogleAuthProvider
 import com.ssajudn.barebudget.data.local.UserSessionManager
 import com.ssajudn.barebudget.utils.AppConfig
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
+import javax.inject.Singleton
 
 sealed interface AuthResult {
     data class Success(val user: FirebaseUser) : AuthResult
@@ -24,10 +27,11 @@ sealed interface AuthResult {
     object Cancelled : AuthResult
 }
 
-class AuthManager(
-    private val context: Context,
-    private val sessionManager: UserSessionManager = UserSessionManager(context),
-    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
+@Singleton
+class AuthManager @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val sessionManager: UserSessionManager,
+    private val firebaseAuth: FirebaseAuth
 ) {
     private val credentialManager = CredentialManager.create(context)
 

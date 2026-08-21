@@ -2,13 +2,22 @@ package com.ssajudn.barebudget.ui.goals
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ssajudn.barebudget.data.model.CreateGoalRequest
-import com.ssajudn.barebudget.data.model.Goal
-import com.ssajudn.barebudget.data.repository.BudgetRepository
+import com.ssajudn.barebudget.domain.model.CreateGoalRequest
+import com.ssajudn.barebudget.domain.model.Goal
+import com.ssajudn.barebudget.domain.repository.GoalRepository
+import com.ssajudn.barebudget.domain.repository.WalletRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import com.ssajudn.barebudget.domain.model.Wallet
+import com.ssajudn.barebudget.domain.model.UpdateGoalRequest
 
 sealed interface GoalsUiState {
     object Loading : GoalsUiState
@@ -16,117 +25,58 @@ sealed interface GoalsUiState {
     data class Error(val message: String) : GoalsUiState
 }
 
-class GoalsViewModel(
-    private val repository: BudgetRepository = BudgetRepository()
+@HiltViewModel
+class GoalsViewModel @Inject constructor(
+    private val repository: GoalRepository,
+    private val walletRepository: WalletRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<GoalsUiState>(GoalsUiState.Loading)
-    val uiState: StateFlow<GoalsUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<GoalsUiState> = repository.observeGoals()
+        .map<List<Goal>, GoalsUiState> { GoalsUiState.Success(it) }
+        .catch { e -> emit(GoalsUiState.Error(e.message ?: "Failed to load savings goals")) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), GoalsUiState.Loading)
+
+    val wallets: StateFlow<List<Wallet>> =
+        walletRepository.observeWallets()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    private val _wallets = MutableStateFlow<List<com.ssajudn.barebudget.data.model.Wallet>>(emptyList())
-    val wallets: StateFlow<List<com.ssajudn.barebudget.data.model.Wallet>> = _wallets.asStateFlow()
-
     init {
-        loadGoals()
-        loadWallets()
+        viewModelScope.launch { walletRepository.getWallets() }
     }
 
     fun loadWallets() {
-        viewModelScope.launch {
-            repository.getWallets().onSuccess {
-                _wallets.value = it
-            }
-        }
+        viewModelScope.launch { walletRepository.getWallets() }
     }
 
     fun loadGoals(isPullToRefresh: Boolean = false) {
         viewModelScope.launch {
-            if (isPullToRefresh) {
-                _isRefreshing.value = true
-            } else if (_uiState.value !is GoalsUiState.Success) {
-                _uiState.value = GoalsUiState.Loading
-            }
-
-            loadWallets()
-
+            _isRefreshing.value = true
             repository.getGoals()
-                .onSuccess { goals ->
-                    _uiState.value = GoalsUiState.Success(goals)
-                    _isRefreshing.value = false
-                }
-                .onFailure { error ->
-                    _isRefreshing.value = false
-                    if (_uiState.value !is GoalsUiState.Success) {
-                        _uiState.value = GoalsUiState.Error(error.localizedMessage ?: "Failed to load savings goals")
-                    }
-                }
+            walletRepository.getWallets()
+            _isRefreshing.value = false
         }
     }
 
-    fun addGoal(
-        name: String,
-        targetAmount: Long,
-        targetDate: String = "",
-        colorHex: String = "#4E73DF",
-        notes: String = ""
-    ) {
+    fun addGoal(name: String, targetAmount: Long, targetDate: String = "", colorHex: String = "#4E73DF", notes: String = "") {
         viewModelScope.launch {
-            val request = CreateGoalRequest(
-                name = name,
-                targetAmount = targetAmount,
-                targetDate = targetDate,
-                colorHex = colorHex,
-                notes = notes
-            )
-            repository.createGoal(request)
-                .onSuccess {
-                    loadGoals()
-                }
+            repository.createGoal(CreateGoalRequest(name, targetAmount, targetDate, colorHex, notes))
         }
     }
 
-    fun updateGoal(
-        id: String,
-        name: String,
-        targetAmount: Long,
-        targetDate: String = "",
-        colorHex: String = "#4E73DF",
-        notes: String = ""
-    ) {
+    fun updateGoal(id: String, name: String, targetAmount: Long, targetDate: String = "", colorHex: String = "#4E73DF", notes: String = "") {
         viewModelScope.launch {
-            val request = com.ssajudn.barebudget.data.model.UpdateGoalRequest(
-                name = name,
-                targetAmount = targetAmount,
-                targetDate = targetDate,
-                colorHex = colorHex,
-                notes = notes
-            )
-            repository.updateGoal(id, request)
-                .onSuccess {
-                    loadGoals()
-                }
+            repository.updateGoal(id, UpdateGoalRequest(name, targetAmount, targetDate, colorHex, notes))
         }
     }
 
     fun depositToGoal(id: String, amount: Long, walletId: String) {
-        viewModelScope.launch {
-            repository.depositToGoal(id, amount, walletId)
-                .onSuccess {
-                    loadGoals()
-                    loadWallets()
-                }
-        }
+        viewModelScope.launch { repository.depositToGoal(id, amount, walletId) }
     }
 
     fun deleteGoal(id: String) {
-        viewModelScope.launch {
-            repository.deleteGoal(id)
-                .onSuccess {
-                    loadGoals()
-                }
-        }
+        viewModelScope.launch { repository.deleteGoal(id) }
     }
 }

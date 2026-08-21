@@ -2,12 +2,18 @@ package com.ssajudn.barebudget.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ssajudn.barebudget.data.model.DashboardSummary
-import com.ssajudn.barebudget.data.repository.BudgetRepository
+import com.ssajudn.barebudget.domain.model.DashboardSummary
+import com.ssajudn.barebudget.domain.repository.BudgetRepository
+import com.ssajudn.barebudget.domain.repository.TransactionRepository
+import com.ssajudn.barebudget.domain.usecase.GetDashboardSummaryUseCase
+import com.ssajudn.barebudget.domain.error.AppException
+import com.ssajudn.barebudget.domain.error.userMessage
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 sealed interface DashboardUiState {
     object Loading : DashboardUiState
@@ -15,8 +21,11 @@ sealed interface DashboardUiState {
     data class Error(val message: String) : DashboardUiState
 }
 
-class DashboardViewModel(
-    private val repository: BudgetRepository = BudgetRepository()
+@HiltViewModel
+class DashboardViewModel @Inject constructor(
+    private val getDashboardSummary: GetDashboardSummaryUseCase,
+    private val budgetRepository: BudgetRepository,
+    private val transactionRepository: TransactionRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<DashboardUiState>(DashboardUiState.Loading)
@@ -37,7 +46,7 @@ class DashboardViewModel(
                 _uiState.value = DashboardUiState.Loading
             }
 
-            repository.getDashboardSummary()
+            getDashboardSummary()
                 .onSuccess { summary ->
                     _uiState.value = DashboardUiState.Success(summary)
                     _isRefreshing.value = false
@@ -45,7 +54,7 @@ class DashboardViewModel(
                 .onFailure { error ->
                     _isRefreshing.value = false
                     if (_uiState.value !is DashboardUiState.Success) {
-                        _uiState.value = DashboardUiState.Error(error.localizedMessage ?: "Failed to load dashboard data")
+                        _uiState.value = DashboardUiState.Error((error as? AppException)?.userMessage() ?: error.localizedMessage ?: "Failed to load dashboard data")
                     }
                 }
         }
@@ -53,7 +62,7 @@ class DashboardViewModel(
 
     fun updateBudget(newBudget: Long) {
         viewModelScope.launch {
-            repository.setBudget(newBudget)
+            budgetRepository.setBudget(newBudget)
                 .onSuccess {
                     loadDashboardData()
                 }
@@ -62,7 +71,7 @@ class DashboardViewModel(
 
     fun deleteTransaction(id: String) {
         viewModelScope.launch {
-            repository.deleteTransaction(id)
+            transactionRepository.deleteTransaction(id)
                 .onSuccess {
                     loadDashboardData()
                 }

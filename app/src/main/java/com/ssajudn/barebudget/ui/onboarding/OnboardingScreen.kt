@@ -23,10 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.R
-import com.ssajudn.barebudget.data.auth.AuthManager
 import com.ssajudn.barebudget.data.auth.AuthResult
-import com.ssajudn.barebudget.data.local.UserSessionManager
 import com.ssajudn.barebudget.ui.theme.*
 import kotlinx.coroutines.launch
 
@@ -39,10 +38,10 @@ data class OnboardingPageData(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
-    onFinishOnboarding: () -> Unit
+    onFinishOnboarding: () -> Unit,
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val authManager = remember { AuthManager(context) }
     val coroutineScope = rememberCoroutineScope()
     var isGoogleLoading by remember { mutableStateOf(false) }
     var isGuestLoading by remember { mutableStateOf(false) }
@@ -133,9 +132,8 @@ fun OnboardingScreen(
                         isGoogleLoading = isGoogleLoading,
                         isGuestLoading = isGuestLoading,
                         onSignInClick = {
-                            coroutineScope.launch {
-                                isGoogleLoading = true
-                                val result = authManager.signInWithGoogle()
+                            isGoogleLoading = true
+                            authViewModel.signInWithGoogle { result ->
                                 isGoogleLoading = false
                                 when (result) {
                                     is AuthResult.Success -> onFinishOnboarding()
@@ -145,9 +143,8 @@ fun OnboardingScreen(
                             }
                         },
                         onGuestClick = {
-                            coroutineScope.launch {
-                                isGuestLoading = true
-                                authManager.signInAnonymously()
+                            isGuestLoading = true
+                            authViewModel.signInAnonymously {
                                 isGuestLoading = false
                                 onFinishOnboarding()
                             }

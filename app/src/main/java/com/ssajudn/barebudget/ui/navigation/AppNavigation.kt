@@ -26,9 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -36,7 +34,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.ssajudn.barebudget.data.local.UserSessionManager
 import com.ssajudn.barebudget.ui.analytics.AnalyticsScreen
 import com.ssajudn.barebudget.ui.bills.DueBillsScreen
 import com.ssajudn.barebudget.ui.budget.BudgetScreen
@@ -119,20 +116,6 @@ private val TopLevelRoutes = TopLevelDestinations.map { it.route }.toSet()
 fun AppNavigation(
     navController: NavHostController = rememberNavController()
 ) {
-    val context = LocalContext.current
-    val sessionManager = remember { 
-        UserSessionManager(context).apply { initSession() } 
-    }
-    
-    // Dynamic entry point:
-    // 1. If never onboarded -> Onboarding
-    // 2. If logged in (has userId) -> Dashboard
-    // 3. If signed out but onboarded -> Auth Screen
-    val startDestination = when {
-        !sessionManager.isOnboardingCompleted -> Screen.Onboarding.route
-        sessionManager.userId.isNotBlank() -> Screen.Dashboard.route
-        else -> Screen.Auth.route
-    }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route

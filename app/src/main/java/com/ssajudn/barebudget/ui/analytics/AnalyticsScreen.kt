@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.ShowChart
 import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,7 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.Spacing
@@ -37,10 +38,10 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 @Composable
 fun AnalyticsScreen(
     onNavigateBack: (() -> Unit)? = null,
-    viewModel: AnalyticsViewModel = viewModel()
+    viewModel: AnalyticsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(lifecycleOwner) {

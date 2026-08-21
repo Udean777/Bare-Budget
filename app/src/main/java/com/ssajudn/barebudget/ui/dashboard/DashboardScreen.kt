@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,15 +18,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ssajudn.barebudget.data.model.DashboardSummary
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ssajudn.barebudget.domain.model.DashboardSummary
 import com.ssajudn.barebudget.ui.components.FinancialRunwayCard
 import com.ssajudn.barebudget.ui.components.TransactionItem
 import com.ssajudn.barebudget.ui.theme.*
+import com.ssajudn.barebudget.data.local.ThemePreferences
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -47,10 +50,10 @@ fun DashboardScreen(
     onNavigateToAllTransactions: () -> Unit,
     onNavigateToAnalytics: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    viewModel: DashboardViewModel = viewModel()
+    viewModel: DashboardViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // Auto-refresh dashboard data whenever returning back to this screen
@@ -96,9 +99,9 @@ fun DashboardScreen(
                 },
                 actions = {
                     var showThemeDialog by remember { mutableStateOf(false) }
-                    val context = androidx.compose.ui.platform.LocalContext.current
-                    val themePrefs = remember { com.ssajudn.barebudget.data.local.ThemePreferences.getInstance(context) }
-                    val currentDarkMode by themePrefs.darkMode.collectAsState()
+                    val context = LocalContext.current
+                    val themePrefs = remember { ThemePreferences.getInstance(context) }
+                    val currentDarkMode by themePrefs.darkMode.collectAsStateWithLifecycle()
 
                     val themeIcon = when (currentDarkMode) {
                         ThemeDarkMode.Dark -> Icons.Default.DarkMode

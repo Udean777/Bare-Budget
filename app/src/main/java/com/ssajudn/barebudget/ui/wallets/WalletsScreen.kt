@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,8 +24,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ssajudn.barebudget.data.model.Wallet
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ssajudn.barebudget.domain.model.Wallet
 import com.ssajudn.barebudget.ui.components.AppConfirmDialog
 import com.ssajudn.barebudget.ui.components.AppFormDialog
 import com.ssajudn.barebudget.ui.theme.Spacing
@@ -35,9 +36,9 @@ import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 @Composable
 fun WalletsScreen(
     onNavigateBack: () -> Unit,
-    viewModel: WalletsViewModel = viewModel()
+    viewModel: WalletsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
     // Auto-refresh data dompet setiap kali pengguna kembali ke layar ini

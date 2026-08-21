@@ -23,8 +23,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ssajudn.barebudget.data.model.CashflowDataPoint
-import com.ssajudn.barebudget.data.model.NetWorthDataPoint
+import com.ssajudn.barebudget.domain.model.CashflowDataPoint
+import com.ssajudn.barebudget.domain.model.NetWorthDataPoint
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 
 @Composable

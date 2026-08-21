@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.materialkolor.PaletteStyle
 import com.materialkolor.dynamicColorScheme
 import com.materialkolor.ktx.toHct
-import com.ssajudn.barebudget.data.model.TransactionCategory
+import com.ssajudn.barebudget.domain.model.TransactionCategory
 
 enum class ThemeColorMode {
     System,

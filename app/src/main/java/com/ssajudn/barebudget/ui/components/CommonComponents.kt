@@ -43,13 +43,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.ssajudn.barebudget.data.model.Transaction
-import com.ssajudn.barebudget.data.model.TransactionCategory
+import com.ssajudn.barebudget.domain.model.Transaction
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.Spacing
 import com.ssajudn.barebudget.ui.theme.categoryColors
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
+import com.ssajudn.barebudget.domain.model.TransactionType
+import com.ssajudn.barebudget.domain.model.TransactionCategory
 
 @Composable
 fun FinancialRunwayCard(
@@ -272,9 +273,9 @@ fun TransactionItem(
     val amountText = CurrencyFormatter.formatRupiah(transaction.amount)
 
     val (prefix, trailingColor) = when (transaction.type) {
-        com.ssajudn.barebudget.data.model.TransactionType.INCOME -> "+" to MaterialTheme.colorScheme.primary
-        com.ssajudn.barebudget.data.model.TransactionType.TRANSFER -> "⇄ " to MaterialTheme.colorScheme.onSurface
-        com.ssajudn.barebudget.data.model.TransactionType.EXPENSE -> "-" to MaterialTheme.colorScheme.onSurface
+        TransactionType.INCOME -> "+" to MaterialTheme.colorScheme.primary
+        TransactionType.TRANSFER -> "⇄ " to MaterialTheme.colorScheme.onSurface
+        TransactionType.EXPENSE -> "-" to MaterialTheme.colorScheme.onSurface
     }
 
     ListItem(
@@ -311,7 +312,7 @@ fun TransactionItem(
         },
         supportingContent = {
             Text(
-                text = if (transaction.type == com.ssajudn.barebudget.data.model.TransactionType.TRANSFER) {
+                text = if (transaction.type == TransactionType.TRANSFER) {
                     "Transfer Antar Dompet • ${DateUtils.formatDisplayDate(transaction.date)}"
                 } else {
                     "${category.displayName} • ${DateUtils.formatDisplayDate(transaction.date)}"

@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -21,8 +22,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ssajudn.barebudget.data.model.Goal
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ssajudn.barebudget.domain.model.Goal
 import com.ssajudn.barebudget.ui.components.AppConfirmDialog
 import com.ssajudn.barebudget.ui.components.AppFormDialog
 import com.ssajudn.barebudget.ui.theme.*
@@ -30,6 +31,7 @@ import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
 import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
+import com.ssajudn.barebudget.domain.model.Wallet
 
 enum class GoalFilter(val label: String) {
     ALL("Semua"),
@@ -45,11 +47,11 @@ val presetGoalColors = listOf(
 @Composable
 fun GoalsScreen(
     onNavigateBack: (() -> Unit)? = null,
-    viewModel: GoalsViewModel = viewModel()
+    viewModel: GoalsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
-    val wallets by viewModel.wallets.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
+    val wallets by viewModel.wallets.collectAsStateWithLifecycle()
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
 
     // Auto-refresh data dompet & target tabungan setiap kali pengguna kembali ke layar ini
@@ -815,7 +817,7 @@ fun GoalFormDialog(
 @Composable
 fun DepositGoalDialog(
     goal: Goal,
-    wallets: List<com.ssajudn.barebudget.data.model.Wallet>,
+    wallets: List<Wallet>,
     initialWithdraw: Boolean = false,
     onDismiss: () -> Unit,
     onConfirm: (amount: Long, walletId: String) -> Unit

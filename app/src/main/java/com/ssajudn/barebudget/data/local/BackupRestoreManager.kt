@@ -4,8 +4,9 @@ import android.content.Context
 import android.net.Uri
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
-import com.ssajudn.barebudget.BareBudgetApplication
 import com.ssajudn.barebudget.data.local.room.*
+import com.ssajudn.barebudget.domain.error.AppException
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.BufferedReader
@@ -14,6 +15,8 @@ import java.io.OutputStreamWriter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import javax.inject.Inject
+import javax.inject.Singleton
 
 data class BareBudgetBackupData(
     val version: Int = 1,
@@ -26,9 +29,10 @@ data class BareBudgetBackupData(
     val wallets: List<LocalWalletEntity> = emptyList()
 )
 
-class BackupRestoreManager(
-    private val context: Context,
-    private val db: AppDatabase = BareBudgetApplication.instance.database
+@Singleton
+class BackupRestoreManager @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val db: AppDatabase
 ) {
     private val gson: Gson = GsonBuilder().setPrettyPrinting().create()
 
@@ -53,10 +57,10 @@ class BackupRestoreManager(
                 OutputStreamWriter(outputStream).use { writer ->
                     writer.write(jsonString)
                 }
-            } ?: return@withContext Result.failure(Exception("Cannot open file for writing"))
+            } ?: return@withContext Result.failure(AppException.DataException("Cannot open file for writing"))
             Result.success(Unit)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(if (e is AppException) e else AppException.DataException(e.message, e))
         }
     }
 
@@ -71,10 +75,10 @@ class BackupRestoreManager(
                         line = reader.readLine()
                     }
                 }
-            } ?: return@withContext Result.failure(Exception("Cannot open file for reading"))
+            } ?: return@withContext Result.failure(AppException.DataException("Cannot open file for reading"))
 
             val backup = gson.fromJson(stringBuilder.toString(), BareBudgetBackupData::class.java)
-                ?: return@withContext Result.failure(Exception("Invalid backup format"))
+                ?: return@withContext Result.failure(AppException.DataException("Invalid backup format"))
 
             var totalRestored = 0
 
@@ -101,7 +105,7 @@ class BackupRestoreManager(
 
             Result.success(totalRestored)
         } catch (e: Exception) {
-            Result.failure(e)
+            Result.failure(if (e is AppException) e else AppException.UnknownError(e.message, e))
         }
     }
 }

@@ -1,6 +1,11 @@
 package com.ssajudn.barebudget.ui.navigation
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -13,6 +18,7 @@ import androidx.compose.material.icons.automirrored.outlined.TrendingUp
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Dashboard
 import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.outlined.Dashboard
 import androidx.compose.material.icons.outlined.Payments
 import androidx.compose.material3.FloatingActionButton
@@ -20,9 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -30,7 +34,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.ssajudn.barebudget.data.local.UserSessionManager
 import com.ssajudn.barebudget.ui.analytics.AnalyticsScreen
 import com.ssajudn.barebudget.ui.bills.DueBillsScreen
 import com.ssajudn.barebudget.ui.budget.BudgetScreen
@@ -41,11 +44,13 @@ import com.ssajudn.barebudget.ui.goals.GoalsScreen
 import com.ssajudn.barebudget.ui.onboarding.AuthScreen
 import com.ssajudn.barebudget.ui.onboarding.OnboardingScreen
 import com.ssajudn.barebudget.ui.settings.SettingsScreen
+import com.ssajudn.barebudget.ui.splash.SplashScreen
 import com.ssajudn.barebudget.ui.transaction.AddTransactionScreen
 import com.ssajudn.barebudget.ui.transaction.AllTransactionsScreen
 import com.ssajudn.barebudget.ui.transaction.TransactionDetailScreen
 
 sealed class Screen(val route: String) {
+    object Splash : Screen("splash")
     object Onboarding : Screen("onboarding")
     object Auth : Screen("auth")
     object Dashboard : Screen("dashboard")
@@ -54,6 +59,7 @@ sealed class Screen(val route: String) {
     object Analytics : Screen("analytics")
     object Settings : Screen("settings")
     object DueBills : Screen("due_bills")
+    object Transfer : Screen("transfer")
     object Goals : Screen("goals")
     object Budget : Screen("budget")
     object Wallets : Screen("wallets")
@@ -85,6 +91,12 @@ private val TopLevelDestinations = listOf(
         selectedIcon = Icons.AutoMirrored.Filled.ReceiptLong,
     ),
     NavigationBarItemData(
+        route = Screen.Transfer.route,
+        label = "Transfer",
+        icon = Icons.Default.SwapHoriz,
+        selectedIcon = Icons.Default.SwapHoriz,
+    ),
+    NavigationBarItemData(
         route = Screen.Goals.route,
         label = "Target",
         icon = Icons.Outlined.Payments,
@@ -104,20 +116,6 @@ private val TopLevelRoutes = TopLevelDestinations.map { it.route }.toSet()
 fun AppNavigation(
     navController: NavHostController = rememberNavController()
 ) {
-    val context = LocalContext.current
-    val sessionManager = remember { 
-        UserSessionManager(context).apply { initSession() } 
-    }
-    
-    // Dynamic entry point:
-    // 1. If never onboarded -> Onboarding
-    // 2. If logged in (has userId) -> Dashboard
-    // 3. If signed out but onboarded -> Auth Screen
-    val startDestination = when {
-        !sessionManager.isOnboardingCompleted -> Screen.Onboarding.route
-        sessionManager.userId.isNotBlank() -> Screen.Dashboard.route
-        else -> Screen.Auth.route
-    }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
@@ -150,7 +148,11 @@ fun AppNavigation(
             }
         },
         floatingActionButton = {
-            if (showNavigationBar) {
+            AnimatedVisibility(
+                visible = showNavigationBar,
+                enter = scaleIn(animationSpec = tween(300)) + fadeIn(animationSpec = tween(300)),
+                exit = scaleOut(animationSpec = tween(200)) + fadeOut(animationSpec = tween(200)),
+            ) {
                 FloatingActionButton(
                     onClick = { navController.navigate(Screen.AddTransaction.route) },
                 ) {
@@ -173,11 +175,25 @@ fun AppNavigation(
         // bar — and the top inset was never applied on any route.
         NavHost(
             navController = navController,
-            startDestination = startDestination,
+            startDestination = Screen.Splash.route,
+            enterTransition = { fadeIn(animationSpec = tween(350)) },
+            exitTransition = { fadeOut(animationSpec = tween(350)) },
+            popEnterTransition = { fadeIn(animationSpec = tween(350)) },
+            popExitTransition = { fadeOut(animationSpec = tween(350)) },
             modifier = Modifier
                 .padding(innerPadding)
                 .consumeWindowInsets(innerPadding),
         ) {
+            composable(Screen.Splash.route) {
+                SplashScreen(
+                    onSplashFinished = { destination ->
+                        navController.navigate(destination) {
+                            popUpTo(Screen.Splash.route) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable(Screen.Onboarding.route) {
                 OnboardingScreen(
                     onFinishOnboarding = {
@@ -285,6 +301,16 @@ fun AppNavigation(
 
             composable(Screen.DueBills.route) {
                 DueBillsScreen()
+            }
+
+            composable(Screen.Transfer.route) {
+                com.ssajudn.barebudget.ui.transaction.TransferScreen(
+                    onTransferSuccess = {
+                        navController.navigate(Screen.Dashboard.route) {
+                            popUpTo(Screen.Dashboard.route) { inclusive = true }
+                        }
+                    }
+                )
             }
 
             composable(Screen.Wallets.route) {

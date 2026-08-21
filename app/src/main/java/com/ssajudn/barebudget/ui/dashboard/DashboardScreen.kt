@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -17,19 +18,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ssajudn.barebudget.data.model.DashboardSummary
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ssajudn.barebudget.domain.model.DashboardSummary
 import com.ssajudn.barebudget.ui.components.FinancialRunwayCard
 import com.ssajudn.barebudget.ui.components.TransactionItem
 import com.ssajudn.barebudget.ui.theme.*
+import com.ssajudn.barebudget.data.local.ThemePreferences
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.ssajudn.barebudget.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,10 +50,10 @@ fun DashboardScreen(
     onNavigateToAllTransactions: () -> Unit,
     onNavigateToAnalytics: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    viewModel: DashboardViewModel = viewModel()
+    viewModel: DashboardViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
-    val isRefreshing by viewModel.isRefreshing.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     // Auto-refresh dashboard data whenever returning back to this screen
@@ -66,23 +73,120 @@ fun DashboardScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Column {
-                        Text(
-                            text = "Bare Budget",
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Image(
+                            painter = painterResource(id = R.drawable.ic_app_logo),
+                            contentDescription = "BareBudget Logo",
+                            modifier = Modifier
+                                .size(38.dp)
+                                .clip(MaterialTheme.shapes.small)
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = "Bare Budget",
+                                style = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold
+                                )
                             )
-                        )
-                        Text(
-                            text = "Frictionless Expense Tracker",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                            Text(
+                                text = "Frictionless Expense Tracker",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 },
                 actions = {
+                    var showThemeDialog by remember { mutableStateOf(false) }
+                    val context = LocalContext.current
+                    val themePrefs = remember { ThemePreferences.getInstance(context) }
+                    val currentDarkMode by themePrefs.darkMode.collectAsStateWithLifecycle()
+
+                    val themeIcon = when (currentDarkMode) {
+                        ThemeDarkMode.Dark -> Icons.Default.DarkMode
+                        ThemeDarkMode.Light -> Icons.Default.LightMode
+                        ThemeDarkMode.FollowSystem -> Icons.Default.BrightnessAuto
+                    }
+
+                    IconButton(onClick = { showThemeDialog = true }) {
+                        Icon(
+                            imageVector = themeIcon,
+                            contentDescription = "Tema Tampilan"
+                        )
+                    }
+
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.Settings, contentDescription = "Settings")
+                    }
+
+                    if (showThemeDialog) {
+                        AlertDialog(
+                            onDismissRequest = { showThemeDialog = false },
+                            title = {
+                                Text(
+                                    text = "Pilih Tema Tampilan",
+                                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                                )
+                            },
+                            text = {
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    val options = listOf(
+                                        Triple(ThemeDarkMode.FollowSystem, "Ikuti Sistem", Icons.Default.BrightnessAuto),
+                                        Triple(ThemeDarkMode.Light, "Mode Terang", Icons.Default.LightMode),
+                                        Triple(ThemeDarkMode.Dark, "Mode Gelap", Icons.Default.DarkMode)
+                                    )
+
+                                    options.forEach { (mode, label, icon) ->
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(MaterialTheme.shapes.medium)
+                                                .clickable {
+                                                    themePrefs.setDarkMode(mode)
+                                                    showThemeDialog = false
+                                                },
+                                            color = if (currentDarkMode == mode) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerLow,
+                                            shape = MaterialTheme.shapes.medium
+                                        ) {
+                                            Row(
+                                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Icon(
+                                                    imageVector = icon,
+                                                    contentDescription = null,
+                                                    tint = if (currentDarkMode == mode) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                                Spacer(modifier = Modifier.width(12.dp))
+                                                Text(
+                                                    text = label,
+                                                    style = MaterialTheme.typography.bodyLarge.copy(
+                                                        fontWeight = if (currentDarkMode == mode) FontWeight.Bold else FontWeight.Normal
+                                                    ),
+                                                    color = if (currentDarkMode == mode) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                                if (currentDarkMode == mode) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.Check,
+                                                        contentDescription = null,
+                                                        tint = MaterialTheme.colorScheme.primary,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            confirmButton = {
+                                TextButton(onClick = { showThemeDialog = false }) {
+                                    Text("Tutup")
+                                }
+                            }
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

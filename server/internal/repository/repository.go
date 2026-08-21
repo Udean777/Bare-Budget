@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -52,19 +53,19 @@ func (r *Repository) CreateTransaction(t *models.Transaction) error {
 		if err := tx.Create(t).Error; err != nil {
 			return err
 		}
-		
+
 		if t.WalletID != nil && *t.WalletID != "" {
 			var wallet models.Wallet
 			if err := tx.First(&wallet, "id = ?", *t.WalletID).Error; err != nil {
 				return err
 			}
-			
+
 			if t.Type == models.TypeIncome {
 				wallet.Balance += t.Amount
 			} else if t.Type == models.TypeExpense || t.Type == "" {
 				wallet.Balance -= t.Amount
 			}
-			
+
 			if err := tx.Save(&wallet).Error; err != nil {
 				return err
 			}
@@ -99,7 +100,7 @@ func (r *Repository) DeleteTransaction(userID string, id uuid.UUID) error {
 		if err := tx.Where("id = ? AND user_id = ?", id, userID).First(&t).Error; err != nil {
 			return err
 		}
-		
+
 		if t.WalletID != nil && *t.WalletID != "" {
 			var wallet models.Wallet
 			if err := tx.First(&wallet, "id = ?", *t.WalletID).Error; err == nil {
@@ -113,7 +114,7 @@ func (r *Repository) DeleteTransaction(userID string, id uuid.UUID) error {
 				}
 			}
 		}
-		
+
 		return tx.Delete(&t).Error
 	})
 }
@@ -121,11 +122,12 @@ func (r *Repository) DeleteTransaction(userID string, id uuid.UUID) error {
 func (r *Repository) GetMonthlySpent(userID string, startOfMonth, endOfMonth time.Time) (int64, error) {
 	var total int64
 	err := r.db.Model(&models.Transaction{}).
-		Where("user_id = ? AND date >= ? AND date <= ? AND (type = ? OR type IS NULL OR type = '')", userID, startOfMonth, endOfMonth, models.TypeExpense).
+		Where("user_id = ? AND date >= ? AND date <= ? AND (type = ? OR type IS NULL OR type = '') AND category != ?", userID, startOfMonth, endOfMonth, models.TypeExpense, models.CategoryBills).
 		Select("COALESCE(SUM(amount), 0)").
 		Scan(&total).Error
 	return total, err
 }
+
 // DueBill Repo
 type CategorySummary struct {
 	Category models.TransactionCategory `json:"category"`
@@ -158,8 +160,102 @@ func (r *Repository) GetDueBillsByUserID(userID string, status string) ([]models
 	return list, err
 }
 
-func (r *Repository) UpdateDueBillStatus(userID string, id uuid.UUID, status models.DueBillStatus) error {
-	return r.db.Model(&models.DueBill{}).Where("id = ? AND user_id = ?", id, userID).Update("status", status).Error
+func (r *Repository) UpdateDueBill(userID string, id uuid.UUID, fields map[string]interface{}) error {
+	return r.db.Model(&models.DueBill{}).
+		Where("id = ? AND user_id = ?", id, userID).
+		Updates(fields).Error
+}
+
+func (r *Repository) UpdateDueBillStatus(userID string, id uuid.UUID, status models.DueBillStatus, walletID *string) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var bill models.DueBill
+		if err := tx.Where("id = ? AND user_id = ?", id, userID).First(&bill).Error; err != nil {
+			return err
+		}
+
+		if status == models.DueBillPaid {
+			now := time.Now()
+			updates := map[string]interface{}{
+				"status":         status,
+				"paid_at":        now,
+				"paid_wallet_id": walletID,
+			}
+			if err := tx.Model(&bill).Updates(updates).Error; err != nil {
+				return err
+			}
+
+			if walletID != nil && *walletID != "" {
+				// 1. Create Transaction
+				transaction := models.Transaction{
+					UserID:   userID,
+					Amount:   bill.TotalAmount,
+					Type:     models.TypeExpense,
+					Category: models.CategoryBills,
+					Merchant: bill.ProviderName,
+					Date:     now,
+					Notes:    "Pembayaran tagihan: " + bill.ProviderName,
+					WalletID: walletID,
+				}
+				if err := tx.Create(&transaction).Error; err != nil {
+					return err
+				}
+
+				// 2. Deduct Wallet Balance
+				var wallet models.Wallet
+				if err := tx.First(&wallet, "id = ?", *walletID).Error; err == nil {
+					wallet.Balance -= bill.TotalAmount
+					if err := tx.Save(&wallet).Error; err != nil {
+						return err
+					}
+				}
+			}
+		} else if status == models.DueBillUnpaid {
+			// If canceling payment for a previously paid bill with recorded paid_wallet_id
+			if bill.Status == models.DueBillPaid && bill.PaidWalletID != nil && *bill.PaidWalletID != "" {
+				refundWalletID := *bill.PaidWalletID
+
+				// 1. Refund Wallet Balance
+				var wallet models.Wallet
+				if err := tx.First(&wallet, "id = ?", refundWalletID).Error; err == nil {
+					wallet.Balance += bill.TotalAmount
+					if err := tx.Save(&wallet).Error; err != nil {
+						return err
+					}
+				}
+
+				// 2. Create Refund Income Transaction
+				refundTx := models.Transaction{
+					UserID:   userID,
+					Amount:   bill.TotalAmount,
+					Type:     models.TypeIncome,
+					Category: models.CategoryBills,
+					Merchant: "Refund: " + bill.ProviderName,
+					Date:     time.Now(),
+					Notes:    "Pembatalan pembayaran tagihan " + bill.ProviderName,
+					WalletID: &refundWalletID,
+				}
+				if err := tx.Create(&refundTx).Error; err != nil {
+					return err
+				}
+			}
+
+			// Clear status and paid_wallet_id
+			updates := map[string]interface{}{
+				"status":         status,
+				"paid_at":        nil,
+				"paid_wallet_id": nil,
+			}
+			if err := tx.Model(&bill).Select("status", "paid_at", "paid_wallet_id").Updates(updates).Error; err != nil {
+				return err
+			}
+		} else {
+			if err := tx.Model(&bill).Update("status", status).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
 }
 
 func (r *Repository) DeleteDueBill(userID string, id uuid.UUID) error {
@@ -264,12 +360,163 @@ func (r *Repository) GetGoalByID(userID string, id uuid.UUID) (*models.Goal, err
 	return &g, nil
 }
 
-func (r *Repository) UpdateGoalAmount(userID string, id uuid.UUID, addedAmount int64) error {
-	return r.db.Model(&models.Goal{}).
-		Where("id = ? AND user_id = ?", id, userID).
-		Update("current_amount", gorm.Expr("current_amount + ?", addedAmount)).Error
+func (r *Repository) DepositToGoal(userID string, id uuid.UUID, walletID string, amount int64) error {
+	return r.db.Transaction(func(tx *gorm.DB) error {
+		var goal models.Goal
+		if err := tx.Where("id = ? AND user_id = ?", id, userID).First(&goal).Error; err != nil {
+			return err
+		}
+
+		newAmount := goal.CurrentAmount + amount
+		if newAmount < 0 {
+			return fmt.Errorf("insufficient goal balance")
+		}
+
+		if err := tx.Model(&goal).Update("current_amount", newAmount).Error; err != nil {
+			return err
+		}
+
+		var wallet models.Wallet
+		if err := tx.Where("id = ? AND user_id = ?", walletID, userID).First(&wallet).Error; err != nil {
+			return fmt.Errorf("wallet not found")
+		}
+
+		now := time.Now()
+		if amount > 0 {
+			// Deposit / Setor (Expense)
+			if wallet.Balance < amount {
+				return fmt.Errorf("insufficient wallet balance")
+			}
+			wallet.Balance -= amount
+			if err := tx.Save(&wallet).Error; err != nil {
+				return err
+			}
+
+			transaction := models.Transaction{
+				UserID:   userID,
+				Amount:   amount,
+				Type:     models.TypeExpense,
+				Category: models.CategoryOther,
+				Merchant: "Tabungan: " + goal.Name,
+				Date:     now,
+				Notes:    "Setor ke tabungan " + goal.Name,
+				WalletID: &walletID,
+			}
+			if err := tx.Create(&transaction).Error; err != nil {
+				return err
+			}
+		} else if amount < 0 {
+			// Withdraw / Tarik (Income)
+			withdrawAmt := -amount
+			wallet.Balance += withdrawAmt
+			if err := tx.Save(&wallet).Error; err != nil {
+				return err
+			}
+
+			transaction := models.Transaction{
+				UserID:   userID,
+				Amount:   withdrawAmt,
+				Type:     models.TypeIncome,
+				Category: models.CategoryOther,
+				Merchant: "Penarikan: " + goal.Name,
+				Date:     now,
+				Notes:    "Penarikan dari tabungan " + goal.Name,
+				WalletID: &walletID,
+			}
+			if err := tx.Create(&transaction).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func (r *Repository) UpdateGoal(userID string, id uuid.UUID, fields map[string]interface{}) error {
+	return r.db.Model(&models.Goal{}).Where("id = ? AND user_id = ?", id, userID).Updates(fields).Error
 }
 
 func (r *Repository) DeleteGoal(userID string, id uuid.UUID) error {
 	return r.db.Where("id = ? AND user_id = ?", id, userID).Delete(&models.Goal{}).Error
+}
+
+// Analytics Repo
+type CashflowDataPoint struct {
+	Month   string `json:"month"`
+	Label   string `json:"label"`
+	Income  int64  `json:"income"`
+	Expense int64  `json:"expense"`
+}
+
+type NetWorthDataPoint struct {
+	Month    string `json:"month"`
+	Label    string `json:"label"`
+	NetWorth int64  `json:"net_worth"`
+}
+
+func (r *Repository) GetMonthlyCashflow(userID string, monthsCount int) ([]CashflowDataPoint, error) {
+	now := time.Now()
+	var points []CashflowDataPoint
+
+	for i := monthsCount - 1; i >= 0; i-- {
+		targetMonth := now.AddDate(0, -i, 0)
+		startOfMonth := time.Date(targetMonth.Year(), targetMonth.Month(), 1, 0, 0, 0, 0, time.UTC)
+		endOfMonth := startOfMonth.AddDate(0, 1, 0).Add(-time.Nanosecond)
+
+		monthKey := startOfMonth.Format("2006-01")
+		label := startOfMonth.Format("Jan")
+
+		var income int64
+		var expense int64
+
+		r.db.Model(&models.Transaction{}).
+			Where("user_id = ? AND date >= ? AND date <= ? AND type = ?", userID, startOfMonth, endOfMonth, models.TypeIncome).
+			Select("COALESCE(SUM(amount), 0)").
+			Scan(&income)
+
+		r.db.Model(&models.Transaction{}).
+			Where("user_id = ? AND date >= ? AND date <= ? AND (type = ? OR type IS NULL OR type = '')", userID, startOfMonth, endOfMonth, models.TypeExpense).
+			Select("COALESCE(SUM(amount), 0)").
+			Scan(&expense)
+
+		points = append(points, CashflowDataPoint{
+			Month:   monthKey,
+			Label:   label,
+			Income:  income,
+			Expense: expense,
+		})
+	}
+
+	return points, nil
+}
+
+func (r *Repository) GetMonthlyNetWorthTrend(userID string, monthsCount int) ([]NetWorthDataPoint, error) {
+	wallets, err := r.GetWalletsByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	var currentNetWorth int64
+	for _, w := range wallets {
+		currentNetWorth += w.Balance
+	}
+
+	cashflow, err := r.GetMonthlyCashflow(userID, monthsCount)
+	if err != nil {
+		return nil, err
+	}
+
+	points := make([]NetWorthDataPoint, len(cashflow))
+	runningNetWorth := currentNetWorth
+
+	for i := len(cashflow) - 1; i >= 0; i-- {
+		points[i] = NetWorthDataPoint{
+			Month:    cashflow[i].Month,
+			Label:    cashflow[i].Label,
+			NetWorth: runningNetWorth,
+		}
+		netChange := cashflow[i].Income - cashflow[i].Expense
+		runningNetWorth -= netChange
+	}
+
+	return points, nil
 }

@@ -1,5 +1,6 @@
 package com.ssajudn.barebudget.data.network
 
+import com.ssajudn.barebudget.domain.model.*
 import com.ssajudn.barebudget.data.model.*
 import retrofit2.Response
 import retrofit2.http.*
@@ -12,6 +13,13 @@ interface ApiService {
 
     @POST("api/v1/budget")
     suspend fun setBudget(@Body request: SetBudgetRequest): Response<Map<String, String>>
+
+    // Analytics
+    @GET("api/v1/analytics/cashflow")
+    suspend fun getCashflowAnalytics(): Response<CashflowResponse>
+
+    @GET("api/v1/analytics/networth")
+    suspend fun getNetWorthAnalytics(): Response<NetWorthResponse>
 
     // Wallets
     @GET("api/v1/wallets")
@@ -52,14 +60,16 @@ interface ApiService {
         @Body request: UpdateDueBillStatusRequest
     ): Response<Map<String, String>>
 
+    @PUT("api/v1/due-bills/{id}")
+    suspend fun updateDueBill(
+        @Path("id") id: String,
+        @Body request: UpdateDueBillRequest
+    ): Response<DueBill>
+
     @DELETE("api/v1/due-bills/{id}")
     suspend fun deleteDueBill(@Path("id") id: String): Response<Map<String, String>>
 
-    // Account Migration (Guest -> Google Account)
-    @POST("api/v1/auth/migrate-guest")
-    suspend fun migrateGuestData(@Body request: Map<String, String>): Response<Map<String, Any>>
-
-    // Savings Goals Tracker
+    // Savings Goals
     @GET("api/v1/goals")
     suspend fun getGoals(): Response<GoalListResponse>
 
@@ -67,10 +77,16 @@ interface ApiService {
     suspend fun createGoal(@Body request: CreateGoalRequest): Response<Goal>
 
     @POST("api/v1/goals/{id}/deposit")
-    suspend fun depositGoal(
+    suspend fun depositToGoal(
         @Path("id") id: String,
         @Body request: DepositGoalRequest
     ): Response<Map<String, String>>
+
+    @PUT("api/v1/goals/{id}")
+    suspend fun updateGoal(
+        @Path("id") id: String,
+        @Body request: UpdateGoalRequest
+    ): Response<Goal>
 
     @DELETE("api/v1/goals/{id}")
     suspend fun deleteGoal(@Path("id") id: String): Response<Map<String, String>>

@@ -22,10 +22,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ssajudn.barebudget.ui.components.AppConfirmDialog
 import com.ssajudn.barebudget.ui.theme.*
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ssajudn.barebudget.BuildConfig
 import com.ssajudn.barebudget.data.local.ThemePreferences
-import com.ssajudn.barebudget.utils.AppConfig
+import com.ssajudn.barebudget.domain.AppConfig
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,12 +38,12 @@ fun SettingsScreen(
     // viewModel { } rather than remember { }: a ViewModel created with remember is
     // not lifecycle-scoped, so it was destroyed and recreated on every
     // configuration change and its viewModelScope was not managed by the framework.
-    val viewModel: SettingsViewModel = viewModel { SettingsViewModel(context) }
-    val uiState by viewModel.uiState.collectAsState()
+    val viewModel: SettingsViewModel = hiltViewModel()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     val themePrefs = remember { ThemePreferences.getInstance(context) }
-    val colorMode by themePrefs.colorMode.collectAsState()
-    val darkMode by themePrefs.darkMode.collectAsState()
+    val colorMode by themePrefs.colorMode.collectAsStateWithLifecycle()
+    val darkMode by themePrefs.darkMode.collectAsStateWithLifecycle()
     var showSignOutConfirmDialog by remember { mutableStateOf(false) }
 
     val snackbarHostState = remember { SnackbarHostState() }
@@ -64,13 +65,25 @@ fun SettingsScreen(
         }
     }
 
+    val exportBackupLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.CreateDocument("application/json")
+    ) { uri: android.net.Uri? ->
+        uri?.let { viewModel.exportBackup(it) }
+    }
+
+    val importBackupLauncher = androidx.activity.compose.rememberLauncherForActivityResult(
+        contract = androidx.activity.result.contract.ActivityResultContracts.OpenDocument()
+    ) { uri: android.net.Uri? ->
+        uri?.let { viewModel.importBackup(it) }
+    }
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Settings & Profile",
+                        text = "Pengaturan",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -98,82 +111,104 @@ fun SettingsScreen(
         ) {
             Spacer(modifier = Modifier.height(4.dp))
 
-            // 1. USER PROFILE CARD (M3 ElevatedCard)
-            ElevatedCard(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.extraLarge,
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
-                ),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(22.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+            // 1. USER PROFILE CARD (Hanya muncul jika login dengan Google)
+            if (!uiState.isGuestMode) {
+                ElevatedCard(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.extraLarge,
+                    colors = CardDefaults.elevatedCardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                    ),
+                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (uiState.isGuestMode) MaterialTheme.colorScheme.errorContainer
-                                else MaterialTheme.colorScheme.primaryContainer
-                            ),
-                        contentAlignment = Alignment.Center
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(22.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        Icon(
-                            imageVector = if (uiState.isGuestMode) Icons.Default.PersonOutline else Icons.Default.AccountCircle,
-                            contentDescription = null,
-                            tint = if (uiState.isGuestMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(36.dp)
-                        )
-                    }
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccountCircle,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(36.dp)
+                            )
+                        }
 
-                    Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                    Text(
-                        text = uiState.userName,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = uiState.userEmail,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // M3 Mode Badge
-                    Surface(
-                        shape = MaterialTheme.shapes.medium,
-                        color = if (uiState.isGuestMode) MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f) else MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
-                    ) {
                         Text(
-                            text = if (uiState.isGuestMode) "Guest Mode (Local Only)" else "Google Account Connected",
-                            style = MaterialTheme.typography.labelMedium.copy(
+                            text = uiState.userName,
+                            style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold
                             ),
-                            color = if (uiState.isGuestMode) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                            color = MaterialTheme.colorScheme.onSurface
                         )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = uiState.userEmail,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Surface(
+                            shape = MaterialTheme.shapes.medium,
+                            color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
+                        ) {
+                            Text(
+                                text = "Google Account Connected",
+                                style = MaterialTheme.typography.labelMedium.copy(
+                                    fontWeight = FontWeight.Bold
+                                ),
+                                color = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
+                            )
+                        }
                     }
                 }
             }
 
-            // 2. ACCOUNT & SYNC GROUP (Material3SettingsGroup)
+            // 2. OFFLINE BACKUP & RESTORE GROUP
+            com.ssajudn.barebudget.ui.components.Material3SettingsGroup(
+                title = "Cadangan Data (Offline Backup)",
+                items = listOf(
+                    com.ssajudn.barebudget.ui.components.Material3SettingsItem(
+                        title = "Ekspor File Backup (Download)",
+                        description = "Simpan semua transaksi, tagihan, dompet, dan target tabungan ke file JSON",
+                        icon = Icons.Default.FileDownload,
+                        onClick = {
+                            val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
+                            exportBackupLauncher.launch("BareBudget_Backup_$timeStamp.json")
+                        }
+                    ),
+                    com.ssajudn.barebudget.ui.components.Material3SettingsItem(
+                        title = "Impor File Backup (Restore)",
+                        description = "Pulihkan seluruh data dari file JSON cadangan sebelumnya",
+                        icon = Icons.Default.FileUpload,
+                        onClick = {
+                            importBackupLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+                        }
+                    )
+                )
+            )
+
+            // 3. CLOUD SYNC GROUP (Opsional untuk Guest yang ingin sync Google)
             if (uiState.isGuestMode) {
                 com.ssajudn.barebudget.ui.components.Material3SettingsGroup(
-                    title = "Account & Cloud Sync",
+                    title = "Akun & Cloud Sync (Opsional)",
                     items = listOf(
                         com.ssajudn.barebudget.ui.components.Material3SettingsItem(
-                            title = "Link with Google Account",
-                            description = "Backup transactions and access data across devices",
+                            title = "Hubungkan Akun Google",
+                            description = "Sinkronkan data secara otomatis ke cloud",
                             icon = Icons.Default.CloudUpload,
                             onClick = { viewModel.linkWithGoogle() }
                         )
@@ -189,21 +224,48 @@ fun SettingsScreen(
                 onDarkModeChange = themePrefs::setDarkMode,
             )
 
-            // 4. APPLICATION & PREFERENCES GROUP
+            // 4. SUPPORT & APPRECIATION GROUP
             com.ssajudn.barebudget.ui.components.Material3SettingsGroup(
-                title = "Application & About",
+                title = "Dukungan & Apresiasi",
                 items = listOf(
                     com.ssajudn.barebudget.ui.components.Material3SettingsItem(
-                        title = "App Version",
-                        description = "Current installed build",
-                        value = BuildConfig.VERSION_NAME,
-                        icon = Icons.Default.Info
+                        title = "Donasi untuk Pengembang",
+                        description = "Traktir kopi atau dukung kelanjutan BareBudget",
+                        icon = Icons.Default.VolunteerActivism,
+                        onClick = {
+                            val intent = android.content.Intent(
+                                android.content.Intent.ACTION_VIEW,
+                                android.net.Uri.parse("https://trakteer.id/ssajudn")
+                            )
+                            context.startActivity(intent)
+                        }
                     ),
                     com.ssajudn.barebudget.ui.components.Material3SettingsItem(
-                        title = "Environment",
-                        description = "Active backend endpoint",
-                        value = if (AppConfig.isDebug) "Development" else "Production",
-                        icon = Icons.Default.Dns
+                        title = "Beri Bintang di GitHub",
+                        description = "Beri star repository BareBudget di GitHub",
+                        icon = Icons.Default.Star,
+                        onClick = {
+                            val intent = android.content.Intent(
+                                android.content.Intent.ACTION_VIEW,
+                                android.net.Uri.parse("https://github.com/Udean777/Bare-Budget")
+                            )
+                            context.startActivity(intent)
+                        }
+                    ),
+                    com.ssajudn.barebudget.ui.components.Material3SettingsItem(
+                        title = "Bagikan Aplikasi",
+                        description = "Ajak teman untuk kelola keuangan & runway finansial",
+                        icon = Icons.Default.Share,
+                        onClick = {
+                            val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                                type = "text/plain"
+                                putExtra(
+                                    android.content.Intent.EXTRA_TEXT,
+                                    "Kelola keuangan dan hitung runway finansialmu dengan BareBudget! Cek repository-nya di: https://github.com/Udean777/Bare-Budget"
+                                )
+                            }
+                            context.startActivity(android.content.Intent.createChooser(shareIntent, "Bagikan BareBudget"))
+                        }
                     )
                 )
             )
@@ -222,7 +284,27 @@ fun SettingsScreen(
                 )
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            // Minimalist Footer Versioning
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "BareBudget v${BuildConfig.VERSION_NAME}",
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.SemiBold),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    text = "Frictionless Personal Finance",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                )
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 

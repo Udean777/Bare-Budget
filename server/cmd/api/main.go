@@ -67,6 +67,10 @@ func main() {
 	api.Get("/dashboard/summary", h.GetDashboardSummary)
 	api.Post("/budget", h.SetBudget)
 
+	// Analytics
+	api.Get("/analytics/cashflow", h.GetCashflowAnalytics)
+	api.Get("/analytics/networth", h.GetNetWorthAnalytics)
+
 	// Transactions
 	// Wallets
 	api.Get("/wallets", h.GetWallets)
@@ -81,12 +85,14 @@ func main() {
 	api.Get("/due-bills", h.GetDueBills)
 	api.Post("/due-bills", h.CreateDueBill)
 	api.Patch("/due-bills/:id/status", h.UpdateDueBillStatus)
+	api.Patch("/due-bills/:id", h.UpdateDueBill)
 	api.Delete("/due-bills/:id", h.DeleteDueBill)
 
 	// Savings Goals Tracker
 	api.Get("/goals", h.GetGoals)
 	api.Post("/goals", h.CreateGoal)
 	api.Post("/goals/:id/deposit", h.DepositToGoal)
+	api.Patch("/goals/:id", h.UpdateGoal)
 	api.Delete("/goals/:id", h.DeleteGoal)
 
 	log.Printf("Bare Budget server starting on port %s in [%s] mode...", cfg.Port, cfg.Environment)

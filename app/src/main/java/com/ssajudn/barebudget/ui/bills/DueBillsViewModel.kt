@@ -2,15 +2,26 @@ package com.ssajudn.barebudget.ui.bills
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ssajudn.barebudget.data.model.CreateDueBillRequest
-import com.ssajudn.barebudget.data.model.DueBill
-import com.ssajudn.barebudget.data.model.DueBillStatus
-import com.ssajudn.barebudget.data.repository.BudgetRepository
+import com.ssajudn.barebudget.domain.model.CreateDueBillRequest
+import com.ssajudn.barebudget.domain.model.DueBill
+import com.ssajudn.barebudget.domain.model.DueBillStatus
+import com.ssajudn.barebudget.domain.model.UpdateDueBillRequest
+import com.ssajudn.barebudget.domain.repository.DueBillRepository
+import com.ssajudn.barebudget.domain.repository.WalletRepository
 import com.ssajudn.barebudget.utils.DateUtils
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
+import com.ssajudn.barebudget.domain.model.Wallet
+import com.ssajudn.barebudget.domain.model.RecurringInterval
 
 sealed interface DueBillsUiState {
     object Loading : DueBillsUiState
@@ -18,99 +29,88 @@ sealed interface DueBillsUiState {
     data class Error(val message: String) : DueBillsUiState
 }
 
-class DueBillsViewModel(
-    private val repository: BudgetRepository = BudgetRepository()
+@HiltViewModel
+class DueBillsViewModel @Inject constructor(
+    private val repository: DueBillRepository,
+    private val walletRepository: WalletRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<DueBillsUiState>(DueBillsUiState.Loading)
-    val uiState: StateFlow<DueBillsUiState> = _uiState.asStateFlow()
+    private val _selectedStatus = MutableStateFlow<DueBillStatus?>(null)
+    val selectedStatus: StateFlow<DueBillStatus?> = _selectedStatus.asStateFlow()
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
+    val wallets: StateFlow<List<Wallet>> =
+        walletRepository.observeWallets()
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val uiState: StateFlow<DueBillsUiState> = combine(
+        repository.observeDueBills(),
+        _selectedStatus
+    ) { bills, status ->
+        if (status == null) bills else bills.filter { it.status == status }
+    }.map<List<DueBill>, DueBillsUiState> { DueBillsUiState.Success(it) }
+        .catch { e -> emit(DueBillsUiState.Error(e.message ?: "Failed to fetch due bills")) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DueBillsUiState.Loading)
+
     init {
-        loadDueBills()
+        viewModelScope.launch { walletRepository.getWallets() }
+    }
+
+    fun setFilterStatus(status: DueBillStatus?) {
+        _selectedStatus.value = status
+    }
+
+    fun loadWallets() {
+        viewModelScope.launch { walletRepository.getWallets() }
     }
 
     fun loadDueBills(isPullToRefresh: Boolean = false) {
         viewModelScope.launch {
-            if (isPullToRefresh) {
-                _isRefreshing.value = true
-            } else if (_uiState.value !is DueBillsUiState.Success) {
-                _uiState.value = DueBillsUiState.Loading
-            }
-
-            repository.getDueBills()
-                .onSuccess { bills ->
-                    _uiState.value = DueBillsUiState.Success(bills)
-                    _isRefreshing.value = false
-                }
-                .onFailure { error ->
-                    _isRefreshing.value = false
-                    if (_uiState.value !is DueBillsUiState.Success) {
-                        _uiState.value = DueBillsUiState.Error(error.localizedMessage ?: "Failed to fetch due bills")
-                    }
-                }
+            _isRefreshing.value = true
+            walletRepository.getWallets()
+            repository.getDueBills(_selectedStatus.value?.name)
+            _isRefreshing.value = false
         }
     }
 
-    fun addDueBill(
-        providerName: String,
-        providerIconUrl: String?,
-        totalAmount: Long,
-        dueDate: String,
-        isRecurring: Boolean = false,
-        recurringInterval: com.ssajudn.barebudget.data.model.RecurringInterval = com.ssajudn.barebudget.data.model.RecurringInterval.NONE,
-        notes: String = ""
-    ) {
+    fun addDueBill(providerName: String, providerIconUrl: String?, totalAmount: Long, dueDate: String, isRecurring: Boolean = false, recurringInterval: RecurringInterval = RecurringInterval.NONE, notes: String = "") {
         viewModelScope.launch {
-            val request = CreateDueBillRequest(
-                providerName = providerName,
-                providerIconUrl = providerIconUrl,
-                totalAmount = totalAmount,
-                dueDate = dueDate,
-                isRecurring = isRecurring,
-                recurringInterval = recurringInterval,
-                notes = notes
-            )
-            repository.createDueBill(request)
-                .onSuccess {
-                    loadDueBills()
-                }
+            repository.createDueBill(CreateDueBillRequest(providerName, providerIconUrl, totalAmount, dueDate, isRecurring, recurringInterval, notes))
         }
     }
 
-    fun toggleBillStatus(bill: DueBill) {
-        val nextStatus = if (bill.status == DueBillStatus.UNPAID) DueBillStatus.PAID else DueBillStatus.UNPAID
+    fun updateDueBill(id: String, providerName: String, providerIconUrl: String?, totalAmount: Long, dueDate: String, isRecurring: Boolean = false, recurringInterval: RecurringInterval = RecurringInterval.NONE, notes: String = "") {
+        viewModelScope.launch {
+            repository.updateDueBill(id, UpdateDueBillRequest(providerName, providerIconUrl, totalAmount, dueDate, isRecurring, recurringInterval, notes))
+        }
+    }
+
+    fun payBill(bill: DueBill, walletId: String) {
         viewModelScope.launch {
             if (bill.id != null) {
-                repository.updateDueBillStatus(bill.id, nextStatus)
-                    .onSuccess {
-                        // Auto-rollover: If marked as PAID and it's a recurring bill, create the next period's bill automatically
-                        if (nextStatus == DueBillStatus.PAID && bill.isRecurring && bill.recurringInterval != com.ssajudn.barebudget.data.model.RecurringInterval.NONE) {
-                            val nextDueDate = DateUtils.calculateNextDueDate(bill.dueDate, bill.recurringInterval.name)
-                            val nextBillRequest = CreateDueBillRequest(
-                                providerName = bill.providerName,
-                                totalAmount = bill.totalAmount,
-                                dueDate = nextDueDate,
-                                isRecurring = true,
-                                recurringInterval = bill.recurringInterval,
-                                notes = bill.notes ?: ""
-                            )
-                            repository.createDueBill(nextBillRequest)
-                        }
-                        loadDueBills()
-                    }
+                repository.updateDueBillStatus(bill.id, DueBillStatus.PAID, walletId)
+                if (bill.isRecurring && bill.recurringInterval != RecurringInterval.NONE) {
+                    val nextDueDate = DateUtils.calculateNextDueDate(bill.dueDate, bill.recurringInterval.name)
+                    repository.createDueBill(CreateDueBillRequest(bill.providerName, totalAmount = bill.totalAmount, dueDate = nextDueDate, isRecurring = true, recurringInterval = bill.recurringInterval, notes = bill.notes ?: ""))
+                }
             }
         }
+    }
+
+    fun markBillAsUnpaid(bill: DueBill) {
+        viewModelScope.launch {
+            if (bill.id != null) repository.updateDueBillStatus(bill.id, DueBillStatus.UNPAID)
+        }
+    }
+
+    fun toggleBillStatus(bill: DueBill, walletId: String? = null) {
+        if (bill.status == DueBillStatus.UNPAID && walletId != null) payBill(bill, walletId)
+        else if (bill.status == DueBillStatus.PAID) markBillAsUnpaid(bill)
     }
 
     fun deleteBill(id: String) {
-        viewModelScope.launch {
-            repository.deleteDueBill(id)
-                .onSuccess {
-                    loadDueBills()
-                }
-        }
+        viewModelScope.launch { repository.deleteDueBill(id) }
     }
 }

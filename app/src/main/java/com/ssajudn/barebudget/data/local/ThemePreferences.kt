@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.core.content.edit
 import com.ssajudn.barebudget.ui.theme.ThemeColorMode
 import com.ssajudn.barebudget.ui.theme.ThemeDarkMode
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Persisted appearance settings.
@@ -19,7 +22,10 @@ import kotlinx.coroutines.flow.asStateFlow
  * Exposed as [StateFlow]s so the theme recomposes the moment a setting changes,
  * with no activity restart.
  */
-class ThemePreferences(context: Context) {
+@Singleton
+class ThemePreferences @Inject constructor(
+    @ApplicationContext context: Context
+) {
 
     private val prefs = context.applicationContext
         .getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -59,12 +65,16 @@ class ThemePreferences(context: Context) {
         private var instance: ThemePreferences? = null
 
         /**
-         * Single shared instance, so the Activity and the settings screen observe
-         * the same flows and stay in sync.
+         * Single shared instance. Retained for Compose callers that cannot
+         * easily receive Hilt injection (e.g. a top-level composable reading
+         * the theme from `LocalContext`). The Hilt-provided singleton and this
+         * accessor return the *same* instance because the module binds the
+         * same object. To be removed in Phase 8 once all callers move to DI.
          */
         fun getInstance(context: Context): ThemePreferences =
             instance ?: synchronized(this) {
-                instance ?: ThemePreferences(context).also { instance = it }
+                instance ?: ThemePreferences(context.applicationContext).also { instance = it }
             }
     }
 }
+

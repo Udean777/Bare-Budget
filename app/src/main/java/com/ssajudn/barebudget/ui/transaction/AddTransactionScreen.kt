@@ -1,32 +1,28 @@
 package com.ssajudn.barebudget.ui.transaction
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ssajudn.barebudget.data.model.TransactionCategory
-import com.ssajudn.barebudget.data.model.TransactionType
-import com.ssajudn.barebudget.data.model.Wallet
-
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ssajudn.barebudget.domain.model.TransactionCategory
+import com.ssajudn.barebudget.domain.model.TransactionType
 import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
 import com.ssajudn.barebudget.ui.theme.categoryColors
@@ -38,9 +34,9 @@ import com.ssajudn.barebudget.utils.DateUtils
 @Composable
 fun AddTransactionScreen(
     onNavigateBack: () -> Unit,
-    viewModel: AddTransactionViewModel = viewModel()
+    viewModel: AddTransactionViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showSplitBottomSheet by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isSuccess) {
@@ -114,53 +110,126 @@ fun AddTransactionScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // 0. TRANSACTION TYPE (Income/Expense)
+            // 0. TRANSACTION TYPE (Expense / Income / Transfer)
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                SegmentedButton(
-                    selected = uiState.transactionType == TransactionType.EXPENSE,
-                    onClick = { viewModel.onTransactionTypeChange(TransactionType.EXPENSE) },
-                    shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
-                ) {
-                    Text("Pengeluaran")
-                }
-                SegmentedButton(
-                    selected = uiState.transactionType == TransactionType.INCOME,
-                    onClick = { viewModel.onTransactionTypeChange(TransactionType.INCOME) },
-                    shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
-                ) {
-                    Text("Pemasukan")
+                val types = listOf(
+                    Triple(TransactionType.EXPENSE, "Pengeluaran", 0),
+                    Triple(TransactionType.INCOME, "Pemasukan", 1),
+                    Triple(TransactionType.TRANSFER, "Transfer", 2)
+                )
+                types.forEach { (type, label, index) ->
+                    SegmentedButton(
+                        selected = uiState.transactionType == type,
+                        onClick = { viewModel.onTransactionTypeChange(type) },
+                        shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
+                    ) {
+                        Text(label)
+                    }
                 }
             }
 
-            // 0.5. WALLET SELECTION
-            var walletDropdownExpanded by remember { mutableStateOf(false) }
-            ExposedDropdownMenuBox(
-                expanded = walletDropdownExpanded,
-                onExpandedChange = { walletDropdownExpanded = !walletDropdownExpanded },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                val selectedWalletName = uiState.wallets.find { it.id == uiState.selectedWalletId }?.name ?: "Pilih Dompet"
-                OutlinedTextField(
-                    value = selectedWalletName,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text("Dompet") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = walletDropdownExpanded) },
-                    modifier = Modifier.menuAnchor().fillMaxWidth(),
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-                )
-                ExposedDropdownMenu(
-                    expanded = walletDropdownExpanded,
-                    onDismissRequest = { walletDropdownExpanded = false }
+            // 0.5. WALLET SELECTION (Single for Income/Expense, Dual for Transfer)
+            if (uiState.transactionType == TransactionType.TRANSFER) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    uiState.wallets.forEach { wallet ->
-                        DropdownMenuItem(
-                            text = { Text(wallet.name) },
-                            onClick = {
-                                viewModel.onWalletChange(wallet.id!!)
-                                walletDropdownExpanded = false
-                            }
+                    // Source Wallet (Dari)
+                    var fromWalletExpanded by remember { mutableStateOf(false) }
+                    val selectedFromWalletName = uiState.wallets.find { it.id == uiState.selectedWalletId }?.name ?: "Pilih"
+                    ExposedDropdownMenuBox(
+                        expanded = fromWalletExpanded,
+                        onExpandedChange = { fromWalletExpanded = !fromWalletExpanded },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        OutlinedTextField(
+                            value = selectedFromWalletName,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Dari Dompet") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = fromWalletExpanded) },
+                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
                         )
+                        ExposedDropdownMenu(
+                            expanded = fromWalletExpanded,
+                            onDismissRequest = { fromWalletExpanded = false }
+                        ) {
+                            uiState.wallets.forEach { wallet ->
+                                DropdownMenuItem(
+                                    text = { Text(wallet.name) },
+                                    onClick = {
+                                        viewModel.onWalletChange(wallet.id!!)
+                                        fromWalletExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    // Destination Wallet (Ke)
+                    var toWalletExpanded by remember { mutableStateOf(false) }
+                    val selectedToWalletName = uiState.wallets.find { it.id == uiState.selectedToWalletId }?.name ?: "Pilih"
+                    ExposedDropdownMenuBox(
+                        expanded = toWalletExpanded,
+                        onExpandedChange = { toWalletExpanded = !toWalletExpanded },
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        OutlinedTextField(
+                            value = selectedToWalletName,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Ke Dompet") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = toWalletExpanded) },
+                            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+                            colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                        )
+                        ExposedDropdownMenu(
+                            expanded = toWalletExpanded,
+                            onDismissRequest = { toWalletExpanded = false }
+                        ) {
+                            uiState.wallets.forEach { wallet ->
+                                DropdownMenuItem(
+                                    text = { Text(wallet.name) },
+                                    onClick = {
+                                        viewModel.onToWalletChange(wallet.id!!)
+                                        toWalletExpanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                var walletDropdownExpanded by remember { mutableStateOf(false) }
+                ExposedDropdownMenuBox(
+                    expanded = walletDropdownExpanded,
+                    onExpandedChange = { walletDropdownExpanded = !walletDropdownExpanded },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val selectedWalletName = uiState.wallets.find { it.id == uiState.selectedWalletId }?.name ?: "Pilih Dompet"
+                    OutlinedTextField(
+                        value = selectedWalletName,
+                        onValueChange = {},
+                        readOnly = true,
+                        label = { Text("Dompet") },
+                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = walletDropdownExpanded) },
+                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = walletDropdownExpanded,
+                        onDismissRequest = { walletDropdownExpanded = false }
+                    ) {
+                        uiState.wallets.forEach { wallet ->
+                            DropdownMenuItem(
+                                text = { Text(wallet.name) },
+                                onClick = {
+                                    viewModel.onWalletChange(wallet.id!!)
+                                    walletDropdownExpanded = false
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -178,8 +247,13 @@ fun AddTransactionScreen(
                     modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    val amountLabel = when (uiState.transactionType) {
+                        TransactionType.INCOME -> "Nominal Pemasukan"
+                        TransactionType.TRANSFER -> "Nominal Transfer"
+                        TransactionType.EXPENSE -> "Nominal Pengeluaran"
+                    }
                     Text(
-                        text = if (uiState.transactionType == TransactionType.INCOME) "Nominal Pemasukan" else "Nominal Pengeluaran",
+                        text = amountLabel,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -236,8 +310,8 @@ fun AddTransactionScreen(
                         }
                     }
 
-                    // Quick Split Bill Trigger Button
-                    if (uiState.parsedAmount > 0) {
+                    // Quick Split Bill Trigger Button (Hanya jika pengeluaran)
+                    if (uiState.transactionType == TransactionType.EXPENSE && uiState.parsedAmount > 0) {
                         Spacer(modifier = Modifier.height(14.dp))
                         FilledTonalButton(
                             onClick = { showSplitBottomSheet = true },
@@ -245,62 +319,67 @@ fun AddTransactionScreen(
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text("👥 Smart Split Bill (Patungan Cerdas)", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
+                            Icon(
+                                imageVector = Icons.Default.Group,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Smart Split Bill (Patungan Cerdas)", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
                         }
                     }
                 }
             }
 
-            // 2. CATEGORY SELECTOR (M3 Filter Chips with Animated Indicators)
-            Column {
-                Text(
-                    text = "Kategori",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Spacer(modifier = Modifier.height(10.dp))
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    contentPadding = PaddingValues(vertical = 4.dp)
-                ) {
-                    val incomeCats = listOf(TransactionCategory.SALARY, TransactionCategory.BONUS, TransactionCategory.INVESTMENT)
-                    val filteredCats = TransactionCategory.entries.filter { if (uiState.transactionType == TransactionType.INCOME) it in incomeCats else it !in incomeCats }
-                    items(filteredCats) { category ->
-                        val isSelected = category == uiState.selectedCategory
-                        val catColors = categoryColors
+            // 2. CATEGORY SELECTOR (Hanya jika bukan Transfer)
+            if (uiState.transactionType != TransactionType.TRANSFER) {
+                Column {
+                    Text(
+                        text = "Kategori",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(10.dp))
+                    LazyRow(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(vertical = 4.dp)
+                    ) {
+                        val incomeCats = listOf(TransactionCategory.SALARY, TransactionCategory.BONUS, TransactionCategory.INVESTMENT)
+                        val filteredCats = TransactionCategory.entries.filter {
+                            it != TransactionCategory.TRANSFER && (if (uiState.transactionType == TransactionType.INCOME) it in incomeCats else it !in incomeCats)
+                        }
+                        items(filteredCats) { category ->
+                            val isSelected = category == uiState.selectedCategory
+                            val catColors = categoryColors
 
-                        FilterChip(
-                            selected = isSelected,
-                            onClick = { viewModel.onCategoryChange(category) },
-                            label = {
-                                Text(
-                                    text = category.displayName,
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                            FilterChip(
+                                selected = isSelected,
+                                onClick = { viewModel.onCategoryChange(category) },
+                                label = {
+                                    Text(
+                                        text = category.displayName,
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                        )
                                     )
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        imageVector = getCategoryIcon(category),
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                },
+                                shape = MaterialTheme.shapes.small,
+                                colors = FilterChipDefaults.filterChipColors(
+                                    selectedContainerColor = catColors.container(category),
+                                    selectedLabelColor = catColors.onContainer(category),
+                                    selectedLeadingIconColor = catColors.onContainer(category)
                                 )
-                            },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = getCategoryIcon(category),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
-                            shape = MaterialTheme.shapes.small,
-                            // Per-category colour, so the selected chip reinforces
-                            // the same hue used in the list and the analytics
-                            // breakdown. Previously every category selected to the
-                            // same primaryContainer, which threw the colour coding
-                            // away at the one moment the user is choosing a category.
-                            colors = FilterChipDefaults.filterChipColors(
-                                selectedContainerColor = catColors.container(category),
-                                selectedLabelColor = catColors.onContainer(category),
-                                selectedLeadingIconColor = catColors.onContainer(category)
                             )
-                        )
+                        }
                     }
                 }
             }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,27 +21,27 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.ssajudn.barebudget.data.auth.AuthManager
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.ssajudn.barebudget.R
 import com.ssajudn.barebudget.data.auth.AuthResult
-import com.ssajudn.barebudget.data.local.UserSessionManager
 import com.ssajudn.barebudget.ui.theme.*
 import kotlinx.coroutines.launch
 
 data class OnboardingPageData(
     val title: String,
     val description: String,
-    val icon: ImageVector,
-    val iconBgColor: Color,
-    val iconTint: Color
+    val imageRes: Int,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OnboardingScreen(
-    onFinishOnboarding: () -> Unit
+    onFinishOnboarding: () -> Unit,
+    authViewModel: AuthViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
-    val authManager = remember { AuthManager(context) }
     val coroutineScope = rememberCoroutineScope()
     var isGoogleLoading by remember { mutableStateOf(false) }
     var isGuestLoading by remember { mutableStateOf(false) }
@@ -58,30 +59,22 @@ fun OnboardingScreen(
         OnboardingPageData(
             title = "Zero Friction Expense Tracking",
             description = "Log your daily expenses in seconds. Clean, minimal, and focused on what truly matters to your wallet.",
-            icon = Icons.Default.Bolt,
-            iconBgColor = MaterialTheme.colorScheme.primaryContainer,
-            iconTint = MaterialTheme.colorScheme.onPrimaryContainer
+            imageRes = R.drawable.img_onboarding_expense
         ),
         OnboardingPageData(
             title = "Track Your Financial Runway",
             description = "Get honest predictions of how long your money will last based on your real-time daily burn rate.",
-            icon = Icons.Default.Timeline,
-            iconBgColor = MaterialTheme.colorScheme.secondaryContainer,
-            iconTint = MaterialTheme.colorScheme.onSecondaryContainer
+            imageRes = R.drawable.img_onboarding_runway
         ),
         OnboardingPageData(
             title = "Due Bills & Commitments",
             description = "Never get caught off-guard by PayLater or monthly subscription due dates ever again.",
-            icon = Icons.Default.ReceiptLong,
-            iconBgColor = MaterialTheme.colorScheme.errorContainer,
-            iconTint = MaterialTheme.colorScheme.onErrorContainer
+            imageRes = R.drawable.img_onboarding_bills
         ),
         OnboardingPageData(
             title = "Choose How You Start",
             description = "Select whether to sign in or explore immediately in Guest Mode.",
-            icon = Icons.Default.LockPerson,
-            iconBgColor = MaterialTheme.colorScheme.tertiaryContainer,
-            iconTint = MaterialTheme.colorScheme.onTertiaryContainer
+            imageRes = R.drawable.ic_app_logo
         )
     )
 
@@ -139,9 +132,8 @@ fun OnboardingScreen(
                         isGoogleLoading = isGoogleLoading,
                         isGuestLoading = isGuestLoading,
                         onSignInClick = {
-                            coroutineScope.launch {
-                                isGoogleLoading = true
-                                val result = authManager.signInWithGoogle()
+                            isGoogleLoading = true
+                            authViewModel.signInWithGoogle { result ->
                                 isGoogleLoading = false
                                 when (result) {
                                     is AuthResult.Success -> onFinishOnboarding()
@@ -151,9 +143,8 @@ fun OnboardingScreen(
                             }
                         },
                         onGuestClick = {
-                            coroutineScope.launch {
-                                isGuestLoading = true
-                                authManager.signInAnonymously()
+                            isGuestLoading = true
+                            authViewModel.signInAnonymously {
                                 isGuestLoading = false
                                 onFinishOnboarding()
                             }
@@ -210,7 +201,7 @@ fun OnboardingScreen(
                         )
                         Spacer(modifier = Modifier.width(6.dp))
                         Icon(
-                            Icons.Default.ArrowForward,
+                            Icons.AutoMirrored.Filled.ArrowForward,
                             contentDescription = null,
                             modifier = Modifier.size(18.dp)
                         )
@@ -230,22 +221,15 @@ fun OnboardingSlide(data: OnboardingPageData) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Box(
+        Image(
+            painter = painterResource(id = data.imageRes),
+            contentDescription = data.title,
             modifier = Modifier
-                .size(120.dp)
-                .clip(AppShapes.ExtraLargeIncreased)
-                .background(data.iconBgColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                imageVector = data.icon,
-                contentDescription = null,
-                tint = data.iconTint,
-                modifier = Modifier.size(60.dp)
-            )
-        }
+                .size(230.dp)
+                .clip(MaterialTheme.shapes.extraLarge)
+        )
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(36.dp))
 
         Text(
             text = data.title,
@@ -285,6 +269,16 @@ fun FinalAuthChoiceStep(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.ic_app_logo),
+            contentDescription = "BareBudget Logo",
+            modifier = Modifier
+                .size(76.dp)
+                .clip(MaterialTheme.shapes.extraLarge)
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+
         Text(
             text = "Welcome to Bare Budget",
             style = MaterialTheme.typography.headlineMedium.copy(
@@ -408,7 +402,7 @@ fun FinalAuthChoiceStep(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "No login required. Note: If you uninstall the app or clear data, your history will not be restored and you will start from zero.",
+                    text = "100% Offline & tanpa login. Semua data tersimpan di perangkat dan dapat dicadangkan/dipulihkan kapan saja lewat file backup JSON.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )

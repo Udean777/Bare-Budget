@@ -18,18 +18,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Category
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.DirectionsCar
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.ReceiptLong
-import androidx.compose.material.icons.filled.Restaurant
-import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material.icons.filled.SportsEsports
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material.icons.filled.Redeem
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.*
+import androidx.compose.material.icons.filled.*
 
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -53,13 +43,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.ssajudn.barebudget.data.model.Transaction
-import com.ssajudn.barebudget.data.model.TransactionCategory
+import com.ssajudn.barebudget.domain.model.Transaction
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.Spacing
 import com.ssajudn.barebudget.ui.theme.categoryColors
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
+import com.ssajudn.barebudget.domain.model.TransactionType
+import com.ssajudn.barebudget.domain.model.TransactionCategory
 
 @Composable
 fun FinancialRunwayCard(
@@ -281,10 +272,15 @@ fun TransactionItem(
     val merchantName = transaction.merchant?.takeIf { it.isNotBlank() } ?: category.displayName
     val amountText = CurrencyFormatter.formatRupiah(transaction.amount)
 
+    val (prefix, trailingColor) = when (transaction.type) {
+        TransactionType.INCOME -> "+" to MaterialTheme.colorScheme.primary
+        TransactionType.TRANSFER -> "⇄ " to MaterialTheme.colorScheme.onSurface
+        TransactionType.EXPENSE -> "-" to MaterialTheme.colorScheme.onSurface
+    }
+
     ListItem(
         modifier = modifier.clickable(
-            // Names the action for accessibility services, which the old
-            // bare `clickable {}` did not.
+            // Names the action for accessibility services
             onClickLabel = "Lihat detail $merchantName",
             onClick = onClick,
         ),
@@ -316,16 +312,21 @@ fun TransactionItem(
         },
         supportingContent = {
             Text(
-                text = "${category.displayName} • ${DateUtils.formatDisplayDate(transaction.date)}",
+                text = if (transaction.type == TransactionType.TRANSFER) {
+                    "Transfer Antar Dompet • ${DateUtils.formatDisplayDate(transaction.date)}"
+                } else {
+                    "${category.displayName} • ${DateUtils.formatDisplayDate(transaction.date)}"
+                },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         },
         trailingContent = {
             Text(
-                text = "-$amountText",
+                text = "$prefix$amountText",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
+                color = trailingColor
             )
         },
     )
@@ -334,15 +335,15 @@ fun TransactionItem(
 fun getCategoryIcon(category: TransactionCategory): ImageVector = when (category) {
     TransactionCategory.FOOD -> Icons.Default.Restaurant
     TransactionCategory.TRANSPORT -> Icons.Default.DirectionsCar
-    TransactionCategory.BILLS -> Icons.Default.ReceiptLong
+    TransactionCategory.BILLS -> Icons.AutoMirrored.Filled.ReceiptLong
     TransactionCategory.SHOPPING -> Icons.Default.ShoppingBag
     TransactionCategory.ENTERTAINMENT -> Icons.Default.SportsEsports
     TransactionCategory.SOCIAL -> Icons.Default.Groups
     TransactionCategory.SALARY -> Icons.Default.Payments
     TransactionCategory.BONUS -> Icons.Default.Redeem
-    TransactionCategory.INVESTMENT -> Icons.Default.TrendingUp
+    TransactionCategory.INVESTMENT -> Icons.AutoMirrored.Filled.TrendingUp
+    TransactionCategory.TRANSFER -> Icons.Default.SwapHoriz
     TransactionCategory.OTHER -> Icons.Default.Category
-    else -> Icons.Default.Category
 }
 
 private val ProgressBarHeight = 8.dp

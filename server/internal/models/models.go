@@ -102,12 +102,15 @@ type DueBill struct {
 	ID                uuid.UUID         `gorm:"type:uuid;primaryKey" json:"id"`
 	UserID            string            `gorm:"type:varchar(128);index;not null" json:"user_id"`
 	ProviderName      string            `gorm:"type:varchar(100);not null" json:"provider_name"` // e.g. "Shopee", "Electricity", "Kredivo"
+	ProviderIconURL   string            `gorm:"type:text" json:"provider_icon_url,omitempty"`
 	TotalAmount       int64             `gorm:"not null" json:"total_amount"`
 	DueDate           time.Time         `gorm:"not null" json:"due_date"`
 	Status            DueBillStatus     `gorm:"type:varchar(20);default:'UNPAID'" json:"status"`
+	PaidWalletID      *string           `gorm:"type:varchar(128)" json:"paid_wallet_id,omitempty"`
 	IsRecurring       bool              `gorm:"default:false" json:"is_recurring"`
 	RecurringInterval RecurringInterval `gorm:"type:varchar(20);default:'NONE'" json:"recurring_interval"`
 	Notes             string            `gorm:"type:text" json:"notes"`
+	PaidAt            *time.Time        `json:"paid_at,omitempty"`
 	CreatedAt         time.Time         `json:"created_at"`
 	UpdatedAt         time.Time         `json:"updated_at"`
 	DeletedAt         gorm.DeletedAt    `gorm:"index" json:"-"`

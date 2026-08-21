@@ -2,91 +2,66 @@ package com.ssajudn.barebudget.ui.transaction
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ssajudn.barebudget.data.model.Transaction
-import com.ssajudn.barebudget.data.model.TransactionCategory
-import com.ssajudn.barebudget.data.repository.BudgetRepository
+import com.ssajudn.barebudget.domain.model.Transaction
+import com.ssajudn.barebudget.domain.model.TransactionCategory
+import com.ssajudn.barebudget.domain.repository.TransactionRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 sealed interface AllTransactionsUiState {
     object Loading : AllTransactionsUiState
-    data class Success(
-        val transactions: List<Transaction>,
-        val selectedCategory: TransactionCategory?,
-        val searchQuery: String
-    ) : AllTransactionsUiState
+    data class Success(val transactions: List<Transaction>, val selectedCategory: TransactionCategory?, val searchQuery: String) : AllTransactionsUiState
     data class Error(val message: String) : AllTransactionsUiState
 }
 
-class AllTransactionsViewModel(
-    private val repository: BudgetRepository = BudgetRepository()
+@HiltViewModel
+class AllTransactionsViewModel @Inject constructor(
+    private val repository: TransactionRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<AllTransactionsUiState>(AllTransactionsUiState.Loading)
-    val uiState: StateFlow<AllTransactionsUiState> = _uiState.asStateFlow()
-
+    private val _selectedCategory = MutableStateFlow<TransactionCategory?>(null)
+    private val _searchQuery = MutableStateFlow("")
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
-    private var allFetchedTransactions: List<Transaction> = emptyList()
-    private var currentSelectedCategory: TransactionCategory? = null
-    private var currentSearchQuery: String = ""
-
-    init {
-        loadTransactions()
-    }
+    val uiState: StateFlow<AllTransactionsUiState> = combine(
+        repository.observeTransactions(),
+        _selectedCategory,
+        _searchQuery
+    ) { all, cat, query ->
+        var filtered = if (cat == null) all else all.filter { it.category == cat }
+        if (query.isNotBlank()) {
+            filtered = filtered.filter { tx ->
+                (tx.merchant?.contains(query, ignoreCase = true) == true) ||
+                    (tx.notes?.contains(query, ignoreCase = true) == true) ||
+                    tx.category.displayName.contains(query, ignoreCase = true)
+            }
+        }
+        AllTransactionsUiState.Success(filtered, cat, query) as AllTransactionsUiState
+    }.catch { e -> emit(AllTransactionsUiState.Error(e.message ?: "Failed to load transactions")) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AllTransactionsUiState.Loading)
 
     fun loadTransactions(isPullToRefresh: Boolean = false) {
         viewModelScope.launch {
-            if (isPullToRefresh) {
-                _isRefreshing.value = true
-            } else if (_uiState.value !is AllTransactionsUiState.Success) {
-                _uiState.value = AllTransactionsUiState.Loading
-            }
-
-            val categoryQuery = currentSelectedCategory?.name
-            repository.getTransactions(category = categoryQuery, limit = 100)
-                .onSuccess { list ->
-                    allFetchedTransactions = list
-                    applyFilters()
-                    _isRefreshing.value = false
-                }
-                .onFailure { error ->
-                    _isRefreshing.value = false
-                    if (_uiState.value !is AllTransactionsUiState.Success) {
-                        _uiState.value = AllTransactionsUiState.Error(error.localizedMessage ?: "Failed to load transactions")
-                    }
-                }
+            _isRefreshing.value = true
+            repository.getTransactions(limit = 100)
+            _isRefreshing.value = false
         }
     }
 
     fun filterByCategory(category: TransactionCategory?) {
-        currentSelectedCategory = category
-        loadTransactions()
+        _selectedCategory.value = category
     }
 
     fun onSearchQueryChange(query: String) {
-        currentSearchQuery = query
-        applyFilters()
-    }
-
-    private fun applyFilters() {
-        val filtered = if (currentSearchQuery.isBlank()) {
-            allFetchedTransactions
-        } else {
-            allFetchedTransactions.filter { tx ->
-                (tx.merchant?.contains(currentSearchQuery, ignoreCase = true) == true) ||
-                (tx.notes?.contains(currentSearchQuery, ignoreCase = true) == true) ||
-                tx.category.displayName.contains(currentSearchQuery, ignoreCase = true)
-            }
-        }
-
-        _uiState.value = AllTransactionsUiState.Success(
-            transactions = filtered,
-            selectedCategory = currentSelectedCategory,
-            searchQuery = currentSearchQuery
-        )
+        _searchQuery.value = query
     }
 }

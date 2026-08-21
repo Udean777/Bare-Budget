@@ -2,16 +2,17 @@ package com.ssajudn.barebudget.data.local.room
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.ssajudn.barebudget.data.model.DueBill
-import com.ssajudn.barebudget.data.model.DueBillStatus
-import com.ssajudn.barebudget.data.model.Goal
-import com.ssajudn.barebudget.data.model.RecurringInterval
-import com.ssajudn.barebudget.data.model.Transaction
-import com.ssajudn.barebudget.data.model.TransactionCategory
+import com.ssajudn.barebudget.domain.model.DueBill
+import com.ssajudn.barebudget.domain.model.DueBillStatus
+import com.ssajudn.barebudget.domain.model.Goal
+import com.ssajudn.barebudget.domain.model.RecurringInterval
+import com.ssajudn.barebudget.domain.model.Transaction
+import com.ssajudn.barebudget.domain.model.TransactionCategory
 import java.util.UUID
 
-import com.ssajudn.barebudget.data.model.TransactionType
-import com.ssajudn.barebudget.data.model.Wallet
+import com.ssajudn.barebudget.domain.model.TransactionType
+import com.ssajudn.barebudget.domain.model.Wallet
+import com.ssajudn.barebudget.data.repository.DomainMappers
 
 @Entity(tableName = "local_transactions")
 data class LocalTransactionEntity(
@@ -24,19 +25,12 @@ data class LocalTransactionEntity(
     val notes: String?,
     val receiptUrl: String?,
     val walletId: String? = null,
+    val toWalletId: String? = null,
     val isSynced: Boolean = false
 ) {
     fun toTransaction(): Transaction {
-        val cat = try {
-            TransactionCategory.valueOf(category)
-        } catch (e: Exception) {
-            TransactionCategory.OTHER
-        }
-        val txType = try {
-            TransactionType.valueOf(type)
-        } catch (e: Exception) {
-            TransactionType.EXPENSE
-        }
+        val cat = DomainMappers.safeCategory(category)
+        val txType = DomainMappers.safeTransactionType(type)
         return Transaction(
             id = id,
             amount = amount,
@@ -46,7 +40,8 @@ data class LocalTransactionEntity(
             date = date,
             notes = notes,
             receiptUrl = receiptUrl,
-            walletId = walletId
+            walletId = walletId,
+            toWalletId = toWalletId
         )
     }
 
@@ -62,6 +57,7 @@ data class LocalTransactionEntity(
                 notes = tx.notes,
                 receiptUrl = tx.receiptUrl,
                 walletId = tx.walletId,
+                toWalletId = tx.toWalletId,
                 isSynced = isSynced
             )
         }
@@ -76,22 +72,17 @@ data class LocalDueBillEntity(
     val totalAmount: Long,
     val dueDate: String,
     val status: String,
+    val paidWalletId: String? = null,
     val isRecurring: Boolean = false,
     val recurringInterval: String = "NONE",
     val notes: String?,
     val isSynced: Boolean = false
 ) {
     fun toDueBill(): DueBill {
-        val s = try {
-            DueBillStatus.valueOf(status)
-        } catch (e: Exception) {
-            DueBillStatus.UNPAID
-        }
-        val interval = try {
-            RecurringInterval.valueOf(recurringInterval)
-        } catch (e: Exception) {
-            RecurringInterval.NONE
-        }
+        val s = runCatching { DueBillStatus.valueOf(status) }
+            .onFailure { println("[Entities] Unknown DueBillStatus: $status: ${it.message}") }
+            .getOrDefault(DueBillStatus.UNPAID)
+        val interval = DomainMappers.safeRecurringInterval(recurringInterval)
         return DueBill(
             id = id,
             providerName = providerName,
@@ -99,6 +90,7 @@ data class LocalDueBillEntity(
             totalAmount = totalAmount,
             dueDate = dueDate,
             status = s,
+            paidWalletId = paidWalletId,
             isRecurring = isRecurring,
             recurringInterval = interval,
             notes = notes
@@ -114,6 +106,7 @@ data class LocalDueBillEntity(
                 totalAmount = bill.totalAmount,
                 dueDate = bill.dueDate,
                 status = bill.status.name,
+                paidWalletId = bill.paidWalletId,
                 isRecurring = bill.isRecurring,
                 recurringInterval = bill.recurringInterval.name,
                 notes = bill.notes,

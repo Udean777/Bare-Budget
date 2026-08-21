@@ -1,16 +1,17 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/tandpfun/skill-icons/main/icons/AndroidLight.svg" width="80" height="80" alt="BareBudget Logo" />
+  <img src="art/app_logo.png" width="120" height="120" alt="BareBudget Logo" style="border-radius: 24px;" />
   
-  # 💸 BareBudget
+  # BareBudget
   
   **Frictionless Personal Finance & Survival Runway Tracker**
   
-  *Kelola keuangan bulanan, hitung tanggal bertahan hidup finansialmu (Runway/Death Day), catat pengeluaran tanpa ribet dengan OCR, dan capai target tabungan.*
+  *Kelola keuangan bulanan, hitung tanggal bertahan hidup finansialmu (Runway/Death Day), kelola multi-dompet, dan capai target tabungan.*
 
   ---
 
   [![Kotlin](https://img.shields.io/badge/Kotlin-2.0+-7F52FF?style=for-the-badge&logo=kotlin&logoColor=white)](https://kotlinlang.org/)
   [![Jetpack Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?style=for-the-badge&logo=android&logoColor=white)](https://developer.android.com/jetpack/compose)
+  [![Material Design 3](https://img.shields.io/badge/UI-Material%20Design%203-7B1FA2?style=for-the-badge&logo=materialdesign&logoColor=white)](https://m3.material.io/)
   [![Go Fiber](https://img.shields.io/badge/Backend-Go%20Fiber-00ADD8?style=for-the-badge&logo=go&logoColor=white)](https://gofiber.io/)
   [![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
   [![Room DB](https://img.shields.io/badge/Local%20Cache-Room%20SQLite-3DDC84?style=for-the-badge&logo=sqlite&logoColor=white)](https://developer.android.com/training/data-storage/room)
@@ -22,10 +23,12 @@
 
 ## 📖 Tentang BareBudget
 
-**BareBudget** adalah aplikasi finansial minimalis, cepat, dan modern yang dirancang untuk menjawab pertanyaan paling krusial setiap orang di tengah bulan:
+**BareBudget** adalah aplikasi personal finance minimalis, cepat, dan modern yang dirancang untuk menjawab pertanyaan krusial di tengah bulan:
 > *"Dengan gaya hidup belanja saat ini, sampai tanggal berapa sisa uangku bisa bertahan hidup?"*
 
-Dengan konsep **Offline-First**, BareBudget dapat digunakan langsung tanpa login (**Guest Mode**) dan secara cerdas dapat dimigrasikan ke **Google Cloud Account** kapan saja tanpa kehilangan data historis.
+Seluruh antarmuka aplikasi dibangun **100% menggunakan Material Design 3 (M3)** dengan Jetpack Compose, menghasilkan visual yang konsisten, modern, adaptif, serta mendukung penuh personalisasi tema dinamis (*Material You*).
+
+Dengan arsitektur **Offline-First**, BareBudget dapat langsung digunakan seketika tanpa login (**Guest Mode**) dan dapat ditautkan ke **Google Cloud Account** kapan saja untuk sinkronisasi tanpa kehilangan data historis.
 
 ---
 
@@ -34,41 +37,56 @@ Dengan konsep **Offline-First**, BareBudget dapat digunakan langsung tanpa login
 ### 1. 🧮 Financial Runway & "Estimated Death Day"
 * Menghitung kecepatan pengeluaran harian (*burn rate*).
 * Memprediksi tanggal persis kapan saldo budget Anda akan habis di bulan berjalan.
-* Memberikan pesan status real-time (*Aman*, *Waspada*, atau *Kritis*).
+* Memberikan indikator status kesehatan keuangan secara real-time (*Aman*, *Waspada*, atau *Kritis*).
+* **Monthly Budget Lock & Audit**: Budget bulanan hanya dapat diset 1x per bulan untuk menjaga disiplin keuangan dan konsistensi audit (*expenses only*, tidak bercampur dengan alokasi tagihan/bills).
 
-### 2. 👛 Multi-Wallet & Income Tracking
-* Lacak arus kas secara nyata dengan tipe transaksi **Pemasukan (Income)**, **Pengeluaran (Expense)**, dan **Transfer**.
-* Buat dan kelola dompet/rekening tanpa batas (misal: Tunai, Bank BCA, GoPay, OVO).
-* Kalkulasi kekayaan bersih (**Net Worth**) otomatis dari akumulasi seluruh dompet.
+### 2. 🔄 Multi-Wallet Transfer & Arus Kas Real-Time
+* Lacak transaksi harian dengan kategori lengkap: **Pemasukan (Income)**, **Pengeluaran (Expense)**, dan **Transfer Antar Dompet**.
+* **Layar & Tab Navigasi "Transfer" Khusus**: Menu transfer ditempatkan di tengah *Bottom Navigation Bar* untuk akses instan transfer antar dompet (Tunai, BCA, Mandiri, GoPay, OVO, ShopeePay, dll).
+* Kalkulasi total kekayaan bersih (**Net Worth**) otomatis dan pembaruan saldo real-time pada seluruh layar tanpa perlu refresh manual.
 
-### 3. 🌊 Floating Bottom Navigation Bar & Modern UI
-* Navigasi melayang (*island floating bar*) modern dengan animasi *spring* yang responsif.
-* Tombol tengah mencolok (**Quick Log**) untuk pencatatan transaksi dalam hitungan detik.
-* Desain warna pastel lembut (*Mint, Coral, Lavender, Ochre*) yang ramah di mata untuk mode terang maupun gelap.
+### 3. 🎯 Smart Savings Goals & Pockets (With Wallet Integration)
+* Buat dan kelola pos target tabungan (Dana Darurat, Liburan, Gadget, Kendaraan, dll).
+* **Integrasi Saldo Dompet (Deposit & Withdraw)**:
+  * **Setor (Deposit)**: Memotong saldo dompet pilihan & mencatat pengeluaran alokasi tabungan.
+  * **Tarik (Withdraw)**: Mengurangi saldo target & mengembalikan saldo ke dompet pilihan.
+* **Smart Calculator & Color Picker**: Kalkulasi otomatis rekomendasi nominal tabungan per bulan/hari untuk mencapai target tepat waktu serta pemilih warna aksen kartu.
+* Visualisasi progress bar interaktif dengan persentase dan badge status (*Tercapai 100%*, *Mendekati Deadline*, *On Track*).
 
-### 4. 🎯 Savings Goals & Pockets (Sinking Funds)
-* Buat target tabungan (Dana Darurat, Liburan, Beli Gadget, dll).
-* Progress bar visual interaktif lengkap dengan persentase dan sisa dana.
-* Dialog khusus untuk **Setor Tabungan (Deposit)** atau **Tarik Dana (Withdraw)** secara fleksibel.
+### 4. 📋 Due Bills, Recurring Subscriptions & Refund System
+* Catat dan pantau pengingat tagihan berkala (WiFi, Kos, Listrik, Streaming, PayLater: Shopee, Kredivo, GoPay, atau custom).
+* **Dropdown Penyedia & Custom Icon**: Pilihan penyedia tagihan lengkap dengan logo resmi dan dukungan unggah ikon kustom dengan persistensi storage lokal.
+* **Auto-Rollover**: Ketika tagihan ditandai **Lunas (PAID)**, sistem otomatis menjadwalkan tagihan untuk periode berikutnya (*Weekly, Monthly, Yearly*).
+* **Refund Batal Bayar**: Saat status tagihan lunas dikembalikan ke **Belum Lunas**, saldo dompet yang digunakan sebelumnya otomatis dikembalikan (*refund*) dan dicatat sebagai transaksi koreksi tanpa merusak audit pengeluaran.
 
-### 5. 🔁 Due Bills & Recurring Subscriptions
-* Catat tagihan berkala (WiFi, Kos, Netflix, Listrik, PayLater).
-* **Auto-Rollover**: Ketika tagihan berulang ditandai **PAID/Lunas**, sistem otomatis menjadwalkan tagihan untuk periode berikutnya (*Weekly, Monthly, Yearly*).
+### 5. ⚡ Modern Quick Action Bottom Sheets & Responsive Dialogs
+* Tap pada kartu Tagihan atau Target Tabungan untuk membuka **Modal Bottom Sheet Quick Action** yang lega dan informatif.
+* Rincian tagihan/target lengkap dengan tombol aksi berbasis rounded surface card dan deskripsi penjelasan yang intuitif.
+* **Scrollable Adaptive Dialogs**: Form input dan modal dialog yang responsif dan aman di berbagai resolusi layar.
 
 ### 6. 👥 Smart Split Bill Calculator
-* Kalkulator patungan cerdas di layar transaksi.
-* Hitung bagi rata (*Equal Split*) lengkap dengan kalkulasi persentase pajak PB1 (10%) & service fee (5%).
-* **1-Click Share to WhatsApp**: Bagikan rincian patungan siap kirim langsung ke teman atau grup WhatsApp.
+* Kalkulator patungan cerdas langsung di dalam aplikasi.
+* Hitung pembagian rata (*Equal Split*) lengkap dengan opsi penyesuaian pajak restoran (PB1 10%) dan service charge (5%).
+* **1-Click Share to WhatsApp**: Rincian tagihan siap kirim langsung ke teman atau grup pesan singkat.
 
-### 7. 📷 ML Kit Receipt OCR (Snap Ledger)
-* Pindai struk belanja fisik langsung dengan kamera Android.
-* Deteksi otomatis nama merchant, total nominal, dan saran kategori belanja.
+### 7. 🎨 100% Material Design 3 UI & Dynamic Theming
+* Dibangun secara native dengan komponen standar **Material 3 (M3)**: *5-Item M3 Navigation Bar (dengan Transfer di tengah), M3 Floating Action Button, M3 Cards, dan M3 Dialogs*.
+* **Dynamic Color (Material You)**: Warna antarmuka dapat otomatis beradaptasi dengan warna wallpaper sistem pada Android 12+.
+* **Brand Theme & Dark Mode**: Pilihan tema *Coral Red* khas BareBudget dan dukungan penuh mode Terang / Gelap (*Light/Dark/System Default*).
 
-### 8. 🔒 Offline-First Architecture & Smart Sync
-* Bekerja 100% secara offline menggunakan **Room SQLite Database**.
-* Otomatis melakukan sinkronisasi dua arah (*Two-Way Sync*) dengan backend REST API Go saat perangkat terhubung ke internet.
+### 8. 📦 Offline JSON Backup & Restore
+* Ekspor seluruh data transaksi, dompet, tagihan, dan target tabungan ke file `.json` lokal sebagai salinan cadangan.
+* Impor kembali data JSON kapan saja dengan pemulihan database Room instan.
+
+### 9. 🚀 Animated Splash Screen & Illustrated Onboarding
+* **Branded Splash Screen**: Transisi *fade & spring scale* yang mulus serta dukungan penuh *Android 12+ SplashScreen API*.
+* **3D Vector Illustrated Onboarding**: Alur pengenalan aplikasi interaktif dengan ilustrasi *semi-3D cartoonish* yang modern dan ramah pengguna.
+
+### 10. 🔒 Clean Architecture & Offline-First Cloud Sync
+* Mengadopsi prinsip **Clean Architecture**: Pemisahan jelas antara *Domain UseCases*, *Data Layer (Local & Remote DataSources)*, dan *Presentation UI Layer (MVI/MVVM State)*.
+* Seluruh fitur bekerja 100% secara offline menggunakan **Room SQLite Database**.
+* Sinkronisasi dua arah (*Two-Way Sync*) dengan backend REST API Go saat terkoneksi internet.
 * **Guest to Google Migration**: Mulai instan sebagai *Guest*, migrasikan seluruh data lokal ke Google Account saat login.
-
 
 ---
 
@@ -80,22 +98,30 @@ BareBudget/
 │   ├── src/main/java/com/ssajudn/barebudget/
 │   │   ├── data/
 │   │   │   ├── auth/           # Firebase Authentication & Credential Manager
-│   │   │   ├── local/          # Room DB (Entities, DAOs) & UserSessionManager
-│   │   │   ├── model/          # DTOs & Domain Models
+│   │   │   ├── datasource/     # Local (Room) & Remote (Retrofit) DataSources
+│   │   │   ├── local/          # Room DB (Entities, DAOs), BackupRestoreManager & Preferences
+│   │   │   ├── mapper/         # Entity & DTO to Pure Domain Model Mappers
 │   │   │   ├── network/        # Retrofit Client & ApiService
-│   │   │   └── repository/     # Offline-First BudgetRepository
+│   │   │   └── repository/     # Offline-First Repository Implementations
+│   │   ├── domain/
+│   │   │   ├── model/          # Pure Domain Models
+│   │   │   ├── repository/     # Repository Interfaces
+│   │   │   └── usecase/        # Business Logic & Interaction UseCases
 │   │   ├── ui/
 │   │   │   ├── analytics/      # Financial Breakdown & Category Charts
-│   │   │   ├── bills/          # Due Bills & Recurring Subscriptions
-│   │   │   ├── budget/         # Monthly Spending Target Setup
-│   │   │   ├── components/     # CustomDialog, CustomToastHost, FloatingNavBar
+│   │   │   ├── bills/          # Due Bills, Provider Picker & Refund System
+│   │   │   ├── budget/         # Monthly Spending Target & Locked Budget UI
+│   │   │   ├── components/     # M3 Dialogs, AppNavigationBar, M3 Settings
 │   │   │   ├── dashboard/      # Financial Runway Card & Recent Feeds
-│   │   │   ├── goals/          # Savings Goals & Pockets
-│   │   │   ├── navigation/     # AppNavigation & Screen Routes
-│   │   │   ├── onboarding/     # Onboarding & Auth Screens
-│   │   │   ├── theme/          # Custom Pastel Palette & Typography
-│   │   │   └── transaction/    # Add Expense & Split Bill BottomSheet
-│   │   └── utils/              # CurrencyFormatter, DateUtils, ReceiptParser
+│   │   │   ├── goals/          # Savings Goals, Pockets & Smart Calculator
+│   │   │   ├── navigation/     # AppNavigation & 5-Item TopLevelDestinations
+│   │   │   ├── onboarding/     # 3D Illustrated Onboarding & Auth Screens
+│   │   │   ├── settings/       # Appearance (Material You), JSON Backup/Restore, Sync & Profile
+│   │   │   ├── splash/         # Animated Branded Splash Screen
+│   │   │   ├── theme/          # Material 3 Color Schemes, Typography & Shapes
+│   │   │   ├── transaction/    # Add Expense, Dedicated TransferScreen, Detail & Split Bill BottomSheet
+│   │   │   └── wallets/        # Multi-Wallet Management
+│   │   └── utils/              # CurrencyFormatter, DateUtils, AppConfig
 │   └── build.gradle.kts
 │
 └── server/                     # High-Performance REST API (Go + Fiber)
@@ -103,10 +129,10 @@ BareBudget/
     ├── internal/
     │   ├── config/             # Environment configurations
     │   ├── database/           # PostgreSQL connection & GORM AutoMigrate
-    │   ├── handler/            # HTTP Request Handlers
+    │   ├── handler/            # HTTP Request Handlers (Deposit, Refund, Goals, Bills)
     │   ├── middleware/         # Auth & Header Middlewares
     │   ├── models/             # Database Models & Entities
-    │   ├── repository/         # Database Queries & GORM Operations
+    │   ├── repository/         # Transactional Database Queries & GORM Operations
     │   └── service/            # Business Logic & Runway Calculations
     └── go.mod
 ```
@@ -150,13 +176,13 @@ go run cmd/api/main.go
 
 ---
 
-## 🎨 Shared Design System
+## 🎨 Material 3 Design System
 
-BareBudget menggunakan komponen kustom modern tanpa bergantung penuh pada default theme Material:
-* **`CustomDialog`**: Dialog kartu elegan dengan border halus, header badge, dan tombol pill kustom.
-* **`CustomConfirmDeleteDialog`**: Modal konfirmasi tindakan destruktif dengan warna aksen *Pastel Coral*.
-* **`CustomToastHost`**: Notifikasi in-app melayang (*Top Floating Banner*) dengan transisi halus.
-* **`FloatingBottomNavBar`**: Navigasi pulau melayang dengan elevation shadow lembut.
+BareBudget menerapkan panduan desain **Material Design 3 (M3)** secara menyeluruh:
+* **`M3 Dynamic Theming`**: Menggunakan palet warna tonal adaptif (*Tonal Spot / Dynamic Colors*) yang mengikuti palet Material You Android 12+.
+* **`M3 Navigation Bar`**: Navigasi bottom bar resmi Material 3 dengan *pill indicator* aktif dan transisi halus.
+* **`M3 Elevated & Outlined Cards`**: Pengelompokan informasi keuangan dengan hirarki elevasi permukaan yang jelas.
+* **`M3 Expressive Typography & Shapes`**: Bentuk sudut membulat ekspresif (*extra large shapes*) yang ergonomis untuk perangkat mobile.
 
 ---
 
@@ -165,5 +191,5 @@ BareBudget menggunakan komponen kustom modern tanpa bergantung penuh pada defaul
 Distributed under the **MIT License**. Lihat `LICENSE` untuk informasi lebih lanjut.
 
 <div align="center">
-  <sub>Dibangun dengan ❤️ oleh <a href="https://github.com/ssajudn">ssajudn</a> untuk kebebasan finansial yang lebih sehat.</sub>
+  <sub>Dibangun dengan ❤️ oleh <a href="https://github.com/Udean777">Udean777</a> untuk kebebasan finansial yang lebih sehat.</sub>
 </div>

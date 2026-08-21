@@ -14,7 +14,9 @@ import com.ssajudn.barebudget.data.local.ThemePreferences
 import com.ssajudn.barebudget.ui.navigation.AppNavigation
 import com.ssajudn.barebudget.ui.theme.BareBudgetTheme
 import com.ssajudn.barebudget.ui.theme.ThemeDarkMode
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

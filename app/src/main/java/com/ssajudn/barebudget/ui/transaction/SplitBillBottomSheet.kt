@@ -277,7 +277,7 @@ private fun shareSplitToWhatsApp(
     names: List<String>
 ) {
     val builder = StringBuilder()
-    builder.append("🧾 *BareBudget Split Bill - $merchant*\n")
+    builder.append("*BareBudget Split Bill - $merchant*\n")
     builder.append("Total Tagihan: ${CurrencyFormatter.formatRupiah(total)}\n")
     builder.append("Jumlah Orang: $peopleCount\n")
     builder.append("Tagihan per Orang: *${CurrencyFormatter.formatRupiah(perPerson)}*\n")
@@ -286,7 +286,7 @@ private fun shareSplitToWhatsApp(
         builder.append("${index + 1}. $name: ${CurrencyFormatter.formatRupiah(perPerson)}\n")
     }
     builder.append("------------------------------------\n")
-    builder.append("Dihitung otomatis dengan BareBudget 💸")
+    builder.append("Dihitung otomatis dengan BareBudget")
 
     val sendIntent = Intent().apply {
         action = Intent.ACTION_SEND

@@ -2,31 +2,30 @@ package com.ssajudn.barebudget.data.network
 
 import com.ssajudn.barebudget.BuildConfig
 import com.ssajudn.barebudget.utils.AppConfig
-import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
+import javax.inject.Inject
+import javax.inject.Singleton
 
-object ApiClient {
+/**
+ * Holder for the authenticated HTTP client and Retrofit [ApiService].
+ *
+ * Previously this was a mutable `object` with `var authToken` — an anti-pattern
+ * that made the token a race-prone global and impossible to swap in tests.
+ * It is now a `@Singleton` class constructed by [com.ssajudn.barebudget.di.NetworkModule]
+ * and receives its auth header via [AuthInterceptor], which reads the current
+ * token from [com.ssajudn.barebudget.data.local.UserSessionManager] on every
+ * request.
+ */
+@Singleton
+class ApiClient @Inject constructor(
+    private val authInterceptor: AuthInterceptor
+) {
 
-    // BASE_URL dynamically loaded from AppConfig (BuildConfig)
     val BASE_URL: String = AppConfig.baseUrl
-
-    // In-memory auth token (Firebase Auth UID or dev token)
-    var authToken: String = "dev-user-123"
-    var userEmail: String = "user@barebudget.app"
-
-    private val authInterceptor = Interceptor { chain ->
-        val original = chain.request()
-        val requestBuilder = original.newBuilder()
-            .header("Authorization", "Bearer $authToken")
-            .header("X-User-Email", userEmail)
-            .header("Accept", "application/json")
-        val request = requestBuilder.build()
-        chain.proceed(request)
-    }
 
     private val loggingInterceptor = HttpLoggingInterceptor().apply {
         level = if (AppConfig.enableHttpLogging) {
@@ -36,7 +35,7 @@ object ApiClient {
         }
     }
 
-    private val okHttpClient = OkHttpClient.Builder()
+    val okHttpClient: OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
         .addInterceptor(loggingInterceptor)
         .connectTimeout(15, TimeUnit.SECONDS)

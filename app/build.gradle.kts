@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.hilt)
 }
 
 android {
@@ -46,6 +47,9 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    ksp {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
     buildFeatures {
         compose = true
         buildConfig = true
@@ -83,6 +87,11 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.kotlinx.coroutines.android)
 
+    // Hilt (Dependency Injection)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.hilt.navigation.compose)
+
     // Networking (Retrofit & Gson)
     implementation(libs.retrofit)
     implementation(libs.retrofit.converter.gson)
@@ -107,8 +116,12 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     ksp(libs.androidx.room.compiler)
+    // Room schema export for Phase 8
 
     testImplementation(libs.junit)
+    testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.turbine)
+    testImplementation(libs.mockk)
     // The BOM must be applied to the androidTest configuration too, otherwise the
     // versionless Compose test artifacts below cannot resolve — which failed the
     // build for `lint` and any instrumented test run.

@@ -1,16 +1,21 @@
 package com.ssajudn.barebudget.ui.settings
 
-import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseUser
 import com.ssajudn.barebudget.data.auth.AuthManager
 import com.ssajudn.barebudget.data.auth.AuthResult
+import com.ssajudn.barebudget.data.local.BackupRestoreManager
 import com.ssajudn.barebudget.data.local.UserSessionManager
+import com.ssajudn.barebudget.domain.repository.MigrationRepository
+import com.ssajudn.barebudget.domain.error.AppException
+import com.ssajudn.barebudget.domain.error.userMessage
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class SettingsUiState(
     val isGuestMode: Boolean = false,
@@ -23,11 +28,12 @@ data class SettingsUiState(
     val successMessage: String? = null
 )
 
-class SettingsViewModel(
-    context: Context,
-    private val authManager: AuthManager = AuthManager(context),
-    private val sessionManager: UserSessionManager = UserSessionManager(context),
-    private val repository: com.ssajudn.barebudget.data.repository.BudgetRepository = com.ssajudn.barebudget.data.repository.BudgetRepository()
+@HiltViewModel
+class SettingsViewModel @Inject constructor(
+    private val authManager: AuthManager,
+    private val sessionManager: UserSessionManager,
+    private val repository: MigrationRepository,
+    private val backupManager: BackupRestoreManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SettingsUiState())
@@ -74,6 +80,41 @@ class SettingsViewModel(
                 is AuthResult.Cancelled -> {
                     _uiState.value = _uiState.value.copy(isLoading = false)
                 }
+            }
+        }
+    }
+
+    fun exportBackup(uri: android.net.Uri) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            val result = backupManager.exportBackupToUri(uri)
+            _uiState.value = _uiState.value.copy(isLoading = false)
+            if (result.isSuccess) {
+                _uiState.value = _uiState.value.copy(
+                    successMessage = "Backup berhasil diekspor ke file! Simpan file ini untuk restore kapan saja."
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Gagal mengekspor backup: ${result.exceptionOrNull()?.localizedMessage}"
+                )
+            }
+        }
+    }
+
+    fun importBackup(uri: android.net.Uri) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
+            val result = backupManager.importBackupFromUri(uri)
+            _uiState.value = _uiState.value.copy(isLoading = false)
+            if (result.isSuccess) {
+                val count = result.getOrNull() ?: 0
+                _uiState.value = _uiState.value.copy(
+                    successMessage = "Berhasil memulihkan $count data dari file backup!"
+                )
+            } else {
+                _uiState.value = _uiState.value.copy(
+                    errorMessage = "Gagal memulihkan backup. Pastikan format file benar: ${result.exceptionOrNull()?.localizedMessage}"
+                )
             }
         }
     }

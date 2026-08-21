@@ -2,13 +2,17 @@ package com.ssajudn.barebudget.ui.wallets
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ssajudn.barebudget.data.model.CreateWalletRequest
-import com.ssajudn.barebudget.data.model.Wallet
-import com.ssajudn.barebudget.data.repository.BudgetRepository
-import kotlinx.coroutines.flow.MutableStateFlow
+import com.ssajudn.barebudget.domain.model.CreateWalletRequest
+import com.ssajudn.barebudget.domain.model.Wallet
+import com.ssajudn.barebudget.domain.repository.WalletRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 data class WalletsUiState(
     val wallets: List<Wallet> = emptyList(),
@@ -17,55 +21,32 @@ data class WalletsUiState(
     val error: String? = null
 )
 
-class WalletsViewModel(
-    private val repository: BudgetRepository = BudgetRepository()
+@HiltViewModel
+class WalletsViewModel @Inject constructor(
+    private val repository: WalletRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(WalletsUiState())
-    val uiState: StateFlow<WalletsUiState> = _uiState.asStateFlow()
+    val uiState: StateFlow<WalletsUiState> = repository.observeWallets()
+        .map { wallets -> WalletsUiState(wallets = wallets, netWorth = wallets.sumOf { it.balance }) }
+        .catch { e -> emit(WalletsUiState(error = e.message ?: "Gagal memuat dompet")) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WalletsUiState(isLoading = true))
 
+    // ponytail: one-shot for default-wallet creation + remote refresh (Flow is source of truth)
     init {
-        loadWallets()
+        viewModelScope.launch { repository.getWallets() }
     }
 
     fun loadWallets() {
-        viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
-            val result = repository.getWallets()
-            if (result.isSuccess) {
-                val wallets = result.getOrNull() ?: emptyList()
-                val netWorth = wallets.sumOf { it.balance }
-                _uiState.value = _uiState.value.copy(
-                    wallets = wallets,
-                    netWorth = netWorth,
-                    isLoading = false
-                )
-            } else {
-                _uiState.value = _uiState.value.copy(
-                    isLoading = false,
-                    error = result.exceptionOrNull()?.message ?: "Gagal memuat dompet"
-                )
-            }
-        }
+        viewModelScope.launch { repository.getWallets() }
     }
 
     fun addWallet(name: String, startingBalance: Long, colorHex: String) {
         viewModelScope.launch {
-            val req = CreateWalletRequest(
-                name = name,
-                balance = startingBalance,
-                colorHex = colorHex,
-                iconName = "account_balance_wallet"
-            )
-            repository.createWallet(req)
-            loadWallets()
+            repository.createWallet(CreateWalletRequest(name, startingBalance, colorHex, "account_balance_wallet"))
         }
     }
 
     fun deleteWallet(id: String) {
-        viewModelScope.launch {
-            repository.deleteWallet(id)
-            loadWallets()
-        }
+        viewModelScope.launch { repository.deleteWallet(id) }
     }
 }

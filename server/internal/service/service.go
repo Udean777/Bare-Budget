@@ -71,8 +71,12 @@ func (s *Service) GetDueBills(userID string, status string) ([]models.DueBill, e
 	return s.repo.GetDueBillsByUserID(userID, status)
 }
 
-func (s *Service) UpdateDueBillStatus(userID string, id uuid.UUID, status models.DueBillStatus) error {
-	return s.repo.UpdateDueBillStatus(userID, id, status)
+func (s *Service) UpdateDueBill(userID string, id uuid.UUID, fields map[string]interface{}) error {
+	return s.repo.UpdateDueBill(userID, id, fields)
+}
+
+func (s *Service) UpdateDueBillStatus(userID string, id uuid.UUID, status models.DueBillStatus, walletID *string) error {
+	return s.repo.UpdateDueBillStatus(userID, id, status, walletID)
 }
 
 func (s *Service) DeleteDueBill(userID string, id uuid.UUID) error {
@@ -88,8 +92,12 @@ func (s *Service) GetGoals(userID string) ([]models.Goal, error) {
 	return s.repo.GetGoalsByUserID(userID)
 }
 
-func (s *Service) DepositToGoal(userID string, id uuid.UUID, amount int64) error {
-	return s.repo.UpdateGoalAmount(userID, id, amount)
+func (s *Service) DepositToGoal(userID string, id uuid.UUID, walletID string, amount int64) error {
+	return s.repo.DepositToGoal(userID, id, walletID, amount)
+}
+
+func (s *Service) UpdateGoal(userID string, id uuid.UUID, fields map[string]interface{}) error {
+	return s.repo.UpdateGoal(userID, id, fields)
 }
 
 func (s *Service) DeleteGoal(userID string, id uuid.UUID) error {
@@ -113,6 +121,10 @@ type DashboardSummary struct {
 }
 
 func (s *Service) SetBudget(userID string, limit int64, monthYear string) error {
+	existing, err := s.repo.GetBudget(userID, monthYear)
+	if err == nil && existing != nil {
+		return fmt.Errorf("budget already set for %s: only one update per month allowed", monthYear)
+	}
 	b := &models.Budget{
 		UserID:       userID,
 		MonthlyLimit: limit,
@@ -189,7 +201,7 @@ func (s *Service) GetDashboardSummary(userID string, now time.Time) (*DashboardS
 	// 6. Get Recent 5 Transactions
 	recentTxs, _, _ := s.repo.GetTransactionsByUserID(userID, time.Time{}, time.Time{}, "", 5, 0)
 
-		// 7. Get Net Worth (Sum of Wallets)
+	// 7. Get Net Worth (Sum of Wallets)
 	wallets, _ := s.repo.GetWalletsByUserID(userID)
 	var netWorth int64 = 0
 	for _, w := range wallets {
@@ -227,4 +239,13 @@ func formatCurrency(amount int64) string {
 		res += string(c)
 	}
 	return res
+}
+
+// Analytics Services
+func (s *Service) GetCashflowAnalytics(userID string) ([]repository.CashflowDataPoint, error) {
+	return s.repo.GetMonthlyCashflow(userID, 6)
+}
+
+func (s *Service) GetNetWorthAnalytics(userID string) ([]repository.NetWorthDataPoint, error) {
+	return s.repo.GetMonthlyNetWorthTrend(userID, 6)
 }

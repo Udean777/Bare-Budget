@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.ui.theme.AppShapes
+import com.ssajudn.barebudget.ui.theme.crispBorder
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 
@@ -118,34 +119,45 @@ fun BudgetScreen(
         ) {
             // Explanatory Card (M3 ElevatedCard)
             ElevatedCard(
-                modifier = Modifier.fillMaxWidth(),
-                shape = AppShapes.LargeIncreased,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .crispBorder(
+                        shape = AppShapes.AsymmetricHero,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                    ),
+                shape = AppShapes.AsymmetricHero,
                 colors = CardDefaults.elevatedCardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer
                 ),
                 elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
             ) {
-                Column(modifier = Modifier.padding(18.dp)) {
+                Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        text = "Lacak Financial Runway Anda",
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold
+                        text = "LACAK FINANCIAL RUNWAY",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.sp
                         ),
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = "Menentukan batas belanja bulanan memungkinkan Bare Budget menghitung kecepatan pengeluaran harian dan tanggal bertahan hidup finansialmu secara akurat.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
+                        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
             }
 
             if (uiState.isLocked) {
                 ElevatedCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = AppShapes.LargeIncreased,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .crispBorder(
+                            shape = AppShapes.Squircle,
+                            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.35f)
+                        ),
+                    shape = AppShapes.Squircle,
                     colors = CardDefaults.elevatedCardColors(
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer
                     )

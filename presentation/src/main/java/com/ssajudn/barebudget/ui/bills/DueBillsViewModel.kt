@@ -42,6 +42,9 @@ class DueBillsViewModel @Inject constructor(
     private val _selectedStatus = MutableStateFlow<DueBillStatus?>(null)
     val selectedStatus: StateFlow<DueBillStatus?> = _selectedStatus.asStateFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
 
@@ -57,15 +60,27 @@ class DueBillsViewModel @Inject constructor(
 
     val uiState: StateFlow<DueBillsUiState> = combine(
         repository.observeDueBills(),
-        _selectedStatus
-    ) { bills, status ->
-        if (status == null) bills else bills.filter { it.status == status }
+        _selectedStatus,
+        _searchQuery
+    ) { bills, status, query ->
+        var filtered = if (status == null) bills else bills.filter { it.status == status }
+        if (query.isNotBlank()) {
+            filtered = filtered.filter { bill ->
+                bill.providerName.contains(query, ignoreCase = true) ||
+                    (bill.notes?.contains(query, ignoreCase = true) == true)
+            }
+        }
+        filtered
     }.map<List<DueBill>, DueBillsUiState> { DueBillsUiState.Success(it) }
         .catch { e -> emit(DueBillsUiState.Error(e.message ?: "Failed to fetch due bills")) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), DueBillsUiState.Loading)
 
     init {
         viewModelScope.launch { walletRepository.getWallets() }
+    }
+
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
     }
 
     fun setFilterStatus(status: DueBillStatus?) {

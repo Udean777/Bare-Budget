@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.domain.model.TransactionType
 import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
+import com.ssajudn.barebudget.ui.theme.AppShapes
+import com.ssajudn.barebudget.ui.theme.crispBorder
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 import com.ssajudn.barebudget.utils.DateUtils
@@ -150,8 +152,13 @@ fun TransferScreen(
 
             // DUAL WALLET SELECTOR CARD
             Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.extraLarge,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .crispBorder(
+                        shape = AppShapes.Squircle,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                    ),
+                shape = AppShapes.Squircle,
                 colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh)
             ) {
                 Column(
@@ -160,8 +167,11 @@ fun TransferScreen(
                 ) {
                     // Source Wallet Dropdown
                     Text(
-                        text = "Dompet Asal (Pengirim)",
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                        text = "DOMPET ASAL (PENGIRIM)",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 0.8.sp
+                        ),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 

@@ -39,7 +39,7 @@ private fun paletteStyleFor(seedColor: Color): PaletteStyle {
     return when {
         chroma < 4.0 -> PaletteStyle.Monochrome
         chroma < 12.0 -> PaletteStyle.Neutral
-        else -> PaletteStyle.TonalSpot
+        else -> PaletteStyle.Expressive
     }
 }
 

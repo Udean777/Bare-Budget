@@ -43,10 +43,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.ssajudn.barebudget.domain.model.Transaction
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.Spacing
 import com.ssajudn.barebudget.ui.theme.categoryColors
+import com.ssajudn.barebudget.ui.theme.crispBorder
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
 import com.ssajudn.barebudget.domain.model.TransactionType
@@ -96,74 +98,101 @@ fun FinancialRunwayCard(
     )
 
     ElevatedCard(
-        modifier = modifier.fillMaxWidth(),
-        shape = AppShapes.ExtraLargeIncreased,
+        modifier = modifier
+            .fillMaxWidth()
+            .crispBorder(
+                shape = AppShapes.AsymmetricHero,
+                color = accentColor.copy(alpha = 0.35f)
+            ),
+        shape = AppShapes.AsymmetricHero,
         colors = CardDefaults.elevatedCardColors(
             containerColor = containerColor,
             contentColor = contentColor,
         ),
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
     ) {
-        Column(modifier = Modifier.padding(Spacing.MediumLarge)) {
+        Column(modifier = Modifier.padding(20.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .clip(AppShapes.Pill)
+                        .background(contentColor.copy(alpha = 0.12f))
+                        .padding(horizontal = 10.dp, vertical = 5.dp)
+                ) {
                     Box(
                         modifier = Modifier
-                            .size(Spacing.Small)
+                            .size(8.dp)
                             .clip(CircleShape)
                             .background(accentColor),
                     )
-                    Spacer(Modifier.width(Spacing.Small))
+                    Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "SISA ANGGARAN",
-                        style = MaterialTheme.typography.labelMedium,
-                        fontWeight = FontWeight.Bold,
+                        text = "FINANCIAL RUNWAY",
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            letterSpacing = 1.sp
+                        ),
+                        fontWeight = FontWeight.ExtraBold,
                     )
                 }
 
                 FilledTonalButton(
                     onClick = onSetBudgetClick,
-                    // surfaceContainerLowest reads as a raised chip on the tonal
-                    // card without the translucency the old version used. A
-                    // `surface.copy(alpha = 0.85f)` fill composites against
-                    // whatever is behind it, so its contrast was unpredictable
-                    // and differed between light and dark.
+                    shape = AppShapes.Pill,
                     colors = ButtonDefaults.filledTonalButtonColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
                         contentColor = MaterialTheme.colorScheme.onSurface,
                     ),
                     contentPadding = PaddingValues(
-                        horizontal = Spacing.MediumSmall,
-                        vertical = Spacing.ExtraSmall,
+                        horizontal = 12.dp,
+                        vertical = 6.dp,
                     ),
                 ) {
                     Text(
-                        text = if (totalBudget > 0) "Ubah" else "Atur",
-                        style = MaterialTheme.typography.labelLarge,
+                        text = if (totalBudget > 0) "Ubah Target" else "Atur Anggaran",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.Bold,
                     )
                 }
             }
 
-            Spacer(Modifier.height(Spacing.Medium))
+            Spacer(Modifier.height(12.dp))
 
+            // Big Number Display
             Text(
                 text = CurrencyFormatter.formatRupiah(remainingBudget),
-                style = MaterialTheme.typography.displaySmall,
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineLarge.copy(
+                    fontWeight = FontWeight.Black,
+                    fontSize = 32.sp
+                ),
             )
 
-            Spacer(Modifier.height(Spacing.ExtraSmall))
+            Spacer(Modifier.height(10.dp))
 
-            Text(
-                text = "dari ${CurrencyFormatter.formatRupiah(totalBudget)} anggaran bulanan",
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            // Signature Expressive Gauge Bar
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(AppShapes.Pill)
+                    .background(contentColor.copy(alpha = 0.15f))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(animatedProgress)
+                        .height(8.dp)
+                        .clip(AppShapes.Pill)
+                        .background(accentColor)
+                )
+            }
 
-            Spacer(Modifier.height(Spacing.Medium))
+            Spacer(Modifier.height(14.dp))
 
+            // Total Net Worth & Details Row
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -171,82 +200,44 @@ fun FinancialRunwayCard(
             ) {
                 Text(
                     text = "TOTAL KEKAYAAN",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold
+                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.8.sp),
+                    fontWeight = FontWeight.Bold,
+                    color = contentColor.copy(alpha = 0.8f)
                 )
                 Text(
                     text = CurrencyFormatter.formatRupiah(netWorth),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black),
+                    color = contentColor
                 )
             }
 
-            Spacer(Modifier.height(Spacing.Medium))
+            Spacer(Modifier.height(12.dp))
 
-            LinearProgressIndicator(
-                progress = { animatedProgress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(ProgressBarHeight),
-                color = accentColor,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-            )
-
-            Spacer(Modifier.height(Spacing.Medium))
-
+            // Runway Insights Pill
             Surface(
-                onClick = onSetBudgetClick,
-                shape = MaterialTheme.shapes.large,
-                color = MaterialTheme.colorScheme.surfaceContainerLowest,
-                contentColor = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.fillMaxWidth(),
+                shape = AppShapes.Squircle,
+                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
-                    modifier = Modifier.padding(Spacing.MediumSmall),
-                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .size(StatusIconContainerSize)
-                            .clip(CircleShape)
-                            .background(
-                                if (isDanger) {
-                                    MaterialTheme.colorScheme.errorContainer
-                                } else {
-                                    MaterialTheme.colorScheme.primaryContainer
-                                },
-                            ),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = if (isDanger) Icons.Default.Warning else Icons.Default.CheckCircle,
-                            contentDescription = null,
-                            tint = if (isDanger) {
-                                MaterialTheme.colorScheme.onErrorContainer
-                            } else {
-                                MaterialTheme.colorScheme.onPrimaryContainer
-                            },
-                            modifier = Modifier.size(StatusIconSize),
-                        )
-                    }
-
-                    Spacer(Modifier.width(Spacing.MediumSmall))
-
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            text = message,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                        if (totalBudget <= 0) {
-                            Spacer(Modifier.height(Spacing.ExtraSmall))
-                            Text(
-                                text = "Atur batas belanja bulanan Anda",
-                                style = MaterialTheme.typography.labelMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
-                    }
+                    Icon(
+                        imageVector = if (isDanger) Icons.Default.Warning else Icons.Default.TrendingUp,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodySmall.copy(
+                            lineHeight = 16.sp,
+                            fontWeight = FontWeight.Medium
+                        ),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
                 }
             }
         }
@@ -291,7 +282,7 @@ fun TransactionItem(
             Box(
                 modifier = Modifier
                     .size(CategoryIconContainerSize)
-                    .clip(MaterialTheme.shapes.medium)
+                    .clip(AppShapes.Squircle)
                     .background(colors.container(category)),
                 contentAlignment = Alignment.Center,
             ) {

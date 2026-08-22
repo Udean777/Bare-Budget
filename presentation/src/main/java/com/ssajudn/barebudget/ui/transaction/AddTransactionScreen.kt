@@ -28,7 +28,9 @@ import com.ssajudn.barebudget.domain.model.TransactionCategory
 import com.ssajudn.barebudget.domain.model.TransactionType
 import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
+import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.categoryColors
+import com.ssajudn.barebudget.ui.theme.crispBorder
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 import com.ssajudn.barebudget.utils.DateUtils
@@ -251,8 +253,13 @@ fun AddTransactionScreen(
 
             // 1. AMOUNT INPUT (Prominent M3 Display Card with Quick Presets)
             ElevatedCard(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.extraLarge,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .crispBorder(
+                        shape = AppShapes.Squircle,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                    ),
+                shape = AppShapes.Squircle,
                 colors = CardDefaults.elevatedCardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                 ),
@@ -269,7 +276,8 @@ fun AddTransactionScreen(
                     }
                     Text(
                         text = amountLabel,
-                        style = MaterialTheme.typography.labelMedium,
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.8.sp),
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(8.dp))
@@ -280,14 +288,14 @@ fun AddTransactionScreen(
                             Text(
                                 "Rp 0",
                                 style = MaterialTheme.typography.displayMedium.copy(
-                                    fontWeight = FontWeight.Bold,
+                                    fontWeight = FontWeight.Black,
                                     fontSize = 32.sp
                                 ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
                             )
                         },
                         textStyle = MaterialTheme.typography.displayMedium.copy(
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Black,
                             fontSize = 32.sp
                         ),
                         singleLine = true,
@@ -319,7 +327,7 @@ fun AddTransactionScreen(
                                         style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold)
                                     )
                                 },
-                                shape = MaterialTheme.shapes.small,
+                                shape = AppShapes.Pill,
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -330,7 +338,7 @@ fun AddTransactionScreen(
                         Spacer(modifier = Modifier.height(14.dp))
                         FilledTonalButton(
                             onClick = { showSplitBottomSheet = true },
-                            shape = MaterialTheme.shapes.medium,
+                            shape = AppShapes.Pill,
                             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                             modifier = Modifier.fillMaxWidth()
                         ) {
@@ -387,7 +395,7 @@ fun AddTransactionScreen(
                                         modifier = Modifier.size(18.dp)
                                     )
                                 },
-                                shape = MaterialTheme.shapes.small,
+                                shape = AppShapes.Pill,
                                 colors = FilterChipDefaults.filterChipColors(
                                     selectedContainerColor = catColors.container(category),
                                     selectedLabelColor = catColors.onContainer(category),

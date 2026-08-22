@@ -1,21 +1,40 @@
 package com.ssajudn.barebudget.ui.components
-
+ 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.ShortNavigationBar
-import androidx.compose.material3.ShortNavigationBarArrangement
-import androidx.compose.material3.ShortNavigationBarItem
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-
-/**
- * A top-level destination in [AppNavigationBar].
- *
- * @param selectedIcon optional filled variant shown while selected. M3 pairs an
- *   outlined icon when unselected with a filled one when selected; omit it and
- *   [icon] is used for both.
- */
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.ssajudn.barebudget.ui.theme.AppShapes
+import com.ssajudn.barebudget.ui.theme.crispBorder
+ 
 data class NavigationBarItemData(
     val route: String,
     val label: String,
@@ -24,24 +43,11 @@ data class NavigationBarItemData(
 )
 
 /**
- * The app's bottom navigation bar, built on Material 3's [ShortNavigationBar].
- *
- * Replaces a hand-rolled version that put real [ShortNavigationBarItem]s
- * (previously `NavigationBarItem`s) inside a custom `Surface` + `Row`. That had
- * three concrete problems this fixes:
- *
- *  1. The container forced `height(72.dp)` on items that want 80dp, so the
- *     selected indicator and label could clip.
- *  2. `Arrangement.SpaceEvenly` with no weights sized items to their content, so
- *     "Analytics" got a larger touch target than "Home".
- *     [ShortNavigationBarArrangement.EqualWeight] gives every item an identical
- *     width, keeping all four above the 48dp minimum.
- *  3. Bypassing the real bar meant losing its window-inset handling, which was
- *     patched with a manual `navigationBarsPadding()`. That in turn forced
- *     `AppNavigation` to discard the Scaffold's inner padding and made each
- *     screen guess a bottom inset — 88dp on one screen, 100dp on three others.
- *     The bar now consumes its own insets, so screens can just use the padding
- *     the Scaffold gives them.
+ * Modern Floating Pill Bottom Navigation Bar.
+ * Features:
+ * - Expressive floating capsule design with subtle border
+ * - Spring-animated pill background indicator on selected item
+ * - High accessibility touch target
  */
 @Composable
 fun AppNavigationBar(
@@ -50,26 +56,92 @@ fun AppNavigationBar(
     onNavigate: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    ShortNavigationBar(
-        modifier = modifier,
-        arrangement = ShortNavigationBarArrangement.EqualWeight,
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center
     ) {
-        items.forEach { item ->
-            val selected = currentRoute == item.route
-            ShortNavigationBarItem(
-                selected = selected,
-                onClick = { onNavigate(item.route) },
-                icon = {
-                    Icon(
-                        imageVector = if (selected) item.selectedIcon ?: item.icon else item.icon,
-                        // Null: the label below already names the destination, and
-                        // the item merges its children into one node. A description
-                        // here would make screen readers announce the name twice.
-                        contentDescription = null,
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .shadow(
+                    elevation = 8.dp,
+                    shape = AppShapes.Pill,
+                    spotColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.15f)
+                )
+                .crispBorder(
+                    shape = AppShapes.Pill,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                ),
+            shape = AppShapes.Pill,
+            color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.95f),
+            tonalElevation = 6.dp
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(64.dp)
+                    .padding(horizontal = 8.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                items.forEach { item ->
+                    val selected = currentRoute == item.route
+                    
+                    val animatedContainerColor by animateColorAsState(
+                        targetValue = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessLow),
+                        label = "navItemBg"
                     )
-                },
-                label = { Text(item.label) },
-            )
+                    val animatedContentColor by animateColorAsState(
+                        targetValue = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy),
+                        label = "navItemContent"
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .clip(AppShapes.Pill)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null
+                            ) { onNavigate(item.route) }
+                            .padding(vertical = 4.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .clip(AppShapes.Pill)
+                                    .background(animatedContainerColor)
+                                    .padding(horizontal = 14.dp, vertical = 4.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = if (selected) item.selectedIcon ?: item.icon else item.icon,
+                                    contentDescription = null,
+                                    tint = animatedContentColor,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            Text(
+                                text = item.label,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 10.5.sp,
+                                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
+                                ),
+                                color = animatedContentColor
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }

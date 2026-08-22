@@ -17,7 +17,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.Spacing
+import com.ssajudn.barebudget.ui.theme.crispBorder
 
 /**
  * A form dialog: title, optional icon, arbitrary content, confirm/dismiss.
@@ -48,8 +50,12 @@ fun AppFormDialog(
         Surface(
             modifier = modifier
                 .fillMaxWidth(0.92f)
-                .heightIn(max = 640.dp),
-            shape = MaterialTheme.shapes.extraLarge,
+                .heightIn(max = 640.dp)
+                .crispBorder(
+                    shape = AppShapes.Squircle,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                ),
+            shape = AppShapes.Squircle,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 6.dp
         ) {
@@ -143,8 +149,12 @@ fun AppConfirmDialog(
         Surface(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
-                .wrapContentHeight(),
-            shape = MaterialTheme.shapes.extraLarge,
+                .wrapContentHeight()
+                .crispBorder(
+                    shape = AppShapes.Squircle,
+                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                ),
+            shape = AppShapes.Squircle,
             color = MaterialTheme.colorScheme.surfaceContainerHigh,
             tonalElevation = 6.dp
         ) {

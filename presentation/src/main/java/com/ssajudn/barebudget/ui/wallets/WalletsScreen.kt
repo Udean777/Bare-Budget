@@ -31,7 +31,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.domain.model.Wallet
 import com.ssajudn.barebudget.ui.components.AppConfirmDialog
 import com.ssajudn.barebudget.ui.components.AppFormDialog
+import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.Spacing
+import com.ssajudn.barebudget.ui.theme.crispBorder
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 
@@ -104,28 +106,34 @@ fun WalletsScreen(
 
             // Net Worth Summary Card
             ElevatedCard(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.extraLarge,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .crispBorder(
+                        shape = AppShapes.AsymmetricHeroReversed,
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
+                    ),
+                shape = AppShapes.AsymmetricHeroReversed,
                 colors = CardDefaults.elevatedCardColors(
                     containerColor = MaterialTheme.colorScheme.primaryContainer,
                     contentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 ),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp)
             ) {
                 Column(
-                    modifier = Modifier.padding(Spacing.Large),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier = Modifier.padding(20.dp),
+                    horizontalAlignment = Alignment.Start
                 ) {
                     Text(
-                        text = "Total Kekayaan (Net Worth)",
-                        style = MaterialTheme.typography.titleMedium,
+                        text = "TOTAL KEKAYAAN BERSIH",
+                        style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                     )
-                    Spacer(modifier = Modifier.height(Spacing.Small))
+                    Spacer(modifier = Modifier.height(6.dp))
                     Text(
                         text = CurrencyFormatter.formatRupiah(uiState.netWorth),
                         style = MaterialTheme.typography.headlineLarge.copy(
-                            fontWeight = FontWeight.Bold,
+                            fontWeight = FontWeight.Black,
                             fontSize = 32.sp
                         )
                     )
@@ -179,54 +187,101 @@ fun WalletItem(
         MaterialTheme.colorScheme.primary
     }
 
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.large,
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .crispBorder(
+                shape = AppShapes.Squircle,
+                color = parsedColor.copy(alpha = 0.4f)
+            ),
+        shape = AppShapes.Squircle,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 3.dp
     ) {
-        Row(
-            modifier = Modifier.padding(Spacing.Medium),
-            verticalAlignment = Alignment.CenterVertically
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp)
         ) {
+            // Background decorative circle (Debit card pattern)
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(120.dp)
+                    .align(Alignment.TopEnd)
                     .clip(CircleShape)
-                    .background(parsedColor.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AccountBalanceWallet,
-                    contentDescription = null,
-                    tint = parsedColor,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
+                    .background(parsedColor.copy(alpha = 0.08f))
+            )
 
-            Spacer(modifier = Modifier.width(Spacing.Medium))
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .clip(AppShapes.Squircle)
+                                .background(parsedColor.copy(alpha = 0.16f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccountBalanceWallet,
+                                contentDescription = null,
+                                tint = parsedColor,
+                                modifier = Modifier.size(22.dp)
+                            )
+                        }
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Column {
+                            Text(
+                                text = wallet.name,
+                                style = MaterialTheme.typography.titleMedium.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 16.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "DOMPET AKTIF",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    letterSpacing = 1.sp,
+                                    fontSize = 9.5.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
 
-            Column(modifier = Modifier.weight(1f)) {
+                    IconButton(
+                        onClick = { showDeleteConfirm = true },
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Delete,
+                            contentDescription = "Hapus Dompet",
+                            tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
                 Text(
-                    text = wallet.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    text = "Saldo Saat Ini",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = CurrencyFormatter.formatRupiah(wallet.balance),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            IconButton(onClick = { showDeleteConfirm = true }) {
-                Icon(
-                    Icons.Default.Delete,
-                    contentDescription = "Hapus Dompet",
-                    tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Black,
+                        fontSize = 24.sp
+                    ),
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
         }

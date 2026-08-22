@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
@@ -27,9 +28,13 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.domain.model.TransactionCategory
+import com.ssajudn.barebudget.domain.model.TransactionType
 import com.ssajudn.barebudget.ui.components.TransactionItem
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
+import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.categoryColors
+import com.ssajudn.barebudget.ui.theme.crispBorder
+import com.ssajudn.barebudget.utils.CurrencyFormatter
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -41,6 +46,8 @@ fun AllTransactionsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val isRefreshing by viewModel.isRefreshing.collectAsStateWithLifecycle()
     val lifecycleOwner = LocalLifecycleOwner.current
+
+    var showFilterBottomSheet by remember { mutableStateOf(false) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -59,7 +66,7 @@ fun AllTransactionsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "All Transactions",
+                        text = "Semua Transaksi",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -67,7 +74,7 @@ fun AllTransactionsScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -87,97 +94,319 @@ fun AllTransactionsScreen(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Search Bar & Filter Chips Header
+                // Search Bar & Filter Action Row
                 when (val state = uiState) {
                     is AllTransactionsUiState.Success -> {
+                        val activeFilterCount = (if (state.selectedType != null) 1 else 0) +
+                                (if (state.selectedCategory != null) 1 else 0) +
+                                (if (state.selectedWalletId != null) 1 else 0)
+
                         Column(
                             modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            // Search Box
-                            OutlinedTextField(
-                                value = state.searchQuery,
-                                onValueChange = { viewModel.onSearchQueryChange(it) },
-                                placeholder = { Text("Search by merchant, notes, or category...") },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Search,
-                                        contentDescription = "Search",
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            // Row Search + Filter Button
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OutlinedTextField(
+                                    value = state.searchQuery,
+                                    onValueChange = { viewModel.onSearchQueryChange(it) },
+                                    placeholder = {
+                                        Text(
+                                            "Cari transaksi...",
+                                            maxLines = 1,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Search,
+                                            contentDescription = "Search",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        if (state.searchQuery.isNotBlank()) {
+                                            IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
+                                                Icon(Icons.Default.Close, contentDescription = "Hapus")
+                                            }
+                                        }
+                                    },
+                                    singleLine = true,
+                                    maxLines = 1,
+                                    shape = AppShapes.Squircle,
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .crispBorder(
+                                            shape = AppShapes.Squircle,
+                                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                                        ),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
                                     )
-                                },
-                                trailingIcon = {
-                                    if (state.searchQuery.isNotBlank()) {
-                                        IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-                                            Icon(Icons.Default.Close, contentDescription = "Clear")
+                                )
+
+                                // Trigger Filter Button with Badge
+                                Surface(
+                                    onClick = { showFilterBottomSheet = true },
+                                    shape = AppShapes.Squircle,
+                                    color = if (activeFilterCount > 0) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceContainerHigh,
+                                    modifier = Modifier
+                                        .size(54.dp)
+                                        .crispBorder(
+                                            shape = AppShapes.Squircle,
+                                            color = if (activeFilterCount > 0) MaterialTheme.colorScheme.primary.copy(alpha = 0.5f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                                        )
+                                ) {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Icon(
+                                            imageVector = Icons.Default.FilterList,
+                                            contentDescription = "Filter Transaksi",
+                                            tint = if (activeFilterCount > 0) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        if (activeFilterCount > 0) {
+                                            Badge(
+                                                modifier = Modifier
+                                                    .align(Alignment.TopEnd)
+                                                    .padding(6.dp),
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary
+                                            ) {
+                                                Text("$activeFilterCount")
+                                            }
                                         }
                                     }
-                                },
-                                singleLine = true,
-                                shape = MaterialTheme.shapes.medium,
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                                    unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                                )
-                            )
-
-                            // Category Filter Chips (M3 FilterChips)
-                            LazyRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                contentPadding = PaddingValues(vertical = 4.dp)
-                            ) {
-                                // "All" chip
-                                item {
-                                    val isAllSelected = state.selectedCategory == null
-                                    FilterChip(
-                                        selected = isAllSelected,
-                                        onClick = { viewModel.filterByCategory(null) },
-                                        label = {
-                                            Text(
-                                                "Semua",
-                                                style = MaterialTheme.typography.labelMedium.copy(
-                                                    fontWeight = if (isAllSelected) FontWeight.Bold else FontWeight.Medium
-                                                )
-                                            )
-                                        },
-                                        shape = MaterialTheme.shapes.medium,
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                                        )
-                                    )
                                 }
+                            }
 
-                                items(TransactionCategory.entries) { category ->
-                                    val isSelected = category == state.selectedCategory
-                                    val catColors = categoryColors
-
-                                    FilterChip(
-                                        selected = isSelected,
-                                        onClick = { viewModel.filterByCategory(category) },
-                                        label = {
-                                            Text(
-                                                category.displayName,
-                                                style = MaterialTheme.typography.labelMedium.copy(
-                                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                                )
-                                            )
-                                        },
-                                        leadingIcon = {
-                                            Icon(
-                                                imageVector = getCategoryIcon(category),
-                                                contentDescription = null,
-                                                modifier = Modifier.size(16.dp)
-                                            )
-                                        },
-                                        shape = MaterialTheme.shapes.small,
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = catColors.container(category),
-                                            selectedLabelColor = catColors.onContainer(category),
-                                            selectedLeadingIconColor = catColors.onContainer(category)
-                                        )
+                            // Dynamic Filter Summary Metric Card
+                            Surface(
+                                shape = AppShapes.Squircle,
+                                color = MaterialTheme.colorScheme.surfaceContainerLow,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .crispBorder(
+                                        shape = AppShapes.Squircle,
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.25f)
                                     )
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 14.dp, vertical = 10.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column {
+                                        Text(
+                                            text = "TOTAL DITEMUKAN",
+                                            style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.6.sp, fontSize = 9.5.sp),
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Text(
+                                            text = "${state.transactions.size} Transaksi",
+                                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurface
+                                        )
+                                    }
+
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        if (state.filteredExpenseTotal > 0) {
+                                            Text(
+                                                text = "-${CurrencyFormatter.formatRupiah(state.filteredExpenseTotal)}",
+                                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Black),
+                                                color = MaterialTheme.colorScheme.onSurface
+                                            )
+                                        }
+                                        if (state.filteredIncomeTotal > 0) {
+                                            Text(
+                                                text = "+${CurrencyFormatter.formatRupiah(state.filteredIncomeTotal)}",
+                                                style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
+                                                color = Color(0xFF2ECC71)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // Filter Bottom Sheet
+                        if (showFilterBottomSheet) {
+                            var draftType by remember { mutableStateOf(state.selectedType) }
+                            var draftCategory by remember { mutableStateOf(state.selectedCategory) }
+                            var draftWalletId by remember { mutableStateOf(state.selectedWalletId) }
+
+                            ModalBottomSheet(
+                                onDismissRequest = { showFilterBottomSheet = false },
+                                shape = MaterialTheme.shapes.extraLarge,
+                                containerColor = MaterialTheme.colorScheme.surface
+                            ) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 24.dp)
+                                        .padding(bottom = 36.dp),
+                                    verticalArrangement = Arrangement.spacedBy(18.dp)
+                                ) {
+                                    val isAnyDraftActive = draftType != null || draftCategory != null || draftWalletId != null
+
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = "Filter Transaksi",
+                                            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                                        )
+                                        if (isAnyDraftActive) {
+                                            TextButton(onClick = {
+                                                draftType = null
+                                                draftCategory = null
+                                                draftWalletId = null
+                                            }) {
+                                                Text("Reset Filter")
+                                            }
+                                        }
+                                    }
+
+                                    // 1. Tipe Transaksi
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(
+                                            text = "Tipe Transaksi",
+                                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            item {
+                                                val isAll = draftType == null
+                                                FilterChip(
+                                                    selected = isAll,
+                                                    onClick = { draftType = null },
+                                                    label = { Text("Semua Tipe") },
+                                                    shape = AppShapes.Pill,
+                                                    colors = FilterChipDefaults.filterChipColors(
+                                                        selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                                                        selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                                    )
+                                                )
+                                            }
+                                            val types = listOf(
+                                                TransactionType.EXPENSE to "Pengeluaran 🔴",
+                                                TransactionType.INCOME to "Pemasukan 🟢",
+                                                TransactionType.TRANSFER to "Transfer ⇄"
+                                            )
+                                            items(types) { (type, label) ->
+                                                val isSelected = draftType == type
+                                                FilterChip(
+                                                    selected = isSelected,
+                                                    onClick = { draftType = if (isSelected) null else type },
+                                                    label = { Text(label) },
+                                                    shape = AppShapes.Pill,
+                                                    colors = FilterChipDefaults.filterChipColors(
+                                                        selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                                                        selectedLabelColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // 2. Kategori
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Text(
+                                            text = "Kategori",
+                                            style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            items(TransactionCategory.entries) { category ->
+                                                val isSelected = category == draftCategory
+                                                val catColors = categoryColors
+
+                                                FilterChip(
+                                                    selected = isSelected,
+                                                    onClick = { draftCategory = if (isSelected) null else category },
+                                                    label = { Text(category.displayName) },
+                                                    leadingIcon = {
+                                                        Icon(
+                                                            imageVector = getCategoryIcon(category),
+                                                            contentDescription = null,
+                                                            modifier = Modifier.size(16.dp)
+                                                        )
+                                                    },
+                                                    shape = AppShapes.Pill,
+                                                    colors = FilterChipDefaults.filterChipColors(
+                                                        selectedContainerColor = catColors.container(category),
+                                                        selectedLabelColor = catColors.onContainer(category),
+                                                        selectedLeadingIconColor = catColors.onContainer(category)
+                                                    )
+                                                )
+                                            }
+                                        }
+                                    }
+
+                                    // 3. Dompet
+                                    if (state.wallets.isNotEmpty()) {
+                                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                            Text(
+                                                text = "Dompet Akun",
+                                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                                items(state.wallets) { wallet ->
+                                                    val isSelected = wallet.id == draftWalletId
+                                                    val parsedColor = try {
+                                                        Color(android.graphics.Color.parseColor(wallet.colorHex))
+                                                    } catch (e: Exception) {
+                                                        MaterialTheme.colorScheme.primary
+                                                    }
+
+                                                    FilterChip(
+                                                        selected = isSelected,
+                                                        onClick = { draftWalletId = if (isSelected) null else wallet.id },
+                                                        label = { Text(wallet.name) },
+                                                        leadingIcon = {
+                                                            Box(
+                                                                modifier = Modifier
+                                                                    .size(8.dp)
+                                                                    .clip(androidx.compose.foundation.shape.CircleShape)
+                                                                    .background(parsedColor)
+                                                            )
+                                                        },
+                                                        shape = AppShapes.Pill,
+                                                        colors = FilterChipDefaults.filterChipColors(
+                                                            selectedContainerColor = parsedColor.copy(alpha = 0.25f),
+                                                            selectedLabelColor = MaterialTheme.colorScheme.onSurface
+                                                        )
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    Button(
+                                        onClick = {
+                                            viewModel.applyFilters(
+                                                category = draftCategory,
+                                                type = draftType,
+                                                walletId = draftWalletId
+                                            )
+                                            showFilterBottomSheet = false
+                                        },
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(top = 8.dp),
+                                        shape = AppShapes.Pill
+                                    ) {
+                                        Text("Terapkan Filter", fontWeight = FontWeight.Bold)
+                                    }
                                 }
                             }
                         }

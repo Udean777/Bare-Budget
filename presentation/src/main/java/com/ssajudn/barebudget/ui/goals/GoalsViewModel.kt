@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.channels.Channel
@@ -39,10 +40,22 @@ class GoalsViewModel @Inject constructor(
     private val _effect = Channel<UiEffect>(Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
 
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    val uiState: StateFlow<GoalsUiState> = repository.observeGoals()
-        .map<List<Goal>, GoalsUiState> { GoalsUiState.Success(it) }
-        .catch { e -> emit(GoalsUiState.Error(e.message ?: "Failed to load savings goals")) }
+    val uiState: StateFlow<GoalsUiState> = combine(
+        repository.observeGoals(),
+        _searchQuery
+    ) { goals, query ->
+        var filtered = goals
+        if (query.isNotBlank()) {
+            filtered = filtered.filter { goal ->
+                goal.name.contains(query, ignoreCase = true) ||
+                    (goal.notes?.contains(query, ignoreCase = true) == true)
+            }
+        }
+        GoalsUiState.Success(filtered) as GoalsUiState
+    }.catch { e -> emit(GoalsUiState.Error(e.message ?: "Failed to load savings goals")) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), GoalsUiState.Loading)
 
     val wallets: StateFlow<List<Wallet>> =
@@ -51,6 +64,10 @@ class GoalsViewModel @Inject constructor(
 
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing: StateFlow<Boolean> = _isRefreshing.asStateFlow()
+
+    fun onSearchQueryChange(query: String) {
+        _searchQuery.value = query
+    }
 
     init {
         viewModelScope.launch { walletRepository.getWallets() }

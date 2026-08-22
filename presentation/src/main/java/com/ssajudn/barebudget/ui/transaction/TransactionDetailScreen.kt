@@ -28,6 +28,7 @@ import com.ssajudn.barebudget.ui.components.getCategoryIcon
 import com.ssajudn.barebudget.ui.components.AppConfirmDialog
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.categoryColors
+import com.ssajudn.barebudget.ui.theme.crispBorder
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
 
@@ -131,8 +132,13 @@ fun TransactionDetailScreen(
                     
                     // Header Amount Card (M3 ElevatedCard)
                     ElevatedCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = MaterialTheme.shapes.extraLarge,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .crispBorder(
+                                shape = AppShapes.Squircle,
+                                color = amountColor.copy(alpha = 0.35f)
+                            ),
+                        shape = AppShapes.Squircle,
                         colors = CardDefaults.elevatedCardColors(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
                         ),

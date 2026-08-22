@@ -85,12 +85,14 @@ fun DueBillsScreen(
     var unpayingBillConfirm by remember { mutableStateOf<DueBill?>(null) }
     var deletingBillConfirm by remember { mutableStateOf<DueBill?>(null) }
 
+    val searchQuery by viewModel.searchQuery.collectAsState()
+
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Due Bills & Commitments",
+                        text = "Tagihan & Komitmen",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -99,7 +101,7 @@ fun DueBillsScreen(
                 navigationIcon = {
                     if (onNavigateBack != null) {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
                         }
                     }
                 },
@@ -108,7 +110,7 @@ fun DueBillsScreen(
                         editingBill = null
                         showFormDialog = true
                     }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Bill")
+                        Icon(Icons.Default.Add, contentDescription = "Tambah Tagihan")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -123,24 +125,70 @@ fun DueBillsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // 1. FILTER TABS (Semua / Belum Lunas / Lunas)
-            SingleChoiceSegmentedButtonRow(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .padding(horizontal = 20.dp, vertical = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                val filters = listOf(
-                    Triple(null, "Semua", 0),
-                    Triple(DueBillStatus.UNPAID, "Belum Lunas", 1),
-                    Triple(DueBillStatus.PAID, "Lunas", 2)
+                // 1. Single-Line Search Bar
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { viewModel.onSearchQueryChange(it) },
+                    placeholder = {
+                        Text(
+                            "Cari tagihan...",
+                            maxLines = 1,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotBlank()) {
+                            IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
+                                Icon(Icons.Default.Close, contentDescription = "Hapus")
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    maxLines = 1,
+                    shape = AppShapes.Squircle,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .crispBorder(
+                            shape = AppShapes.Squircle,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                        ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
                 )
-                filters.forEach { (status, label, index) ->
-                    SegmentedButton(
-                        selected = selectedStatusFilter == status,
-                        enabled = !isOperationLoading, onClick = { viewModel.setFilterStatus(status) },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
-                    ) {
-                        Text(label)
+
+                // 2. FILTER TABS (Semua / Belum Lunas / Lunas)
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val filters = listOf(
+                        Triple(null, "Semua", 0),
+                        Triple(DueBillStatus.UNPAID, "Belum Lunas", 1),
+                        Triple(DueBillStatus.PAID, "Lunas", 2)
+                    )
+                    filters.forEach { (status, label, index) ->
+                        SegmentedButton(
+                            selected = selectedStatusFilter == status,
+                            enabled = !isOperationLoading,
+                            onClick = { viewModel.setFilterStatus(status) },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
+                        ) {
+                            Text(label, style = MaterialTheme.typography.labelSmall.copy(fontWeight = if (selectedStatusFilter == status) FontWeight.Bold else FontWeight.Medium))
+                        }
                     }
                 }
             }
@@ -523,8 +571,12 @@ fun DueBillItem(
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
+            .crispBorder(
+                shape = AppShapes.Squircle,
+                color = if (isOverdue) MaterialTheme.colorScheme.error.copy(alpha = 0.4f) else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+            )
             .clickable(onClick = onClick),
-        shape = MaterialTheme.shapes.large,
+        shape = AppShapes.Squircle,
         colors = CardDefaults.elevatedCardColors(
             containerColor = if (isPaid) MaterialTheme.colorScheme.surfaceContainerLowest else MaterialTheme.colorScheme.surface
         ),

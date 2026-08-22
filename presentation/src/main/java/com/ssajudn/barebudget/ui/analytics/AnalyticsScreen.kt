@@ -31,6 +31,7 @@ import com.ssajudn.barebudget.ui.components.getCategoryIcon
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.Spacing
 import com.ssajudn.barebudget.ui.theme.categoryColors
+import com.ssajudn.barebudget.ui.theme.crispBorder
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 
@@ -188,8 +189,13 @@ fun AnalyticsContent(
                     val isSurplus = netCashflow >= 0
 
                     ElevatedCard(
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = AppShapes.LargeIncreased,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .crispBorder(
+                                shape = AppShapes.Squircle,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                            ),
+                        shape = AppShapes.Squircle,
                         colors = CardDefaults.elevatedCardColors(
                             containerColor = MaterialTheme.colorScheme.surface
                         ),
@@ -197,11 +203,12 @@ fun AnalyticsContent(
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
                             Text(
-                                text = "Ringkasan Arus Kas Bulan Ini",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.onSurface
+                                text = "RINGKASAN ARUS KAS",
+                                style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            Spacer(modifier = Modifier.height(16.dp))
+                            Spacer(modifier = Modifier.height(14.dp))
 
                             Row(
                                 modifier = Modifier.fillMaxWidth(),

@@ -458,30 +458,30 @@ fun QuickActionCard(
 
     Surface(
         modifier = modifier
-            .clip(AppShapes.LargeIncreased)
+            .clip(AppShapes.Squircle)
             .clickable {
                 haptic.performHapticFeedback(androidx.compose.ui.hapticfeedback.HapticFeedbackType.TextHandleMove)
                 onClick()
             },
         color = bgColor,
-        shape = AppShapes.LargeIncreased,
+        shape = AppShapes.Squircle,
         border = androidx.compose.foundation.BorderStroke(
-            1.dp,
-            tintColor.copy(alpha = 0.25f)
+            0.8.dp,
+            tintColor.copy(alpha = 0.35f)
         )
     ) {
         Column(
             modifier = Modifier
-                .padding(horizontal = 14.dp, vertical = 16.dp)
+                .padding(horizontal = 12.dp, vertical = 14.dp)
                 .fillMaxWidth(),
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(tintColor.copy(alpha = 0.18f)),
+                    .size(38.dp)
+                    .clip(AppShapes.Squircle)
+                    .background(tintColor.copy(alpha = 0.16f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(

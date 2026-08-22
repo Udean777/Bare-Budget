@@ -93,12 +93,14 @@ fun GoalsScreen(
     var initialIsWithdraw by remember { mutableStateOf(false) }
     var goalToDelete by remember { mutableStateOf<Goal?>(null) }
 
+    val searchQuery by viewModel.searchQuery.collectAsState()
+
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Savings Goals & Pockets",
+                        text = "Target Tabungan",
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -107,7 +109,7 @@ fun GoalsScreen(
                 navigationIcon = {
                     if (onNavigateBack != null) {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
                         }
                     }
                 },
@@ -116,7 +118,7 @@ fun GoalsScreen(
                         editingGoal = null
                         showAddDialog = true
                     }) {
-                        Icon(Icons.Default.Add, contentDescription = "Add Goal")
+                        Icon(Icons.Default.Add, contentDescription = "Tambah Target")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -131,19 +133,64 @@ fun GoalsScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // 1. FILTER TABS (Semua / Aktif / Tercapai)
-            SingleChoiceSegmentedButtonRow(
+            Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 8.dp)
+                    .padding(horizontal = 20.dp, vertical = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                GoalFilter.entries.forEachIndexed { index, filter ->
-                    SegmentedButton(
-                        selected = selectedFilter == filter,
-                        onClick = { selectedFilter = filter },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = GoalFilter.entries.size)
-                    ) {
-                        Text(filter.label)
+                // 1. Single-Line Search Bar
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { viewModel.onSearchQueryChange(it) },
+                    placeholder = {
+                        Text(
+                            "Cari target tabungan...",
+                            maxLines = 1,
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            Icons.Default.Search,
+                            contentDescription = "Search",
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    trailingIcon = {
+                        if (searchQuery.isNotBlank()) {
+                            IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
+                                Icon(Icons.Default.Close, contentDescription = "Hapus")
+                            }
+                        }
+                    },
+                    singleLine = true,
+                    maxLines = 1,
+                    shape = AppShapes.Squircle,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .crispBorder(
+                            shape = AppShapes.Squircle,
+                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
+                        ),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
+                    )
+                )
+
+                // 2. FILTER TABS (Semua / Aktif / Tercapai)
+                SingleChoiceSegmentedButtonRow(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    GoalFilter.entries.forEachIndexed { index, filter ->
+                        SegmentedButton(
+                            selected = selectedFilter == filter,
+                            onClick = { selectedFilter = filter },
+                            shape = SegmentedButtonDefaults.itemShape(index = index, count = GoalFilter.entries.size)
+                        ) {
+                            Text(filter.label, style = MaterialTheme.typography.labelSmall.copy(fontWeight = if (selectedFilter == filter) FontWeight.Bold else FontWeight.Medium))
+                        }
                     }
                 }
             }
@@ -527,15 +574,19 @@ fun GoalCard(
     ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
+            .crispBorder(
+                shape = AppShapes.Squircle,
+                color = cardAccentColor.copy(alpha = 0.35f)
+            )
             .clickable(onClick = onClick),
-        shape = AppShapes.LargeIncreased,
+        shape = AppShapes.Squircle,
         colors = CardDefaults.elevatedCardColors(
             containerColor = if (isCompleted) MaterialTheme.colorScheme.surfaceContainerHigh else MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = if (isCompleted) 1.dp else 2.dp)
+        elevation = CardDefaults.elevatedCardElevation(defaultElevation = if (isCompleted) 1.dp else 3.dp)
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
+            modifier = Modifier.padding(18.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             // Top Row: Accent Dot, Title, & Badge
@@ -550,26 +601,29 @@ fun GoalCard(
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(12.dp)
+                            .size(10.dp)
                             .clip(CircleShape)
                             .background(cardAccentColor)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         text = goal.name,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        ),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
 
                 Surface(
-                    shape = MaterialTheme.shapes.extraSmall,
+                    shape = AppShapes.Pill,
                     color = badgeBgColor
                 ) {
                     Text(
                         text = badgeLabel,
-                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 3.dp),
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.ExtraBold),
                         color = badgeTextColor
                     )
                 }

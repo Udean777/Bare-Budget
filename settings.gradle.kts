@@ -24,3 +24,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "Bare Budget"
 include(":app")
+include(":domain")
+include(":data")
+include(":presentation")

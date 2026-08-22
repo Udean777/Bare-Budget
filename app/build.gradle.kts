@@ -47,12 +47,12 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    ksp {
-        arg("room.schemaLocation", "$projectDir/schemas")
-    }
     buildFeatures {
         compose = true
         buildConfig = true
+    }
+    testOptions {
+        unitTests.all { it.jvmArgs("-Dnet.bytebuddy.experimental=true") }
     }
 }
 
@@ -69,6 +69,9 @@ kotlin {
 }
 
 dependencies {
+    implementation(project(":domain"))
+    implementation(project(":data"))
+    implementation(project(":presentation"))
     implementation(libs.coil.compose)
 
     implementation(platform(libs.androidx.compose.bom))
@@ -91,6 +94,8 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
+    implementation(libs.hilt.work)
+    implementation(libs.androidx.work.runtime.ktx)
 
     // Networking (Retrofit & Gson)
     implementation(libs.retrofit)
@@ -133,6 +138,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
     
     // Theme generation from Overture
-    implementation("com.materialkolor:material-kolor:5.0.0-alpha07")
-    implementation("androidx.palette:palette-ktx:1.0.0")
+    implementation(libs.material.kolor)
+    implementation(libs.androidx.palette.ktx)
 }

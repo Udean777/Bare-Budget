@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+      Window background, matched to the Compose brand scheme's `surface` role so
+      there is no colour flash between the window appearing and Compose drawing.
+      Light value = BrandLightScheme.surface. See values-night for the dark pair.
+    -->
+    <color name="window_background">#FFF7FAF4</color>
+</resources>

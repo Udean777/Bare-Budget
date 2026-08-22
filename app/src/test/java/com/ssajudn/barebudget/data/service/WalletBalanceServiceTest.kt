@@ -16,7 +16,9 @@ private class FakeWalletDao : WalletDao {
     val calls = mutableListOf<Pair<String, Long>>()
 
     override fun getAllWallets(): List<LocalWalletEntity> = emptyList()
+    override fun getWalletsByOwner(ownerId: String): List<LocalWalletEntity> = emptyList()
     override fun observeAllWallets(): Flow<List<LocalWalletEntity>> = flowOf(emptyList())
+    override fun observeWalletsByOwner(ownerId: String): Flow<List<LocalWalletEntity>> = flowOf(emptyList())
     override fun getFirstWallet(): LocalWalletEntity? = null
     override fun getWalletById(id: String): LocalWalletEntity? = null
     override fun insertWallet(wallet: LocalWalletEntity) {}

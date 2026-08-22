@@ -82,11 +82,13 @@ Dengan arsitektur **Offline-First**, BareBudget dapat langsung digunakan seketik
 * **Branded Splash Screen**: Transisi *fade & spring scale* yang mulus serta dukungan penuh *Android 12+ SplashScreen API*.
 * **3D Vector Illustrated Onboarding**: Alur pengenalan aplikasi interaktif dengan ilustrasi *semi-3D cartoonish* yang modern dan ramah pengguna.
 
-### 10. 🔒 Clean Architecture & Offline-First Cloud Sync
-* Mengadopsi prinsip **Clean Architecture**: Pemisahan jelas antara *Domain UseCases*, *Data Layer (Local & Remote DataSources)*, dan *Presentation UI Layer (MVI/MVVM State)*.
-* Seluruh fitur bekerja 100% secara offline menggunakan **Room SQLite Database**.
-* Sinkronisasi dua arah (*Two-Way Sync*) dengan backend REST API Go saat terkoneksi internet.
-* **Guest to Google Migration**: Mulai instan sebagai *Guest*, migrasikan seluruh data lokal ke Google Account saat login.
+### 10. 🔒 Clean Architecture & Offline-First Cloud Sync (Diperkuat Fase A–D)
+* **Multi-module ter-enforce**: `:domain` pure Kotlin (tanpa Android/Room/Retrofit), `:data` Android library (Room/Retrofit/Firebase/WorkManager), `:presentation` lib, `:app` composition root — `presentation → domain ← data`, `app → presentation+data`. Guard compile-time, bukan hanya package.
+* **DTO terpisah**: `data/network/dto/` (`WalletDto`, `TransactionDto`, `GoalDto`, `DueBillDto`) dengan `Gson(LOWER_CASE_WITH_UNDERSCORES)` + `@SerializedName`, `ApiService` `PATCH` konsisten backend, `RemoteDataSource` mapping `dto.toDomain()` — perubahan domain tidak pecahkan kontrak API. `ApiContractTest` MockWebServer verifikasi snake_case.
+* **Outbox + WorkManager**: `Room outbox` (`PENDING/IN_FLIGHT/DONE/FAILED_RETRYABLE`) + `MIGRATION_8_9`, `withTransaction` atomik (saldo+transaksi+goal/bill), `OutboxWorker` `@HiltWorker` + `OutboxScheduler` `WorkManager` (`NetworkType.CONNECTED`, backoff `2^attempts*30s`), `idempotency_keys` Postgres (`user_id,key` PK) — retry tanpa duplikasi, guest skip.
+* **UiEffect terstandar**: `UiEffect.ShowSnackbar/Navigate/PopBackStack` + `OperationState Idle/Loading/Success/Error` via `Channel(BUFFERED)` — one-shot tidak re-emit saat rotasi, `Button(enabled = !isOperationLoading)` cegah double-tap.
+* **Auth & isolasi**: `TokenVerifier` (`auth/verifier.go`) verifikasi Firebase ID token (dev `dev-user-123` hanya non-prod), `ownerId` di 5 tabel + `signOut` `clearAllTables` — cegah lintas akun, `MigrationRepository` validasi `isSuccessful` sebelum `clearAllTables`.
+* 100% offline via **Room SQLite**, two-way sync saat online, **Guest→Google migration** aman (validasi partial failure).
 
 ---
 
@@ -94,48 +96,59 @@ Dengan arsitektur **Offline-First**, BareBudget dapat langsung digunakan seketik
 
 ```
 BareBudget/
-├── app/                        # Android Native Client (Kotlin + Jetpack Compose)
-│   ├── src/main/java/com/ssajudn/barebudget/
-│   │   ├── data/
-│   │   │   ├── auth/           # Firebase Authentication & Credential Manager
-│   │   │   ├── datasource/     # Local (Room) & Remote (Retrofit) DataSources
-│   │   │   ├── local/          # Room DB (Entities, DAOs), BackupRestoreManager & Preferences
-│   │   │   ├── mapper/         # Entity & DTO to Pure Domain Model Mappers
-│   │   │   ├── network/        # Retrofit Client & ApiService
-│   │   │   └── repository/     # Offline-First Repository Implementations
-│   │   ├── domain/
-│   │   │   ├── model/          # Pure Domain Models
-│   │   │   ├── repository/     # Repository Interfaces
-│   │   │   └── usecase/        # Business Logic & Interaction UseCases
-│   │   ├── ui/
-│   │   │   ├── analytics/      # Financial Breakdown & Category Charts
-│   │   │   ├── bills/          # Due Bills, Provider Picker & Refund System
-│   │   │   ├── budget/         # Monthly Spending Target & Locked Budget UI
-│   │   │   ├── components/     # M3 Dialogs, AppNavigationBar, M3 Settings
-│   │   │   ├── dashboard/      # Financial Runway Card & Recent Feeds
-│   │   │   ├── goals/          # Savings Goals, Pockets & Smart Calculator
-│   │   │   ├── navigation/     # AppNavigation & 5-Item TopLevelDestinations
-│   │   │   ├── onboarding/     # 3D Illustrated Onboarding & Auth Screens
-│   │   │   ├── settings/       # Appearance (Material You), JSON Backup/Restore, Sync & Profile
-│   │   │   ├── splash/         # Animated Branded Splash Screen
-│   │   │   ├── theme/          # Material 3 Color Schemes, Typography & Shapes
-│   │   │   ├── transaction/    # Add Expense, Dedicated TransferScreen, Detail & Split Bill BottomSheet
-│   │   │   └── wallets/        # Multi-Wallet Management
-│   │   └── utils/              # CurrencyFormatter, DateUtils, AppConfig
-│   └── build.gradle.kts
-│
-└── server/                     # High-Performance REST API (Go + Fiber)
-    ├── cmd/api/main.go         # Server entrypoint & Route Handlers
+├── domain/                     # Pure Kotlin JVM — entities, repository ports, use-cases, AppTheme
+│   └── src/main/java/com/ssajudn/barebudget/domain/
+│       ├── model/              # Wallet, Transaction, Goal, DueBill, Budget, AppTheme, DomainModels
+│       ├── repository/         # WalletRepository, TransactionRepository, GoalRepository, DueBillRepository, BudgetRepository (interface milik domain)
+│       ├── usecase/            # GetDashboardSummary, GetCashflow/NetWorth, PayDueBill (usecase milik domain)
+│       └── error/              # AppException (typed)
+├── data/                       # Android Library — Room, Retrofit, Firebase, WorkManager (→ :domain)
+│   └── src/main/java/com/ssajudn/barebudget/data/
+│       ├── auth/               # AuthManager (Firebase), verifier
+│       ├── datasource/local/   # Transaction/Goal/DueBill/Wallet/Budget LocalDataSource + withTransaction + ownerId
+│       ├── datasource/remote/  # Wallet/Transaction/Goal/DueBill RemoteDataSource (DTO→domain mapping)
+│       ├── local/room/         # Entities (ownerId), Daos (*ByOwner), AppDatabase v9 (outbox), OutboxEntity/Dao
+│       ├── sync/               # OutboxWorker (@HiltWorker), OutboxScheduler (WorkManager)
+│       ├── network/            # ApiClient (Gson LOWER_CASE_WITH_UNDERSCORES), ApiService (DTO), dto/ (Wallet/Transaction/Goal/DueBillDto)
+│       ├── repository/         # *RepositoryImpl (isGuestMode routing), DomainMappers, MigrationRepositoryImpl (validasi partial)
+│       ├── service/            # WalletBalanceService (single writer)
+│       └── utils/              # AppConfig (BuildConfig data), DateUtils
+├── presentation/               # Android Library — placeholder ViewModel contracts (→ :domain, :data)
+├── app/                        # Android Application — Compose UI + Hilt + Navigation (→ :domain,:data,:presentation)
+│   └── src/main/java/com/ssajudn/barebudget/
+│       ├── BareBudgetApplication.kt # Hilt + HiltWorkerFactory (WorkManager)
+│       ├── ui/
+│       │   ├── analytics/      # Financial Breakdown & Category Charts
+│       │   ├── bills/          # Due Bills, Provider Picker & Refund System (UiEffect + operation guard)
+│       │   ├── budget/         # Monthly Spending Target & Locked Budget UI (OperationState)
+│       │   ├── components/     # M3 Dialogs, AppNavigationBar, UiEffect, OperationState
+│       │   ├── dashboard/      # Financial Runway Card & Recent Feeds
+│       │   ├── goals/          # Savings Goals, Pockets & Smart Calculator (UiEffect)
+│       │   ├── navigation/     # AppNavigation & 5-Item TopLevelDestinations
+│       │   ├── onboarding/     # AuthScreen (UiEffect), 3D Illustrated Onboarding
+│       │   ├── settings/       # Appearance (Material You), JSON Backup/Restore, Sync & Profile (UiEffect)
+│       │   ├── splash/         # Animated Branded Splash Screen
+│       │   ├── theme/          # Material 3 Color Schemes, Typography & Shapes
+│       │   ├── transaction/    # Add Expense, TransferScreen, Detail & Split Bill (UiEffect, guard)
+│       │   └── wallets/        # Multi-Wallet Management (UiEffect)
+│       └── utils/              # CurrencyFormatter, CurrencyVisualTransformation, DateUtils (UI)
+│   ├── build.gradle.kts        # + hilt-work, work-runtime-ktx, mockwebserver (test)
+│   └── schemas/                # Room schema 8.json, 9.json (outbox)
+└── server/                     # Go + Fiber + GORM + PostgreSQL
+    ├── cmd/api/main.go         # Fiber + AuthMiddlewareWithVerifier + route PATCH
     ├── internal/
-    │   ├── config/             # Environment configurations
-    │   ├── database/           # PostgreSQL connection & GORM AutoMigrate
-    │   ├── handler/            # HTTP Request Handlers (Deposit, Refund, Goals, Bills)
-    │   ├── middleware/         # Auth & Header Middlewares
-    │   ├── models/             # Database Models & Entities
-    │   ├── repository/         # Transactional Database Queries & GORM Operations
-    │   └── service/            # Business Logic & Runway Calculations
-    └── go.mod
+    │   ├── auth/               # TokenVerifier (Firebase ID token, dev fallback non-prod)
+    │   ├── config/             # ENV, CORS, IsProduction
+    │   ├── database/           # postgres.go AutoMigrate User/Wallet/Transaction/DueBill/Budget/Goal/IdempotencyKey
+    │   ├── handler/            # HTTP Handlers (DTO vs GORM model terpisah)
+    │   ├── middleware/         # AuthMiddlewareWithVerifier (Bearer → verified UID)
+    │   ├── models/             # GORM entities + IdempotencyKey (user_id,key PK)
+    │   ├── repository/         # Transactional queries (CreateTransaction, UpdateDueBillStatus, DepositToGoal)
+    │   └── service/            # Business logic
+    └── go.mod                  # go 1.23, Dockerfile golang:1.23-alpine
 ```
+
+**Stack tambahan Fase A–D:** Hilt Work (`hilt-work`), WorkManager (`work-runtime-ktx`), MockWebServer (`mockwebserver`), Gson `LOWER_CASE_WITH_UNDERSCORES`, Room `withTransaction`, `Channel<UiEffect>`.
 
 ---
 
@@ -172,6 +185,20 @@ go run cmd/api/main.go
 
 ```bash
 ./gradlew installDebug
+# atau multi-module assemble
+./gradlew :domain:build :data:assembleDebug :app:assembleDebug
+```
+
+### 3. Menjalankan Test & Verifikasi
+
+```bash
+# Unit test domain + data (termasuk ApiContractTest MockWebServer)
+./gradlew :domain:test :data:testDebugUnitTest --tests "*ApiContractTest*"
+
+# Verifikasi guard multi-module (domain tidak import Android)
+./gradlew :domain:check
+
+# Outbox manual: airplane → buat 3 transaksi → matikan airplane → cek WorkManager log "outbox_sync" sukses
 ```
 
 ---

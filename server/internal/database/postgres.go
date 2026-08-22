@@ -29,6 +29,7 @@ func Connect(databaseURL string) (*gorm.DB, error) {
 		&models.DueBill{},
 		&models.Budget{},
 		&models.Goal{},
+		&models.IdempotencyKey{},
 	)
 	if err != nil {
 		log.Printf("AutoMigrate error: %v", err)

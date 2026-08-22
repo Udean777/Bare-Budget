@@ -35,6 +35,7 @@ import com.ssajudn.barebudget.ui.common.UiEffect
 @Composable
 fun SettingsScreen(
     onNavigateBack: () -> Unit,
+    onReplayTour: () -> Unit = {},
     onSignOutSuccess: () -> Unit
 ) {
     val context = LocalContext.current
@@ -47,6 +48,7 @@ fun SettingsScreen(
     val isOperationLoading = operation is OperationState.Loading
 
     val themePrefs = remember { ThemePreferences.getInstance(context) }
+    val tourPrefs = remember { com.ssajudn.barebudget.data.local.TourPreferences.getInstance(context) }
     val colorMode by themePrefs.colorMode.collectAsStateWithLifecycle()
     val darkMode by themePrefs.darkMode.collectAsStateWithLifecycle()
     var showSignOutConfirmDialog by remember { mutableStateOf(false) }
@@ -305,6 +307,15 @@ fun SettingsScreen(
             com.ssajudn.barebudget.ui.components.Material3SettingsGroup(
                 title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_support_title),
                 items = listOf(
+                    com.ssajudn.barebudget.ui.components.Material3SettingsItem(
+                        title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_replay_tour_title),
+                        description = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_replay_tour_desc),
+                        icon = Icons.Default.Tour,
+                        onClick = {
+                            tourPrefs.resetTour()
+                            onReplayTour()
+                        }
+                    ),
                     com.ssajudn.barebudget.ui.components.Material3SettingsItem(
                         title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_donate_title),
                         description = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_donate_desc),

@@ -15,6 +15,7 @@ import com.ssajudn.barebudget.data.network.dto.DueBillListResponseDto
 import com.ssajudn.barebudget.data.network.dto.GoalDto
 import com.ssajudn.barebudget.data.network.dto.GoalListResponseDto
 import com.ssajudn.barebudget.data.network.dto.TransactionDto
+import com.ssajudn.barebudget.data.network.dto.UpdateWalletRequestDto
 import com.ssajudn.barebudget.data.network.dto.TransactionListResponseDto
 import com.ssajudn.barebudget.data.network.dto.UpdateDueBillRequestDto
 import com.ssajudn.barebudget.data.network.dto.UpdateGoalRequestDto
@@ -44,6 +45,9 @@ interface ApiService {
 
     @POST("api/v1/wallets")
     suspend fun createWallet(@Body request: CreateWalletRequestDto): Response<WalletDto>
+
+    @PUT("api/v1/wallets/{id}")
+    suspend fun updateWallet(@Path("id") id: String, @Body request: UpdateWalletRequestDto): Response<WalletDto>
 
     @DELETE("api/v1/wallets/{id}")
     suspend fun deleteWallet(@Path("id") id: String): Response<Map<String, String>>

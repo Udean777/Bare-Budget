@@ -56,6 +56,21 @@ class WalletRemoteDataSource @Inject constructor(
         }
     }
 
+    suspend fun updateWallet(wallet: Wallet): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val dtoReq = com.ssajudn.barebudget.data.network.dto.UpdateWalletRequestDto(wallet.name, wallet.colorHex, wallet.iconName)
+            val response = api.updateWallet(wallet.id!!, dtoReq)
+            if (response.isSuccessful && response.body() != null) {
+                db.walletDao().insertWallet(LocalWalletEntity.fromWallet(response.body()!!.toDomain(), isSynced = true))
+                Result.success(Unit)
+            } else {
+                Result.failure(ApiErrorParser.parse(response))
+            }
+        } catch (e: Exception) {
+            Result.failure(ApiErrorParser.fromThrowable(e))
+        }
+    }
+
     suspend fun deleteWallet(id: String): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
             val response = api.deleteWallet(id)

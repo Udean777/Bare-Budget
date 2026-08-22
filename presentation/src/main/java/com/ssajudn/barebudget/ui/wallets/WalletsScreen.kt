@@ -14,6 +14,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AccountBalanceWallet
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.*
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
@@ -31,6 +32,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.domain.model.Wallet
 import com.ssajudn.barebudget.ui.components.AppConfirmDialog
 import com.ssajudn.barebudget.ui.components.AppFormDialog
+import com.ssajudn.barebudget.ui.tour.tourAnchor
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.Spacing
 import com.ssajudn.barebudget.ui.theme.crispBorder
@@ -73,6 +75,7 @@ fun WalletsScreen(
         }
     }
     var showAddDialog by remember { mutableStateOf(false) }
+    var editingWallet by remember { mutableStateOf<Wallet?>(null) }
 
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
@@ -110,6 +113,7 @@ fun WalletsScreen(
             ElevatedCard(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .tourAnchor("wallets_summary")
                     .crispBorder(
                         shape = AppShapes.AsymmetricHeroReversed,
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
@@ -159,6 +163,7 @@ fun WalletsScreen(
                 items(uiState.wallets, key = { it.id ?: "" }) { wallet ->
                     WalletItem(
                         wallet = wallet,
+                        onEdit = { editingWallet = wallet },
                         onDelete = { viewModel.deleteWallet(wallet.id!!) }
                     )
                 }
@@ -167,11 +172,25 @@ fun WalletsScreen(
     }
 
     if (showAddDialog) {
-        AddWalletDialog(
+        WalletFormDialog(
+            title = stringResource(R.string.wallets_add_title),
+            initialWallet = null,
             onDismiss = { showAddDialog = false },
             onConfirm = { name, balance, color ->
                 viewModel.addWallet(name, balance, color)
                 showAddDialog = false
+            }
+        )
+    }
+
+    editingWallet?.let { wallet ->
+        WalletFormDialog(
+            title = stringResource(R.string.wallets_edit_title),
+            initialWallet = wallet,
+            onDismiss = { editingWallet = null },
+            onConfirm = { name, _, color ->
+                viewModel.editWallet(wallet, name, color)
+                editingWallet = null
             }
         )
     }
@@ -180,6 +199,7 @@ fun WalletsScreen(
 @Composable
 fun WalletItem(
     wallet: Wallet,
+    onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
     var showDeleteConfirm by remember { mutableStateOf(false) }
@@ -257,6 +277,18 @@ fun WalletItem(
                     }
 
                     IconButton(
+                        onClick = onEdit,
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Edit,
+                            contentDescription = stringResource(R.string.wallets_edit_desc),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+
+                    IconButton(
                         onClick = { showDeleteConfirm = true },
                         modifier = Modifier.size(32.dp)
                     ) {
@@ -304,24 +336,28 @@ fun WalletItem(
 }
 
 @Composable
-fun AddWalletDialog(
+fun WalletFormDialog(
+    title: String,
+    initialWallet: Wallet?,
     onDismiss: () -> Unit,
     onConfirm: (String, Long, String) -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(initialWallet?.name ?: "") }
     var balanceStr by remember { mutableStateOf("") }
     val colors = listOf("#2ECC71", "#3498DB", "#9B59B6", "#E67E22", "#E74C3C", "#34495E")
-    var selectedColor by remember { mutableStateOf(colors.first()) }
+    var selectedColor by remember {
+        mutableStateOf(initialWallet?.colorHex?.takeIf { it in colors } ?: colors.first())
+    }
 
     AppFormDialog(
-        title = stringResource(R.string.wallets_add_title),
+        title = title,
         icon = Icons.Default.AccountBalanceWallet,
         onDismissRequest = onDismiss,
         onConfirm = {
             val amt = balanceStr.replace("[^\\d]".toRegex(), "").toLongOrNull() ?: 0L
             onConfirm(name, amt, selectedColor)
         },
-        isConfirmEnabled = name.isNotBlank() && balanceStr.isNotBlank()
+        isConfirmEnabled = name.isNotBlank() && (initialWallet != null || balanceStr.isNotBlank())
     ) {
         OutlinedTextField(
             value = name,
@@ -332,23 +368,25 @@ fun AddWalletDialog(
             shape = MaterialTheme.shapes.medium
         )
 
-        OutlinedTextField(
-            value = balanceStr,
-            onValueChange = { newValue ->
-                val cleanString = newValue.replace("[^\\d]".toRegex(), "")
-                if (cleanString.length <= 15) {
-                    balanceStr = cleanString
-                }
-            },
-            label = { Text(stringResource(R.string.wallets_initial_balance)) },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
-            visualTransformation = CurrencyVisualTransformation(),
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            shape = MaterialTheme.shapes.medium
-        )
-        
-        Spacer(modifier = Modifier.height(Spacing.Small))
+        if (initialWallet == null) {
+            OutlinedTextField(
+                value = balanceStr,
+                onValueChange = { newValue ->
+                    val cleanString = newValue.replace("[^\\d]".toRegex(), "")
+                    if (cleanString.length <= 15) {
+                        balanceStr = cleanString
+                    }
+                },
+                label = { Text(stringResource(R.string.wallets_initial_balance)) },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                visualTransformation = CurrencyVisualTransformation(),
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                shape = MaterialTheme.shapes.medium
+            )
+        } else {
+            Spacer(modifier = Modifier.height(Spacing.Small))
+        }
         
         Text(
             text = stringResource(R.string.wallets_color),

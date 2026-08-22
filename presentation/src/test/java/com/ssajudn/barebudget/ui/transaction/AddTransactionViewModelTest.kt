@@ -6,10 +6,12 @@ import com.ssajudn.barebudget.domain.model.Transaction
 import com.ssajudn.barebudget.domain.model.TransactionCategory
 import com.ssajudn.barebudget.domain.model.TransactionType
 import com.ssajudn.barebudget.domain.model.Wallet
+import com.ssajudn.barebudget.domain.repository.BudgetRepository
 import com.ssajudn.barebudget.domain.repository.TransactionRepository
 import com.ssajudn.barebudget.domain.repository.WalletRepository
 import com.ssajudn.barebudget.testutil.MainDispatcherRule
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -43,6 +45,12 @@ class AddTransactionViewModelTest {
 
     private val walletRepository: WalletRepository = mockk(relaxed = true)
     private val transactionRepository: TransactionRepository = mockk(relaxed = true)
+    private val budgetRepository: BudgetRepository = mockk()
+
+    private fun createVm(monthlyBudget: Long = 2_000_000L): AddTransactionViewModel {
+        coEvery { budgetRepository.getMonthlyBudget(any()) } returns Result.success(monthlyBudget)
+        return AddTransactionViewModel(walletRepository, transactionRepository, budgetRepository)
+    }
 
     private fun walletsFixture(): List<Wallet> = listOf(
         Wallet(id = "w1", name = "Cash", balance = 100_000L),
@@ -53,7 +61,7 @@ class AddTransactionViewModelTest {
     fun `init loads wallets and selects first as default source`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(walletsFixture())
 
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         assertEquals(walletsFixture(), vm.uiState.value.wallets)
@@ -66,7 +74,7 @@ class AddTransactionViewModelTest {
     fun `init handles empty wallet list without crashing`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(emptyList())
 
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         assertTrue(vm.uiState.value.wallets.isEmpty())
@@ -76,7 +84,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `onAmountChange strips non-digits and parses to Long`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(emptyList())
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onAmountChange("Rp 50.000")
@@ -88,7 +96,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `onAmountChange caps input at 12 digits`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(emptyList())
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onAmountChange("1234567890123456789")
@@ -101,7 +109,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `onAmountChange with no digits yields zero parsed`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(emptyList())
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onAmountChange("abc")
@@ -113,7 +121,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `onTransactionTypeChange to INCOME selects SALARY category`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(emptyList())
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onTransactionTypeChange(TransactionType.INCOME)
@@ -125,7 +133,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `onTransactionTypeChange to TRANSFER selects TRANSFER category`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(emptyList())
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onTransactionTypeChange(TransactionType.TRANSFER)
@@ -136,7 +144,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `saveTransaction rejects zero amount with error message`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(walletsFixture())
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.saveTransaction()
@@ -151,7 +159,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `saveTransaction rejects missing wallet selection`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(emptyList())
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onAmountChange("10000")
@@ -168,7 +176,7 @@ class AddTransactionViewModelTest {
         coEvery { walletRepository.getWallets() } returns Result.success(listOf(
             Wallet(id = "w1", name = "Cash", balance = 0L)
         ))
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onTransactionTypeChange(TransactionType.TRANSFER)
@@ -191,7 +199,7 @@ class AddTransactionViewModelTest {
         coEvery { walletRepository.getWallets() } returns Result.success(listOf(
             Wallet(id = "w1", name = "Cash", balance = 100_000L)
         ))
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onTransactionTypeChange(TransactionType.TRANSFER)
@@ -209,7 +217,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `onWalletChange smart switches destination wallet when selecting current destination`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(walletsFixture())
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onTransactionTypeChange(TransactionType.TRANSFER)
@@ -227,7 +235,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `onToWalletChange smart switches source wallet when selecting current source`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(walletsFixture())
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onTransactionTypeChange(TransactionType.TRANSFER)
@@ -245,7 +253,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `swapWallets correctly swaps source and destination wallets`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(walletsFixture())
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onTransactionTypeChange(TransactionType.TRANSFER)
@@ -274,7 +282,7 @@ class AddTransactionViewModelTest {
             )
         )
 
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onAmountChange("50000")
@@ -293,7 +301,7 @@ class AddTransactionViewModelTest {
             transactionRepository.createTransaction(any<CreateTransactionRequest>())
         } returns Result.failure(RuntimeException("Network down"))
 
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onAmountChange("50000")
@@ -318,7 +326,7 @@ class AddTransactionViewModelTest {
             )
         )
 
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onAmountChange("10000")
@@ -347,7 +355,7 @@ class AddTransactionViewModelTest {
             )
         )
 
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.onTransactionTypeChange(TransactionType.TRANSFER)
@@ -364,7 +372,7 @@ class AddTransactionViewModelTest {
     @Test
     fun `uiState exposes StateFlow that emits state changes`() = runTest {
         coEvery { walletRepository.getWallets() } returns Result.success(walletsFixture())
-        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        val vm = createVm()
         advanceUntilIdle()
 
         vm.uiState.test {
@@ -378,5 +386,54 @@ class AddTransactionViewModelTest {
 
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun `saveTransaction expense blocked when monthly budget not set`() = runTest {
+        coEvery { walletRepository.getWallets() } returns Result.success(walletsFixture())
+
+        val vm = createVm(monthlyBudget = 0L)
+        advanceUntilIdle()
+
+        vm.onAmountChange("50000")
+        vm.saveTransaction()
+        advanceUntilIdle()
+
+        assertEquals("Setup anggaran bulan ini terlebih dahulu", vm.uiState.value.errorMessage)
+        assertFalse(vm.uiState.value.isSuccess)
+        coVerify(exactly = 0) { transactionRepository.createTransaction(any()) }
+    }
+
+    @Test
+    fun `saveTransaction transfer allowed when monthly budget not set`() = runTest {
+        coEvery { walletRepository.getWallets() } returns Result.success(walletsFixture())
+        coEvery {
+            transactionRepository.createTransaction(any<CreateTransactionRequest>())
+        } returns Result.success(
+            Transaction(
+                id = "x", amount = 1L, type = TransactionType.TRANSFER,
+                category = TransactionCategory.TRANSFER, merchant = "", date = "2026-08-19"
+            )
+        )
+
+        val vm = createVm(monthlyBudget = 0L)
+        advanceUntilIdle()
+
+        vm.onTransactionTypeChange(TransactionType.TRANSFER)
+        vm.onAmountChange("10000")
+        vm.saveTransaction()
+        advanceUntilIdle()
+
+        assertTrue(vm.uiState.value.isSuccess)
+    }
+
+    @Test
+    fun `init flags isBudgetMissing when budget not set`() = runTest {
+        coEvery { walletRepository.getWallets() } returns Result.success(emptyList())
+
+        val vm = createVm(monthlyBudget = 0L)
+        advanceUntilIdle()
+
+        assertTrue(vm.uiState.value.isBudgetMissing)
     }
 }

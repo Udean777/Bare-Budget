@@ -9,6 +9,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
@@ -26,6 +27,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -45,6 +47,7 @@ import com.ssajudn.barebudget.ui.onboarding.AuthScreen
 import com.ssajudn.barebudget.ui.onboarding.OnboardingScreen
 import com.ssajudn.barebudget.ui.settings.SettingsScreen
 import com.ssajudn.barebudget.ui.splash.SplashScreen
+import com.ssajudn.barebudget.ui.tour.tourAnchor
 import com.ssajudn.barebudget.ui.transaction.AddTransactionScreen
 import com.ssajudn.barebudget.ui.transaction.AllTransactionsScreen
 import com.ssajudn.barebudget.ui.transaction.TransactionDetailScreen
@@ -102,6 +105,7 @@ private fun rememberTopLevelDestinations(): List<NavigationBarItemData> {
                 label = bills,
                 icon = Icons.AutoMirrored.Outlined.ReceiptLong,
                 selectedIcon = Icons.AutoMirrored.Filled.ReceiptLong,
+                tourAnchorKey = "nav_bills",
             ),
             NavigationBarItemData(
                 route = Screen.Transfer.route,
@@ -120,6 +124,7 @@ private fun rememberTopLevelDestinations(): List<NavigationBarItemData> {
                 label = analytics,
                 icon = Icons.AutoMirrored.Outlined.TrendingUp,
                 selectedIcon = Icons.AutoMirrored.Filled.TrendingUp,
+                tourAnchorKey = "nav_analytics",
             ),
         )
     }
@@ -136,6 +141,63 @@ fun AppNavigation(
     val showNavigationBar = currentRoute in TopLevelRoutes
     val topLevelDestinations = rememberTopLevelDestinations()
 
+    // ---- Tour guide state (hoisted here so the overlay covers FAB + bottom bar too) ----
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val tourPrefs = remember { com.ssajudn.barebudget.data.local.TourPreferences.getInstance(context) }
+    val tourRegistry = remember { com.ssajudn.barebudget.ui.tour.TourRegistry() }
+    var tourIndex by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableIntStateOf(-1) }
+
+    // Registry is never cleared: anchors re-register themselves on every layout pass,
+    // and a clear() landing after the new screen's layout pass would wipe its anchor
+    // with no re-registration (static screen = tour silently invisible). Stale entries
+    // are harmless — overlay only reads the anchor when currentRoute matches the step.
+    androidx.compose.runtime.LaunchedEffect(currentRoute) {
+        if (tourIndex == -1 && currentRoute == Screen.Dashboard.route && !tourPrefs.isTourCompleted) {
+            tourIndex = 0
+        }
+    }
+
+    fun navigateToStepRoute(route: String) {
+        if (navController.currentDestination?.route == route) return
+        // ponytail: plain navigate, no popUpTo games — endTour resets the whole stack anyway
+        navController.navigate(route) { launchSingleTop = true }
+    }
+
+    fun goToStep(index: Int) {
+        tourIndex = index
+        val step = com.ssajudn.barebudget.ui.tour.TourScript.steps.getOrNull(index)
+        if (step != null && currentRoute != step.route) navigateToStepRoute(step.route)
+    }
+
+    fun endTour() {
+        tourPrefs.markTourCompleted()
+        tourIndex = -1
+        navController.navigate(Screen.Dashboard.route) {
+            popUpTo(0) { inclusive = true }
+            launchSingleTop = true
+        }
+    }
+
+    // Watchdog: click-driven goToStep() navigates immediately, but a navigate() racing a
+    // screen transition can be dropped. Re-issue once shortly after; no-op if already there.
+    androidx.compose.runtime.LaunchedEffect(tourIndex) {
+        val step = com.ssajudn.barebudget.ui.tour.TourScript.steps.getOrNull(tourIndex)
+            ?: return@LaunchedEffect
+            kotlinx.coroutines.delay(800)
+            navigateToStepRoute(step.route)
+    }
+
+    val currentTourStep = com.ssajudn.barebudget.ui.tour.TourScript.steps.getOrNull(tourIndex)
+    // Gate by route so stale anchor bounds from other screens are never highlighted.
+    val tourAnchorRect =
+        if (currentTourStep != null && currentRoute == currentTourStep.route) {
+            tourRegistry.anchors[currentTourStep.anchorKey]
+        } else null
+
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.ssajudn.barebudget.ui.tour.LocalTourRegistry provides tourRegistry
+    ) {
+    androidx.compose.foundation.layout.Box(modifier = Modifier.fillMaxSize()) {
     Scaffold(
         bottomBar = {
             // AnimatedVisibility rather than `if`: the bar slides out instead of
@@ -169,6 +231,7 @@ fun AppNavigation(
             ) {
                 FloatingActionButton(
                     onClick = { navController.navigate(Screen.AddTransaction.route) },
+                    modifier = Modifier.tourAnchor("fab_add_transaction"),
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Catat pengeluaran")
                 }
@@ -282,6 +345,11 @@ fun AppNavigation(
                     onNavigateBack = {
                         navController.popBackStack()
                     },
+                    onReplayTour = {
+                        navController.navigate(Screen.Dashboard.route) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
                     onSignOutSuccess = {
                         navController.navigate(Screen.Auth.route) {
                             popUpTo(0) { inclusive = true }
@@ -309,6 +377,9 @@ fun AppNavigation(
                 AddTransactionScreen(
                     onNavigateBack = {
                         navController.popBackStack()
+                    },
+                    onNavigateToBudget = {
+                        navController.navigate(Screen.Budget.route)
                     }
                 )
             }
@@ -363,5 +434,19 @@ fun AppNavigation(
                 )
             }
         }
+    }
+
+        com.ssajudn.barebudget.ui.tour.TourOverlay(
+            step = currentTourStep,
+            anchorRect = tourAnchorRect,
+            stepIndex = tourIndex,
+            totalSteps = com.ssajudn.barebudget.ui.tour.TourScript.steps.size,
+            onNext = {
+                if (tourIndex >= com.ssajudn.barebudget.ui.tour.TourScript.steps.lastIndex) endTour()
+                else goToStep(tourIndex + 1)
+            },
+            onSkip = { endTour() }
+        )
+    }
     }
 }

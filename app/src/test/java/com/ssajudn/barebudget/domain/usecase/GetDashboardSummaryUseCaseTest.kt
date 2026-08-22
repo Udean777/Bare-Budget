@@ -50,6 +50,7 @@ private class FakeTxRepo(var txs: List<Transaction> = emptyList()) : Transaction
 private class FakeWalletRepo(var wallets: List<Wallet> = emptyList()) : WalletRepository {
     override suspend fun getWallets() = Result.success(wallets)
     override suspend fun createWallet(request: CreateWalletRequest) = Result.success(wallets.firstOrNull()!!)
+    override suspend fun updateWallet(wallet: Wallet) = Result.success(Unit)
     override suspend fun deleteWallet(id: String) = Result.success(true)
     override fun observeWallets(): Flow<List<Wallet>> = flowOf(wallets)
 }

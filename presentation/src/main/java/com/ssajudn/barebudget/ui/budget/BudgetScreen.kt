@@ -24,6 +24,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.crispBorder
+import com.ssajudn.barebudget.ui.tour.tourAnchor
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 
@@ -122,6 +123,7 @@ fun BudgetScreen(
             ElevatedCard(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .tourAnchor("budget_explainer")
                     .crispBorder(
                         shape = AppShapes.AsymmetricHero,
                         color = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)

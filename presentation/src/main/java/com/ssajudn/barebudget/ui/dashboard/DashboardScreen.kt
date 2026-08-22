@@ -39,6 +39,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.ssajudn.barebudget.presentation.R
+import com.ssajudn.barebudget.ui.tour.tourAnchor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -276,6 +277,7 @@ fun DashboardContent(
         // 1. FINANCIAL RUNWAY CARD (Core Feature)
         item {
             FinancialRunwayCard(
+                modifier = Modifier.tourAnchor("dashboard_runway"),
                 remainingBudget = summary.remainingBudget,
                 netWorth = summary.netWorth,
                 totalBudget = summary.monthlyBudget,
@@ -289,7 +291,9 @@ fun DashboardContent(
         // 2. QUICK ACTION TILES (M3 Surface Containers)
         item {
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .tourAnchor("dashboard_quick_actions"),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 QuickActionCard(

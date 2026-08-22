@@ -19,3 +19,5 @@ data class WalletDto(
 }
 
 data class CreateWalletRequestDto(@SerializedName("name") val name: String, @SerializedName("balance") val balance: Long, @SerializedName("color_hex") val colorHex: String, @SerializedName("icon_name") val iconName: String)
+
+data class UpdateWalletRequestDto(@SerializedName("name") val name: String, @SerializedName("color_hex") val colorHex: String, @SerializedName("icon_name") val iconName: String)

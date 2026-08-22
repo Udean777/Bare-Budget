@@ -80,6 +80,19 @@ class WalletLocalDataSource @Inject constructor(
         }
     }
 
+    suspend fun updateWallet(wallet: Wallet): Result<Unit> = withContext(Dispatchers.IO) {
+        try {
+            val existing = db.walletDao().getWalletById(wallet.id!!)
+                ?: return@withContext Result.failure(Exception("Dompet tidak ditemukan"))
+            db.walletDao().insertWallet(
+                existing.copy(name = wallet.name, colorHex = wallet.colorHex, isSynced = false)
+            )
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(ApiErrorParser.fromThrowable(e))
+        }
+    }
+
     suspend fun deleteWallet(id: String): Result<Boolean> = withContext(Dispatchers.IO) {
         try {
             db.walletDao().deleteWallet(id)

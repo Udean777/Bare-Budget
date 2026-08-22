@@ -41,6 +41,7 @@ import com.ssajudn.barebudget.utils.DateUtils
 @Composable
 fun AddTransactionScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToBudget: () -> Unit = {},
     viewModel: AddTransactionViewModel = hiltViewModel()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
@@ -50,7 +51,7 @@ fun AddTransactionScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is UiEffect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
-                is UiEffect.Navigate -> {}
+                is UiEffect.Navigate -> onNavigateToBudget()
                 is UiEffect.PopBackStack -> {}
             }
         }
@@ -129,6 +130,31 @@ fun AddTransactionScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            // 0. BUDGET GATE BANNER
+            if (uiState.isBudgetMissing && uiState.transactionType != TransactionType.TRANSFER) {
+                Surface(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colorScheme.errorContainer,
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = stringResource(R.string.tx_budget_not_set),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.weight(1f)
+                        )
+                        TextButton(onClick = onNavigateToBudget) {
+                            Text(stringResource(R.string.tx_budget_set_action), fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+
             // 0. TRANSACTION TYPE (Expense / Income / Transfer)
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 val types = listOf(

@@ -35,12 +35,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.crispBorder
+import com.ssajudn.barebudget.ui.tour.tourAnchor
  
 data class NavigationBarItemData(
     val route: String,
     val label: String,
     val icon: ImageVector,
     val selectedIcon: ImageVector? = null,
+    val tourAnchorKey: String? = null,
 )
 
 /**
@@ -105,6 +107,10 @@ fun AppNavigationBar(
                     Box(
                         modifier = Modifier
                             .weight(1f)
+                            .then(
+                                if (item.tourAnchorKey != null) Modifier.tourAnchor(item.tourAnchorKey)
+                                else Modifier
+                            )
                             .clip(AppShapes.Pill)
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },

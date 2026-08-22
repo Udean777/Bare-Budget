@@ -16,8 +16,6 @@
     <string name="nav_goals">Goals</string>
     <string name="nav_analytics">Analytics</string>
     <!-- Onboarding tour -->
-    <string name="tour_skip">Skip</string>
-    <string name="tour_next">Next</string>
     <string name="tour_finish">Finish</string>
     <!-- Common -->
     <string name="common_close">Close</string>
@@ -113,6 +111,28 @@
     <string name="wallets_name_label">Wallet Name (e.g. BCA, Cash)</string>
     <string name="wallets_initial_balance">Initial Balance</string>
     <string name="wallets_color">Wallet Color</string>
+    <string name="wallets_edit_desc">Edit Wallet</string>
+    <string name="wallets_edit_title">Edit Wallet</string>
+    <string name="tx_budget_not_set">Budget for this month has not been set</string>
+<string name="settings_replay_tour_title">Replay Tour</string>
+    <string name="settings_replay_tour_desc">Re-run the app introduction tour</string>
+    <string name="tour_step1_title">Financial Runway</string>
+    <string name="tour_step1_desc">This card shows your remaining budget and estimates when your money runs out this month.</string>
+    <string name="tour_step2_title">Quick Actions</string>
+    <string name="tour_step2_desc">Quick access to Wallets, Bills, Savings Goals, and Analytics.</string>
+    <string name="tour_step3_title">Set Monthly Budget</string>
+    <string name="tour_step3_desc">Set this month\'s budget here first — expense &amp; income transactions stay locked until it\'s set.</string>
+    <string name="tour_step4_title">My Wallets</string>
+    <string name="tour_step4_desc">A \"Cash\" wallet is created automatically. Every transaction must go through a wallet — create more (bank, e-wallet) here.</string>
+    <string name="tour_step5_title">Record Transaction</string>
+    <string name="tour_step5_desc">Tap + to record an expense or income, then pick the source/destination wallet.</string>
+    <string name="tour_step6_title">Recurring Bills</string>
+    <string name="tour_step6_desc">Manage recurring bills and due-date reminders from the Bills tab.</string>
+    <string name="tour_step7_title">Analytics</string>
+    <string name="tour_step7_desc">Track cashflow trends and net worth growth in the Analytics tab.</string>
+    <string name="tour_skip">Skip</string>
+    <string name="tour_next">Next</string>
+        <string name="tx_budget_set_action">Set Budget</string>
     <!-- Goals -->
     <string name="goals_title">Savings Goals</string>
     <string name="goals_filter_all">All</string>

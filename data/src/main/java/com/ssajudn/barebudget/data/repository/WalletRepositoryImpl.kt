@@ -25,6 +25,10 @@ class WalletRepositoryImpl @Inject constructor(
         if (sessionManager.isGuestMode) local.createWallet(request)
         else remote.createWallet(request)
 
+    override suspend fun updateWallet(wallet: Wallet): Result<Unit> =
+        if (sessionManager.isGuestMode) local.updateWallet(wallet)
+        else remote.updateWallet(wallet)
+
     override suspend fun deleteWallet(id: String): Result<Boolean> =
         if (sessionManager.isGuestMode) local.deleteWallet(id)
         else remote.deleteWallet(id)

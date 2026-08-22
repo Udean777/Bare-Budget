@@ -6,6 +6,7 @@ import com.ssajudn.barebudget.domain.model.CreateTransactionRequest
 import com.ssajudn.barebudget.domain.model.TransactionCategory
 import com.ssajudn.barebudget.domain.model.TransactionType
 import com.ssajudn.barebudget.domain.model.Wallet
+import com.ssajudn.barebudget.domain.repository.BudgetRepository
 import com.ssajudn.barebudget.domain.repository.TransactionRepository
 import com.ssajudn.barebudget.domain.repository.WalletRepository
 import com.ssajudn.barebudget.utils.DateUtils
@@ -35,13 +36,15 @@ data class AddTransactionUiState(
     val notes: String = "",
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
-    val isSuccess: Boolean = false
+    val isSuccess: Boolean = false,
+    val isBudgetMissing: Boolean = false
 )
 
 @HiltViewModel
 class AddTransactionViewModel @Inject constructor(
     private val walletRepository: WalletRepository,
-    private val transactionRepository: TransactionRepository
+    private val transactionRepository: TransactionRepository,
+    private val budgetRepository: BudgetRepository
 ) : ViewModel() {
     private val _operation = kotlinx.coroutines.flow.MutableStateFlow<OperationState>(OperationState.Idle)
     val operation: kotlinx.coroutines.flow.StateFlow<OperationState> = _operation.asStateFlow()
@@ -54,6 +57,15 @@ class AddTransactionViewModel @Inject constructor(
 
     init {
         loadWallets()
+        loadBudgetStatus()
+    }
+
+    // ponytail: snapshot untuk banner saja; save selalu cek ulang langsung ke repository
+    private fun loadBudgetStatus() {
+        viewModelScope.launch {
+            val budget = budgetRepository.getMonthlyBudget("")
+            _uiState.value = _uiState.value.copy(isBudgetMissing = budget.getOrDefault(0L) <= 0L)
+        }
     }
 
     private fun loadWallets() {
@@ -206,6 +218,20 @@ class AddTransactionViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = state.copy(isLoading = true, errorMessage = null)
             _operation.value = OperationState.Loading
+
+            // Gerbang budget: income/expense wajib punya budget bulan berjalan; transfer bebas
+            if (state.transactionType != TransactionType.TRANSFER) {
+                val monthlyBudget = budgetRepository.getMonthlyBudget("").getOrDefault(0L)
+                if (monthlyBudget <= 0L) {
+                    val msg = "Setup anggaran bulan ini terlebih dahulu"
+                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = msg)
+                    _operation.value = OperationState.Error(msg)
+                    _effect.send(UiEffect.ShowSnackbar(msg))
+                    _effect.send(UiEffect.Navigate(com.ssajudn.barebudget.ui.navigation.Screen.Budget.route))
+                    return@launch
+                }
+            }
+
             val sourceWalletName = state.wallets.find { it.id == state.selectedWalletId }?.name ?: "Dompet"
             val targetWalletName = state.wallets.find { it.id == state.selectedToWalletId }?.name ?: "Dompet"
 

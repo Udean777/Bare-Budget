@@ -16,8 +16,6 @@
     <string name="nav_goals">Target</string>
     <string name="nav_analytics">Analitik</string>
     <!-- Onboarding tour -->
-    <string name="tour_skip">Lewati</string>
-    <string name="tour_next">Lanjut</string>
     <string name="tour_finish">Selesai</string>
     <!-- Common -->
     <string name="common_close">Tutup</string>
@@ -113,6 +111,28 @@
     <string name="wallets_name_label">Nama Dompet (contoh: BCA, Tunai)</string>
     <string name="wallets_initial_balance">Saldo Awal</string>
     <string name="wallets_color">Warna Dompet</string>
+    <string name="wallets_edit_desc">Edit Dompet</string>
+    <string name="wallets_edit_title">Edit Dompet</string>
+    <string name="tx_budget_not_set">Anggaran bulan ini belum diatur</string>
+<string name="settings_replay_tour_title">Putar Ulang Tur</string>
+    <string name="settings_replay_tour_desc">Jalankan ulang tur pengenalan aplikasi</string>
+    <string name="tour_step1_title">Runway Keuangan</string>
+    <string name="tour_step1_desc">Kartu ini menunjukkan sisa anggaran dan estimasi kapan uangmu habis bulan ini.</string>
+    <string name="tour_step2_title">Aksi Cepat</string>
+    <string name="tour_step2_desc">Akses cepat ke Dompet, Tagihan, Target Menabung, dan Analitik.</string>
+    <string name="tour_step3_title">Atur Anggaran Bulanan</string>
+    <string name="tour_step3_desc">Setup anggaran bulan berjalan di sini dulu — transaksi expense &amp; income terkunci sampai anggaran diset.</string>
+    <string name="tour_step4_title">Dompetku</string>
+    <string name="tour_step4_desc">Dompet \"Uang Tunai\" sudah tersedia otomatis. Semua transaksi wajib lewat dompet — buat dompet lain (BCA, GoPay, dll) di sini.</string>
+    <string name="tour_step5_title">Catat Transaksi</string>
+    <string name="tour_step5_desc">Tekan tombol + untuk mencatat expense atau income, lalu pilih dompet asal/tujuannya.</string>
+    <string name="tour_step6_title">Tagihan Rutin</string>
+    <string name="tour_step6_desc">Kelola tagihan rutin dan pengingat jatuh tempo dari tab Tagihan.</string>
+    <string name="tour_step7_title">Analitik</string>
+    <string name="tour_step7_desc">Lihat tren cashflow dan perkembangan kekayaan bersihmu di tab Analitik.</string>
+    <string name="tour_skip">Lewati</string>
+    <string name="tour_next">Lanjut</string>
+        <string name="tx_budget_set_action">Atur Anggaran</string>
     <!-- Goals -->
     <string name="goals_title">Target Menabung</string>
     <string name="goals_filter_all">Semua</string>

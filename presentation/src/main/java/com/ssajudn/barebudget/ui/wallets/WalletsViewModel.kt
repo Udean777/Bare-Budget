@@ -60,6 +60,15 @@ class WalletsViewModel @Inject constructor(
         }
     }
 
+    fun editWallet(wallet: Wallet, name: String, colorHex: String) {
+        viewModelScope.launch {
+            _operation.value = OperationState.Loading
+            val r = repository.updateWallet(wallet.copy(name = name, colorHex = colorHex))
+            _operation.value = if (r.isSuccess) OperationState.Success() else OperationState.Error(r.exceptionOrNull()?.message ?: "Gagal")
+            if (r.isFailure) _effect.send(UiEffect.ShowSnackbar(r.exceptionOrNull()?.message ?: "Gagal"))
+        }
+    }
+
     fun deleteWallet(id: String) {
         viewModelScope.launch {
             val r = repository.deleteWallet(id)

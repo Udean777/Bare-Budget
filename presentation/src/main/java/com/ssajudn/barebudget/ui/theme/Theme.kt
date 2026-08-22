@@ -75,7 +75,8 @@ fun BareBudgetTheme(
         dynamicColorScheme(
             seedColor = themeColor,
             isDark = darkTheme,
-            contrastLevel = 0.0,
+            // Subtle contrast enhancement (0.15) provides punchier tonal surfaces and legibility
+            contrastLevel = 0.15,
             style = paletteStyleFor(themeColor),
         )
     }

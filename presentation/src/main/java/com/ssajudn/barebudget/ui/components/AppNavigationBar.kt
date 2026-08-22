@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -77,7 +78,7 @@ fun AppNavigationBar(
                 ),
             shape = AppShapes.Pill,
             color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.95f),
-            tonalElevation = 6.dp
+            tonalElevation = 8.dp
         ) {
             Row(
                 modifier = Modifier
@@ -120,6 +121,13 @@ fun AppNavigationBar(
                                 modifier = Modifier
                                     .clip(AppShapes.Pill)
                                     .background(animatedContainerColor)
+                                    .then(
+                                        if (selected) Modifier.border(
+                                            1.dp,
+                                            MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                                            AppShapes.Pill
+                                        ) else Modifier
+                                    )
                                     .padding(horizontal = 14.dp, vertical = 4.dp),
                                 contentAlignment = Alignment.Center
                             ) {

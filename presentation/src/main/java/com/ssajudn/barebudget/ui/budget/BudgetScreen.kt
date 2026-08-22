@@ -4,7 +4,6 @@ import com.ssajudn.barebudget.ui.common.OperationState
 import com.ssajudn.barebudget.ui.common.UiEffect
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,11 +15,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.crispBorder
 import com.ssajudn.barebudget.utils.CurrencyFormatter
@@ -57,7 +58,7 @@ fun BudgetScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Monthly Budget",
+                        text = stringResource(R.string.budget_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -65,7 +66,7 @@ fun BudgetScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -98,7 +99,7 @@ fun BudgetScreen(
                         )
                     } else {
                         Text(
-                            text = if (uiState.isLocked) "Budget Terkunci Bulan Ini" else "Save Monthly Budget",
+                            text = if (uiState.isLocked) stringResource(R.string.budget_locked_btn) else stringResource(R.string.budget_save_btn),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold
                             )
@@ -133,7 +134,7 @@ fun BudgetScreen(
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
-                        text = "LACAK FINANCIAL RUNWAY",
+                        text = stringResource(R.string.budget_runway_banner_title),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.sp
@@ -142,7 +143,7 @@ fun BudgetScreen(
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Menentukan batas belanja bulanan memungkinkan Bare Budget menghitung kecepatan pengeluaran harian dan tanggal bertahan hidup finansialmu secara akurat.",
+                        text = stringResource(R.string.budget_runway_banner_desc),
                         style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
                         color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
@@ -164,13 +165,13 @@ fun BudgetScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
-                            text = "Budget bulan ini sudah terkunci",
+                            text = stringResource(R.string.budget_locked_title),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onTertiaryContainer
                         )
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
-                            text = "Saat ini ${CurrencyFormatter.formatRupiah(uiState.currentLimit)}. Kamu hanya bisa mengubah budget 1x per bulan. Budget akan bisa diubah lagi bulan depan.",
+                            text = stringResource(R.string.budget_locked_desc, CurrencyFormatter.formatRupiah(uiState.currentLimit)),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
                         )
@@ -192,7 +193,7 @@ fun BudgetScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Target Anggaran Bulanan",
+                        text = stringResource(R.string.budget_input_label),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -229,7 +230,7 @@ fun BudgetScreen(
 
             // Quick Selection Presets
             Text(
-                text = "Preset Cepat",
+                text = stringResource(R.string.budget_presets_label),
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold
                 ),

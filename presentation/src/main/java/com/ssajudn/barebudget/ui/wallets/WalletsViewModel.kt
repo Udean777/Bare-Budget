@@ -42,7 +42,7 @@ class WalletsViewModel @Inject constructor(
         .catch { e -> emit(WalletsUiState(error = e.message ?: "Gagal memuat dompet")) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WalletsUiState(isLoading = true))
 
-    // ponytail: one-shot for default-wallet creation + remote refresh (Flow is source of truth)
+    // Triggers initial remote refresh and default wallet provisioning; observed Flow remains source of truth
     init {
         viewModelScope.launch { repository.getWallets() }
     }

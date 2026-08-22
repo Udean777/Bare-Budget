@@ -21,12 +21,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.Spacing
@@ -62,7 +65,7 @@ fun AnalyticsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Analitik Keuangan",
+                        text = stringResource(R.string.analytics_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -71,7 +74,7 @@ fun AnalyticsScreen(
                 navigationIcon = {
                     if (onNavigateBack != null) {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                         }
                     }
                 },
@@ -105,7 +108,7 @@ fun AnalyticsScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Gagal memuat analitik",
+                            text = stringResource(R.string.analytics_error_title),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -117,7 +120,7 @@ fun AnalyticsScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = { viewModel.loadAnalyticsData() }) {
-                            Text("Coba Lagi")
+                            Text(stringResource(R.string.common_retry))
                         }
                     }
                 }
@@ -171,7 +174,11 @@ fun AnalyticsContent(
                                 }
                                 Icon(icon, contentDescription = null, modifier = Modifier.size(16.dp))
                                 Text(
-                                    text = tab.title,
+                                    text = when (tab) {
+                                        AnalyticsTab.CASHFLOW -> stringResource(R.string.analytics_tab_cashflow)
+                                        AnalyticsTab.NET_WORTH -> stringResource(R.string.analytics_tab_networth)
+                                        AnalyticsTab.CATEGORIES -> stringResource(R.string.analytics_tab_categories)
+                                    },
                                     fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
                                 )
                             }
@@ -203,7 +210,7 @@ fun AnalyticsContent(
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
                             Text(
-                                text = "RINGKASAN ARUS KAS",
+                                text = stringResource(R.string.analytics_cashflow_summary),
                                 style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -224,7 +231,7 @@ fun AnalyticsContent(
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text(
-                                            text = "Pemasukan",
+                                            text = stringResource(R.string.analytics_income),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -247,7 +254,7 @@ fun AnalyticsContent(
                                         )
                                         Spacer(modifier = Modifier.width(4.dp))
                                         Text(
-                                            text = "Pengeluaran",
+                                            text = stringResource(R.string.analytics_expense),
                                             style = MaterialTheme.typography.bodySmall,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -272,7 +279,7 @@ fun AnalyticsContent(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = if (isSurplus) "Arus Kas Bersih (Surplus)" else "Arus Kas Bersih (Defisit)",
+                                    text = if (isSurplus) stringResource(R.string.analytics_net_cashflow_surplus) else stringResource(R.string.analytics_net_cashflow_deficit),
                                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                                     color = MaterialTheme.colorScheme.onSurface
                                 )
@@ -304,7 +311,7 @@ fun AnalyticsContent(
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
                             Text(
-                                text = "Tren Arus Kas 6 Bulan Terakhir",
+                                text = stringResource(R.string.analytics_cashflow_trend),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -349,7 +356,7 @@ fun AnalyticsContent(
 
                             Column {
                                 Text(
-                                    text = "Total Kekayaan Bersih Saat Ini",
+                                    text = stringResource(R.string.analytics_networth_current),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                 )
@@ -378,7 +385,7 @@ fun AnalyticsContent(
                     ) {
                         Column(modifier = Modifier.padding(20.dp)) {
                             Text(
-                                text = "Pertumbuhan Kekayaan Bersih",
+                                text = stringResource(R.string.analytics_networth_growth),
                                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                                 color = MaterialTheme.colorScheme.onSurface
                             )
@@ -423,7 +430,7 @@ fun AnalyticsContent(
 
                             Column {
                                 Text(
-                                    text = "${state.savageStreakDays} Hari Savage Streak!",
+                                    text = stringResource(R.string.analytics_savage_streak, state.savageStreakDays),
                                     style = MaterialTheme.typography.titleMedium.copy(
                                         fontWeight = FontWeight.Bold,
                                         color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -431,7 +438,7 @@ fun AnalyticsContent(
                                 )
                                 Spacer(modifier = Modifier.height(2.dp))
                                 Text(
-                                    text = "Pengeluaran disiplin & terkendali.",
+                                    text = stringResource(R.string.analytics_savage_desc),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
                                 )
@@ -452,7 +459,7 @@ fun AnalyticsContent(
                     ) {
                         Column(modifier = Modifier.padding(18.dp)) {
                             Text(
-                                text = "Pengeluaran Terbesar",
+                                text = stringResource(R.string.analytics_top_spending),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -495,7 +502,7 @@ fun AnalyticsContent(
                                                 color = MaterialTheme.colorScheme.onSurface
                                             )
                                             Text(
-                                                text = "${(topCat.percentage * 100).toInt()}% dari total pengeluaran",
+                                                text = stringResource(R.string.analytics_percent_of_total, (topCat.percentage * 100).toInt()),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -512,7 +519,7 @@ fun AnalyticsContent(
                                 }
                             } else {
                                 Text(
-                                    text = "Belum ada pengeluaran di bulan ini.",
+                                    text = stringResource(R.string.analytics_no_expense),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -524,7 +531,7 @@ fun AnalyticsContent(
                 // 3. Category Distribution List
                 item {
                     Text(
-                        text = "Distribusi per Kategori",
+                        text = stringResource(R.string.analytics_distribution),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -546,7 +553,7 @@ fun AnalyticsContent(
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
-                                    text = "Belum ada data kategori.",
+                                    text = stringResource(R.string.analytics_no_category),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant
                                 )
@@ -622,7 +629,7 @@ fun CategoryBreakdownRow(item: CategoryBreakdownItem) {
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "$percentageInt% (${item.transactionCount} transaksi)",
+                        text = "$percentageInt% (${pluralStringResource(R.plurals.transactions_count, item.transactionCount.toInt(), item.transactionCount.toInt())})",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

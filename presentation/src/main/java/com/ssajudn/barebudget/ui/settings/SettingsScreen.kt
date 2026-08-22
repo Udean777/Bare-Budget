@@ -24,6 +24,7 @@ import com.ssajudn.barebudget.ui.components.AppConfirmDialog
 import com.ssajudn.barebudget.ui.theme.*
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.res.stringResource
 import com.ssajudn.barebudget.presentation.BuildConfig
 import com.ssajudn.barebudget.data.local.ThemePreferences
 import com.ssajudn.barebudget.domain.AppConfig
@@ -97,7 +98,7 @@ fun SettingsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Pengaturan",
+                        text = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -105,7 +106,7 @@ fun SettingsScreen(
                 },
                 navigationIcon = {
                     IconButton(enabled = !isOperationLoading, onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(com.ssajudn.barebudget.presentation.R.string.common_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -179,7 +180,7 @@ fun SettingsScreen(
                             color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f)
                         ) {
                             Text(
-                                text = "Google Account Connected",
+                                text = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_google_connected),
                                 style = MaterialTheme.typography.labelMedium.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
@@ -193,11 +194,11 @@ fun SettingsScreen(
 
             // 2. OFFLINE BACKUP & RESTORE GROUP
             com.ssajudn.barebudget.ui.components.Material3SettingsGroup(
-                title = "Cadangan Data (Offline Backup)",
+                title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_backup_title),
                 items = listOf(
                     com.ssajudn.barebudget.ui.components.Material3SettingsItem(
-                        title = "Ekspor File Backup (Download)",
-                        description = "Simpan semua transaksi, tagihan, dompet, dan target tabungan ke file JSON",
+                        title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_export_title),
+                        description = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_export_desc),
                         icon = Icons.Default.FileDownload,
                         onClick = {
                             val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
@@ -205,8 +206,8 @@ fun SettingsScreen(
                         }
                     ),
                     com.ssajudn.barebudget.ui.components.Material3SettingsItem(
-                        title = "Impor File Backup (Restore)",
-                        description = "Pulihkan seluruh data dari file JSON cadangan sebelumnya",
+                        title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_import_title),
+                        description = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_import_desc),
                         icon = Icons.Default.FileUpload,
                         onClick = {
                             importBackupLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
@@ -218,11 +219,11 @@ fun SettingsScreen(
             // 3. CLOUD SYNC GROUP (Opsional untuk Guest yang ingin sync Google)
             if (uiState.isGuestMode) {
                 com.ssajudn.barebudget.ui.components.Material3SettingsGroup(
-                    title = "Akun & Cloud Sync (Opsional)",
+                    title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_cloud_title),
                     items = listOf(
                         com.ssajudn.barebudget.ui.components.Material3SettingsItem(
-                            title = "Hubungkan Akun Google",
-                            description = "Sinkronkan data secara otomatis ke cloud",
+                            title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_link_google_title),
+                            description = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_link_google_desc),
                             icon = Icons.Default.CloudUpload,
                             onClick = { viewModel.linkWithGoogle() }
                         )
@@ -238,13 +239,75 @@ fun SettingsScreen(
                 onDarkModeChange = themePrefs::setDarkMode,
             )
 
-            // 4. SUPPORT & APPRECIATION GROUP
+            // 4. LANGUAGE SETTINGS
+            var currentLanguage by remember { mutableStateOf(com.ssajudn.barebudget.utils.LanguageManager.getCurrentLanguageCode(context)) }
+            var showLanguageDialog by remember { mutableStateOf(false) }
+
             com.ssajudn.barebudget.ui.components.Material3SettingsGroup(
-                title = "Dukungan & Apresiasi",
+                title = androidx.compose.ui.res.stringResource(com.ssajudn.barebudget.presentation.R.string.language_settings),
                 items = listOf(
                     com.ssajudn.barebudget.ui.components.Material3SettingsItem(
-                        title = "Donasi untuk Pengembang",
-                        description = "Traktir kopi atau dukung kelanjutan BareBudget",
+                        title = androidx.compose.ui.res.stringResource(com.ssajudn.barebudget.presentation.R.string.language_settings),
+                        description = if (currentLanguage == "id") {
+                            androidx.compose.ui.res.stringResource(com.ssajudn.barebudget.presentation.R.string.language_indonesian)
+                        } else {
+                            androidx.compose.ui.res.stringResource(com.ssajudn.barebudget.presentation.R.string.language_english)
+                        },
+                        icon = Icons.Default.Language,
+                        onClick = { showLanguageDialog = true }
+                    )
+                )
+            )
+
+            if (showLanguageDialog) {
+                AlertDialog(
+                    onDismissRequest = { showLanguageDialog = false },
+                    title = {
+                        Text(text = androidx.compose.ui.res.stringResource(com.ssajudn.barebudget.presentation.R.string.language_settings))
+                    },
+                    text = {
+                        Column {
+                            com.ssajudn.barebudget.utils.LanguageManager.SUPPORTED_LANGUAGES.forEach { (code, label) ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    RadioButton(
+                                        selected = (currentLanguage == code),
+                                        onClick = {
+                                            currentLanguage = code
+                                            com.ssajudn.barebudget.utils.LanguageManager.setLanguage(context, code)
+                                            showLanguageDialog = false
+                                        }
+                                    )
+                                    Spacer(modifier = Modifier.width(8.dp))
+                                    Text(
+                                        text = label,
+                                        style = MaterialTheme.typography.bodyLarge
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = {
+                        TextButton(onClick = { showLanguageDialog = false }) {
+                            Text(stringResource(com.ssajudn.barebudget.presentation.R.string.common_close))
+                        }
+                    }
+                )
+            }
+
+            // 4. SUPPORT & APPRECIATION GROUP
+            val shareMessage = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_share_message)
+            val shareChooser = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_share_chooser)
+            com.ssajudn.barebudget.ui.components.Material3SettingsGroup(
+                title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_support_title),
+                items = listOf(
+                    com.ssajudn.barebudget.ui.components.Material3SettingsItem(
+                        title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_donate_title),
+                        description = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_donate_desc),
                         icon = Icons.Default.VolunteerActivism,
                         onClick = {
                             val intent = android.content.Intent(
@@ -255,8 +318,8 @@ fun SettingsScreen(
                         }
                     ),
                     com.ssajudn.barebudget.ui.components.Material3SettingsItem(
-                        title = "Beri Bintang di GitHub",
-                        description = "Beri star repository BareBudget di GitHub",
+                        title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_star_title),
+                        description = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_star_desc),
                         icon = Icons.Default.Star,
                         onClick = {
                             val intent = android.content.Intent(
@@ -267,18 +330,15 @@ fun SettingsScreen(
                         }
                     ),
                     com.ssajudn.barebudget.ui.components.Material3SettingsItem(
-                        title = "Bagikan Aplikasi",
-                        description = "Ajak teman untuk kelola keuangan & runway finansial",
+                        title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_share_title),
+                        description = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_share_desc),
                         icon = Icons.Default.Share,
                         onClick = {
                             val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(
-                                    android.content.Intent.EXTRA_TEXT,
-                                    "Kelola keuangan dan hitung runway finansialmu dengan BareBudget! Cek repository-nya di: https://github.com/Udean777/Bare-Budget"
-                                )
+                                putExtra(android.content.Intent.EXTRA_TEXT, shareMessage)
                             }
-                            context.startActivity(android.content.Intent.createChooser(shareIntent, "Bagikan BareBudget"))
+                            context.startActivity(android.content.Intent.createChooser(shareIntent, shareChooser))
                         }
                     )
                 )
@@ -286,11 +346,11 @@ fun SettingsScreen(
 
             // 5. DANGER ZONE GROUP
             com.ssajudn.barebudget.ui.components.Material3SettingsGroup(
-                title = "Session & Danger Zone",
+                title = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_danger_title),
                 items = listOf(
                     com.ssajudn.barebudget.ui.components.Material3SettingsItem(
-                        title = if (uiState.isGuestMode) "Reset Local Data" else "Sign Out",
-                        description = "Clear current session and return to onboarding",
+                        title = if (uiState.isGuestMode) stringResource(com.ssajudn.barebudget.presentation.R.string.settings_reset_local) else stringResource(com.ssajudn.barebudget.presentation.R.string.settings_sign_out),
+                        description = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_danger_desc),
                         icon = Icons.AutoMirrored.Filled.Logout,
                         isDestructive = true,
                         onClick = { showSignOutConfirmDialog = true }
@@ -312,7 +372,7 @@ fun SettingsScreen(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = "Frictionless Personal Finance",
+                    text = stringResource(com.ssajudn.barebudget.presentation.R.string.settings_footer_tagline),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
                 )
@@ -324,13 +384,13 @@ fun SettingsScreen(
 
     if (showSignOutConfirmDialog) {
         AppConfirmDialog(
-            title = if (uiState.isGuestMode) "Reset Guest Session?" else "Sign Out?",
+            title = if (uiState.isGuestMode) stringResource(com.ssajudn.barebudget.presentation.R.string.settings_dialog_reset_title) else stringResource(com.ssajudn.barebudget.presentation.R.string.settings_dialog_signout_title),
             message = if (uiState.isGuestMode) {
-                "Are you sure you want to exit? Since you are in Guest Mode, your local transactions and records will be cleared."
+                stringResource(com.ssajudn.barebudget.presentation.R.string.settings_dialog_reset_message)
             } else {
-                "Are you sure you want to sign out from your Google account on this device?"
+                stringResource(com.ssajudn.barebudget.presentation.R.string.settings_dialog_signout_message)
             },
-            confirmButtonText = if (uiState.isGuestMode) "Reset" else "Keluar",
+            confirmButtonText = if (uiState.isGuestMode) stringResource(com.ssajudn.barebudget.presentation.R.string.settings_dialog_reset_confirm) else stringResource(com.ssajudn.barebudget.presentation.R.string.settings_dialog_signout_confirm),
             onDismissRequest = { showSignOutConfirmDialog = false },
             onConfirm = {
                 showSignOutConfirmDialog = false

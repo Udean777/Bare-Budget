@@ -36,12 +36,12 @@ object Spacing {
     val ExtraLarge = 32.dp
 
     /**
-     * 16dp — horizontal inset from the screen edge.
+     * 20dp — horizontal inset from the screen edge (M3 Expressive breathing room).
      *
      * One value for every screen. Vertical list padding should come from the
      * Scaffold's inner padding, not a constant.
      */
-    val ScreenHorizontal = 16.dp
+    val ScreenHorizontal = 20.dp
 
     /**
      * 88dp — bottom padding so scrollable content can clear the FAB.

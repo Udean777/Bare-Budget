@@ -131,7 +131,7 @@ class AuthManager @Inject constructor(
         try {
             firebaseAuth.signOut()
             credentialManager.clearCredentialState(ClearCredentialStateRequest())
-            // ponytail: clear local cache to prevent cross-account leakage
+            // Clear local cached Room tables on sign-out to prevent data leakage across accounts
             try { database.clearAllTables() } catch (_: Exception) {}
             sessionManager.clearSession()
         } catch (e: Exception) {

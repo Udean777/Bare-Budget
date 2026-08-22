@@ -40,9 +40,10 @@ Dengan arsitektur **Offline-First**, BareBudget dapat langsung digunakan seketik
 * Memberikan indikator status kesehatan keuangan secara real-time (*Aman*, *Waspada*, atau *Kritis*).
 * **Monthly Budget Lock & Audit**: Budget bulanan hanya dapat diset 1x per bulan untuk menjaga disiplin keuangan dan konsistensi audit (*expenses only*, tidak bercampur dengan alokasi tagihan/bills).
 
-### 2. 🔄 Multi-Wallet Transfer & Arus Kas Real-Time
+### 2. 🔄 Multi-Wallet Transfer, Smart Switch & Arus Kas Real-Time
 * Lacak transaksi harian dengan kategori lengkap: **Pemasukan (Income)**, **Pengeluaran (Expense)**, dan **Transfer Antar Dompet**.
 * **Layar & Tab Navigasi "Transfer" Khusus**: Menu transfer ditempatkan di tengah *Bottom Navigation Bar* untuk akses instan transfer antar dompet (Tunai, BCA, Mandiri, GoPay, OVO, ShopeePay, dll).
+* **Smart Switch & 1-Tap Wallet Swap**: Pencegahan otomatis pemilihan dompet asal dan tujuan yang sama dengan sistem *smart switch* cerdas dan tombol *swap* instan.
 * Kalkulasi total kekayaan bersih (**Net Worth**) otomatis dan pembaruan saldo real-time pada seluruh layar tanpa perlu refresh manual.
 
 ### 3. 🎯 Smart Savings Goals & Pockets (With Wallet Integration)
@@ -64,26 +65,35 @@ Dengan arsitektur **Offline-First**, BareBudget dapat langsung digunakan seketik
 * Rincian tagihan/target lengkap dengan tombol aksi berbasis rounded surface card dan deskripsi penjelasan yang intuitif.
 * **Scrollable Adaptive Dialogs**: Form input dan modal dialog yang responsif dan aman di berbagai resolusi layar.
 
-### 6. 👥 Smart Split Bill Calculator
+### 6. 🌐 Multi-Language & Seamless In-App Locale Switching
+* **Dukungan Dua Bahasa Penuh**: Tersedia dalam Bahasa Indonesia dan English secara komprehensif di seluruh modul (Onboarding, Dashboard, Tagihan, Transfer, Target, Anggaran Bulanan, Analitik, dan Pengaturan).
+* **Clean Capsule Selector di Onboarding**: Pemilih bahasa ringkas dan elegan langsung pada Slide 1 Onboarding.
+* **Zero-Blink Smooth Switching**: Konfigurasi per-app language modern berbasis `android:configChanges` yang memastikan pergantian bahasa terjadi seketika (*in-place recomposition*) tanpa kedipan hitam atau restart activity.
+
+### 7. 👥 Smart Split Bill Calculator
 * Kalkulator patungan cerdas langsung di dalam aplikasi.
 * Hitung pembagian rata (*Equal Split*) lengkap dengan opsi penyesuaian pajak restoran (PB1 10%) dan service charge (5%).
 * **1-Click Share to WhatsApp**: Rincian tagihan siap kirim langsung ke teman atau grup pesan singkat.
 
-### 7. 🎨 100% Material Design 3 UI & Dynamic Theming
-* Dibangun secara native dengan komponen standar **Material 3 (M3)**: *5-Item M3 Navigation Bar (dengan Transfer di tengah), M3 Floating Action Button, M3 Cards, dan M3 Dialogs*.
-* **Dynamic Color (Material You)**: Warna antarmuka dapat otomatis beradaptasi dengan warna wallpaper sistem pada Android 12+.
-* **Brand Theme & Dark Mode**: Pilihan tema *Coral Red* khas BareBudget dan dukungan penuh mode Terang / Gelap (*Light/Dark/System Default*).
+### 8. 🎨 Material 3 Expressive Design & Advanced Filtering
+* **MaterialKolor Expressive Palette**: Warna antarmuka dinamis dan ekspresif dengan variasi tonal kontras tinggi.
+* **Signature Asymmetric & Squircle Cards**: Kartu *Financial Runway* asimetris (`AppShapes.AsymmetricHero`), kartu dompet bergaya *Physical Debit Card*, dan kartu item berbentuk *Squircle* dengan `crispBorder (0.8.dp)`.
+* **Floating Pill Navigation Bar**: Navigasi bawah melayang berbentuk kapsul (*floating pill*) dengan animasi transisi pegas (*spring physics*).
+* **Advanced Bottom Sheet & In-Screen Search Filters**:
+  - *All Transactions*: Single-line search bar + modal bottom sheet filter (Tipe Transaksi, Kategori, Dompet) dengan *draft state* aman.
+  - *Due Bills*: Single-line search bar + segmented button status filter (`Semua`, `Belum Lunas`, `Lunas`).
+  - *Savings Goals*: Single-line search bar + segmented button tab status (`Semua`, `Aktif`, `Tercapai`).
 
-### 8. 📦 Offline JSON Backup & Restore
+### 9. 📦 Offline JSON Backup & Restore
 * Ekspor seluruh data transaksi, dompet, tagihan, dan target tabungan ke file `.json` lokal sebagai salinan cadangan.
 * Impor kembali data JSON kapan saja dengan pemulihan database Room instan.
 
-### 9. 🚀 Animated Splash Screen & Illustrated Onboarding
+### 10. 🚀 Animated Splash Screen & Illustrated Onboarding
 * **Branded Splash Screen**: Transisi *fade & spring scale* yang mulus serta dukungan penuh *Android 12+ SplashScreen API*.
 * **3D Vector Illustrated Onboarding**: Alur pengenalan aplikasi interaktif dengan ilustrasi *semi-3D cartoonish* yang modern dan ramah pengguna.
 
-### 10. 🔒 Clean Architecture & Offline-First Cloud Sync (Diperkuat Fase A–D)
-* **Multi-module ter-enforce**: `:domain` pure Kotlin (tanpa Android/Room/Retrofit), `:data` Android library (Room/Retrofit/Firebase/WorkManager), `:presentation` lib, `:app` composition root — `presentation → domain ← data`, `app → presentation+data`. Guard compile-time, bukan hanya package.
+### 11. 🔒 Clean Architecture & Offline-First Cloud Sync
+* **Multi-module ter-enforce**: `:domain` pure Kotlin (tanpa Android/Room/Retrofit), `:data` Android library (Room/Retrofit/Firebase/WorkManager), `:presentation` Compose UI library + ViewModels (MaterialKolor, Compose Navigation, Hilt), `:app` composition root — `app → presentation → data → domain`. Guard compile-time terisolasi bersih.
 * **DTO terpisah**: `data/network/dto/` (`WalletDto`, `TransactionDto`, `GoalDto`, `DueBillDto`) dengan `Gson(LOWER_CASE_WITH_UNDERSCORES)` + `@SerializedName`, `ApiService` `PATCH` konsisten backend, `RemoteDataSource` mapping `dto.toDomain()` — perubahan domain tidak pecahkan kontrak API. `ApiContractTest` MockWebServer verifikasi snake_case.
 * **Outbox + WorkManager**: `Room outbox` (`PENDING/IN_FLIGHT/DONE/FAILED_RETRYABLE`) + `MIGRATION_8_9`, `withTransaction` atomik (saldo+transaksi+goal/bill), `OutboxWorker` `@HiltWorker` + `OutboxScheduler` `WorkManager` (`NetworkType.CONNECTED`, backoff `2^attempts*30s`), `idempotency_keys` Postgres (`user_id,key` PK) — retry tanpa duplikasi, guest skip.
 * **UiEffect terstandar**: `UiEffect.ShowSnackbar/Navigate/PopBackStack` + `OperationState Idle/Loading/Success/Error` via `Channel(BUFFERED)` — one-shot tidak re-emit saat rotasi, `Button(enabled = !isOperationLoading)` cegah double-tap.
@@ -99,41 +109,41 @@ BareBudget/
 ├── domain/                     # Pure Kotlin JVM — entities, repository ports, use-cases, AppTheme
 │   └── src/main/java/com/ssajudn/barebudget/domain/
 │       ├── model/              # Wallet, Transaction, Goal, DueBill, Budget, AppTheme, DomainModels
-│       ├── repository/         # WalletRepository, TransactionRepository, GoalRepository, DueBillRepository, BudgetRepository (interface milik domain)
-│       ├── usecase/            # GetDashboardSummary, GetCashflow/NetWorth, PayDueBill (usecase milik domain)
+│       ├── repository/         # WalletRepository, TransactionRepository, GoalRepository, DueBillRepository, BudgetRepository
+│       ├── usecase/            # GetDashboardSummary, GetCashflow/NetWorth, PayDueBill
 │       └── error/              # AppException (typed)
 ├── data/                       # Android Library — Room, Retrofit, Firebase, WorkManager (→ :domain)
-│   └── src/main/java/com/ssajudn/barebudget/data/
-│       ├── auth/               # AuthManager (Firebase), verifier
-│       ├── datasource/local/   # Transaction/Goal/DueBill/Wallet/Budget LocalDataSource + withTransaction + ownerId
-│       ├── datasource/remote/  # Wallet/Transaction/Goal/DueBill RemoteDataSource (DTO→domain mapping)
-│       ├── local/room/         # Entities (ownerId), Daos (*ByOwner), AppDatabase v9 (outbox), OutboxEntity/Dao
-│       ├── sync/               # OutboxWorker (@HiltWorker), OutboxScheduler (WorkManager)
-│       ├── network/            # ApiClient (Gson LOWER_CASE_WITH_UNDERSCORES), ApiService (DTO), dto/ (Wallet/Transaction/Goal/DueBillDto)
-│       ├── repository/         # *RepositoryImpl (isGuestMode routing), DomainMappers, MigrationRepositoryImpl (validasi partial)
-│       ├── service/            # WalletBalanceService (single writer)
-│       └── utils/              # AppConfig (BuildConfig data), DateUtils
-├── presentation/               # Android Library — placeholder ViewModel contracts (→ :domain, :data)
-├── app/                        # Android Application — Compose UI + Hilt + Navigation (→ :domain,:data,:presentation)
+│   ├── src/main/java/com/ssajudn/barebudget/data/
+│   │   ├── auth/               # AuthManager (Firebase), verifier
+│   │   ├── datasource/local/   # LocalDataSource + withTransaction + ownerId
+│   │   ├── datasource/remote/  # RemoteDataSource (DTO→domain mapping)
+│   │   ├── local/room/         # Entities, Daos, AppDatabase v9 (outbox), OutboxEntity/Dao
+│   │   ├── sync/               # OutboxWorker (@HiltWorker), OutboxScheduler (WorkManager)
+│   │   ├── network/            # ApiClient, ApiService (DTO), dto/ (Wallet/Transaction/Goal/DueBillDto)
+│   │   ├── repository/         # *RepositoryImpl (isGuestMode routing), DomainMappers, MigrationRepositoryImpl
+│   │   ├── service/            # WalletBalanceService (single writer)
+│   │   └── utils/              # AppConfig (BuildConfig data), DateUtils
+│   └── schemas/                # Room schema 8.json, 9.json (outbox)
+├── presentation/               # Android Library — Jetpack Compose UI, ViewModels, Navigation (→ :domain, :data)
 │   └── src/main/java/com/ssajudn/barebudget/
-│       ├── BareBudgetApplication.kt # Hilt + HiltWorkerFactory (WorkManager)
 │       ├── ui/
 │       │   ├── analytics/      # Financial Breakdown & Category Charts
-│       │   ├── bills/          # Due Bills, Provider Picker & Refund System (UiEffect + operation guard)
-│       │   ├── budget/         # Monthly Spending Target & Locked Budget UI (OperationState)
-│       │   ├── components/     # M3 Dialogs, AppNavigationBar, UiEffect, OperationState
-│       │   ├── dashboard/      # Financial Runway Card & Recent Feeds
-│       │   ├── goals/          # Savings Goals, Pockets & Smart Calculator (UiEffect)
-│       │   ├── navigation/     # AppNavigation & 5-Item TopLevelDestinations
-│       │   ├── onboarding/     # AuthScreen (UiEffect), 3D Illustrated Onboarding
-│       │   ├── settings/       # Appearance (Material You), JSON Backup/Restore, Sync & Profile (UiEffect)
+│       │   ├── bills/          # Due Bills, 1-Line Search, Segmented Filter & Refund System
+│       │   ├── budget/         # Monthly Spending Target & Locked Budget UI
+│       │   ├── components/     # Squircle Dialogs, Floating Pill Navigation Bar, StateViews
+│       │   ├── dashboard/      # Asymmetric Financial Runway Card & Quick Actions
+│       │   ├── goals/          # Savings Goals, Pockets, 1-Line Search & Smart Calculator
+│       │   ├── navigation/     # AppNavigation & TopLevelDestinations
+│       │   ├── onboarding/     # AuthScreen, 3D Illustrated Onboarding
+│       │   ├── settings/       # Appearance (MaterialKolor Expressive), JSON Backup/Restore, Profile
 │       │   ├── splash/         # Animated Branded Splash Screen
-│       │   ├── theme/          # Material 3 Color Schemes, Typography & Shapes
-│       │   ├── transaction/    # Add Expense, TransferScreen, Detail & Split Bill (UiEffect, guard)
-│       │   └── wallets/        # Multi-Wallet Management (UiEffect)
+│       │   ├── theme/          # AppShapes (AsymmetricHero, Squircle, Pill), crispBorder, Theme.kt
+│       │   ├── transaction/    # Add Expense, TransferScreen, AllTransactions (Search & Filter BottomSheet)
+│       │   └── wallets/        # Physical Debit-Style Wallet Cards
 │       └── utils/              # CurrencyFormatter, CurrencyVisualTransformation, DateUtils (UI)
-│   ├── build.gradle.kts        # + hilt-work, work-runtime-ktx, mockwebserver (test)
-│   └── schemas/                # Room schema 8.json, 9.json (outbox)
+├── app/                        # Android Application — Composition Root & Application Entry (→ :presentation)
+│   └── src/main/java/com/ssajudn/barebudget/
+│       └── BareBudgetApplication.kt # Hilt + HiltWorkerFactory (WorkManager)
 └── server/                     # Go + Fiber + GORM + PostgreSQL
     ├── cmd/api/main.go         # Fiber + AuthMiddlewareWithVerifier + route PATCH
     ├── internal/
@@ -148,7 +158,7 @@ BareBudget/
     └── go.mod                  # go 1.23, Dockerfile golang:1.23-alpine
 ```
 
-**Stack tambahan Fase A–D:** Hilt Work (`hilt-work`), WorkManager (`work-runtime-ktx`), MockWebServer (`mockwebserver`), Gson `LOWER_CASE_WITH_UNDERSCORES`, Room `withTransaction`, `Channel<UiEffect>`.
+**Modern Stack & Enterprise Utilities:** Hilt Work (`hilt-work`), WorkManager (`work-runtime-ktx`), MockWebServer (`mockwebserver`), Gson `LOWER_CASE_WITH_UNDERSCORES`, Room `withTransaction`, `Channel<UiEffect>`.
 
 ---
 

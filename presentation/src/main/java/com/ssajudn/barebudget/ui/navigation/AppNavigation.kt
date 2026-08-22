@@ -49,6 +49,10 @@ import com.ssajudn.barebudget.ui.transaction.AddTransactionScreen
 import com.ssajudn.barebudget.ui.transaction.AllTransactionsScreen
 import com.ssajudn.barebudget.ui.transaction.TransactionDetailScreen
 
+import androidx.compose.runtime.remember
+import androidx.compose.ui.res.stringResource
+import com.ssajudn.barebudget.presentation.R
+
 sealed class Screen(val route: String) {
     object Splash : Screen("splash")
     object Onboarding : Screen("onboarding")
@@ -69,48 +73,57 @@ sealed class Screen(val route: String) {
     }
 }
 
-/**
- * The four destinations reachable from the bottom navigation bar.
- *
- * Declared once at file scope rather than rebuilt inside the Scaffold on every
- * recomposition. Each pairs an outlined icon for the unselected state with a
- * filled one for selected, per M3 — the previous code had a `selectedIcon` field
- * that was never populated, so the distinction was silently dead.
- */
-private val TopLevelDestinations = listOf(
-    NavigationBarItemData(
-        route = Screen.Dashboard.route,
-        label = "Beranda",
-        icon = Icons.Outlined.Dashboard,
-        selectedIcon = Icons.Filled.Dashboard,
-    ),
-    NavigationBarItemData(
-        route = Screen.DueBills.route,
-        label = "Tagihan",
-        icon = Icons.AutoMirrored.Outlined.ReceiptLong,
-        selectedIcon = Icons.AutoMirrored.Filled.ReceiptLong,
-    ),
-    NavigationBarItemData(
-        route = Screen.Transfer.route,
-        label = "Transfer",
-        icon = Icons.Default.SwapHoriz,
-        selectedIcon = Icons.Default.SwapHoriz,
-    ),
-    NavigationBarItemData(
-        route = Screen.Goals.route,
-        label = "Target",
-        icon = Icons.Outlined.Payments,
-        selectedIcon = Icons.Filled.Payments,
-    ),
-    NavigationBarItemData(
-        route = Screen.Analytics.route,
-        label = "Analitik",
-        icon = Icons.AutoMirrored.Outlined.TrendingUp,
-        selectedIcon = Icons.AutoMirrored.Filled.TrendingUp,
-    ),
+private val TopLevelRoutes = setOf(
+    Screen.Dashboard.route,
+    Screen.DueBills.route,
+    Screen.Transfer.route,
+    Screen.Goals.route,
+    Screen.Analytics.route,
 )
 
-private val TopLevelRoutes = TopLevelDestinations.map { it.route }.toSet()
+@Composable
+private fun rememberTopLevelDestinations(): List<NavigationBarItemData> {
+    val home = stringResource(R.string.nav_home)
+    val bills = stringResource(R.string.nav_bills)
+    val transfer = stringResource(R.string.nav_transfer)
+    val goals = stringResource(R.string.nav_goals)
+    val analytics = stringResource(R.string.nav_analytics)
+
+    return remember(home, bills, transfer, goals, analytics) {
+        listOf(
+            NavigationBarItemData(
+                route = Screen.Dashboard.route,
+                label = home,
+                icon = Icons.Outlined.Dashboard,
+                selectedIcon = Icons.Filled.Dashboard,
+            ),
+            NavigationBarItemData(
+                route = Screen.DueBills.route,
+                label = bills,
+                icon = Icons.AutoMirrored.Outlined.ReceiptLong,
+                selectedIcon = Icons.AutoMirrored.Filled.ReceiptLong,
+            ),
+            NavigationBarItemData(
+                route = Screen.Transfer.route,
+                label = transfer,
+                icon = Icons.Default.SwapHoriz,
+                selectedIcon = Icons.Default.SwapHoriz,
+            ),
+            NavigationBarItemData(
+                route = Screen.Goals.route,
+                label = goals,
+                icon = Icons.Outlined.Payments,
+                selectedIcon = Icons.Filled.Payments,
+            ),
+            NavigationBarItemData(
+                route = Screen.Analytics.route,
+                label = analytics,
+                icon = Icons.AutoMirrored.Outlined.TrendingUp,
+                selectedIcon = Icons.AutoMirrored.Filled.TrendingUp,
+            ),
+        )
+    }
+}
 
 @Composable
 fun AppNavigation(
@@ -121,6 +134,7 @@ fun AppNavigation(
     val currentRoute = navBackStackEntry?.destination?.route
 
     val showNavigationBar = currentRoute in TopLevelRoutes
+    val topLevelDestinations = rememberTopLevelDestinations()
 
     Scaffold(
         bottomBar = {
@@ -133,7 +147,7 @@ fun AppNavigation(
                 exit = slideOutVertically { it },
             ) {
                 AppNavigationBar(
-                    items = TopLevelDestinations,
+                    items = topLevelDestinations,
                     currentRoute = currentRoute,
                     onNavigate = { route ->
                         if (currentRoute != route) {

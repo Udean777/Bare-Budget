@@ -7,8 +7,8 @@ import (
 	"github.com/ssajudn/barebudget-server/internal/auth"
 )
 
-// AuthMiddleware verifies Firebase ID token and stores verified UID.
-// ponytail: dev fallback allowed only when ENV != production and no Firebase project configured
+// AuthMiddleware verifies the incoming Firebase ID token from the Authorization header
+// and attaches the verified user ID to the request context.
 func AuthMiddleware() fiber.Handler {
 	verifier := auth.NewVerifierFromEnv()
 	return AuthMiddlewareWithVerifier(verifier)

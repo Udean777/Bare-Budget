@@ -8,8 +8,9 @@ import (
 	"strings"
 )
 
-// TokenVerifier validates Firebase ID tokens and returns the Firebase UID.
-// ponytail: interface keeps middleware testable; prod should plug real Firebase Admin SDK.
+// TokenVerifier defines the contract for validating authentication tokens
+// and extracting the authenticated user's unique identifier.
+// Abstracting this via an interface enables unit testing and modular verifier backends.
 type TokenVerifier interface {
 	VerifyIDToken(token string) (uid string, err error)
 }

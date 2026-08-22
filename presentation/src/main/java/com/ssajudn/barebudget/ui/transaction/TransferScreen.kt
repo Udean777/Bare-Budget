@@ -22,6 +22,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.domain.model.TransactionType
 import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
+import androidx.compose.ui.res.stringResource
+import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.crispBorder
 import com.ssajudn.barebudget.utils.CurrencyFormatter
@@ -86,7 +88,7 @@ fun TransferScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Transfer Antar Dompet",
+                        text = stringResource(R.string.tx_transfer_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -95,7 +97,7 @@ fun TransferScreen(
                 navigationIcon = {
                     if (onNavigateBack != null) {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                         }
                     }
                 },
@@ -129,7 +131,7 @@ fun TransferScreen(
                         )
                     } else {
                         Text(
-                            text = "Kirim Transfer Sekarang",
+                            text = stringResource(R.string.tx_transfer_btn),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold
                             )
@@ -167,7 +169,7 @@ fun TransferScreen(
                 ) {
                     // Source Wallet Dropdown
                     Text(
-                        text = "DOMPET ASAL (PENGIRIM)",
+                        text = stringResource(R.string.tx_transfer_from),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 0.8.sp
@@ -180,12 +182,12 @@ fun TransferScreen(
                         onExpandedChange = { sourceDropdownExpanded = !sourceDropdownExpanded },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        val selectedText = sourceWallet?.let { "${it.name} (${CurrencyFormatter.formatRupiah(it.balance)})" } ?: "Pilih Dompet Asal"
+                        val selectedText = sourceWallet?.let { "${it.name} (${CurrencyFormatter.formatRupiah(it.balance)})" } ?: stringResource(R.string.tx_transfer_choose_from)
                         OutlinedTextField(
                             value = selectedText,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Dari Dompet") },
+                            label = { Text(stringResource(R.string.tx_from_wallet)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sourceDropdownExpanded) },
                             modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
@@ -199,7 +201,7 @@ fun TransferScreen(
                                     text = {
                                         Column {
                                             Text(wallet.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                            Text("Saldo: ${CurrencyFormatter.formatRupiah(wallet.balance)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(stringResource(R.string.bills_wallet_balance, CurrencyFormatter.formatRupiah(wallet.balance)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                     },
                                     onClick = {
@@ -211,7 +213,7 @@ fun TransferScreen(
                         }
                     }
 
-                    // Transfer Icon Arrow Down
+                    // Transfer Icon Arrow Down / Swap Button
                     Box(
                         modifier = Modifier.fillMaxWidth(),
                         contentAlignment = Alignment.Center
@@ -219,12 +221,14 @@ fun TransferScreen(
                         Surface(
                             shape = androidx.compose.foundation.shape.CircleShape,
                             color = MaterialTheme.colorScheme.primaryContainer,
-                            modifier = Modifier.size(40.dp)
+                            modifier = Modifier
+                                .size(40.dp)
+                                .clickable { viewModel.swapWallets() }
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
                                     imageVector = Icons.Default.SwapVert,
-                                    contentDescription = null,
+                                    contentDescription = stringResource(R.string.tx_transfer_swap),
                                     tint = MaterialTheme.colorScheme.onPrimaryContainer
                                 )
                             }
@@ -233,7 +237,7 @@ fun TransferScreen(
 
                     // Target Wallet Dropdown
                     Text(
-                        text = "Dompet Tujuan (Penerima)",
+                        text = stringResource(R.string.tx_transfer_to),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -243,12 +247,12 @@ fun TransferScreen(
                         onExpandedChange = { targetDropdownExpanded = !targetDropdownExpanded },
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        val selectedText = targetWallet?.let { "${it.name} (${CurrencyFormatter.formatRupiah(it.balance)})" } ?: "Pilih Dompet Tujuan"
+                        val selectedText = targetWallet?.let { "${it.name} (${CurrencyFormatter.formatRupiah(it.balance)})" } ?: stringResource(R.string.tx_transfer_choose_to)
                         OutlinedTextField(
                             value = selectedText,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Ke Dompet") },
+                            label = { Text(stringResource(R.string.tx_to_wallet)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = targetDropdownExpanded) },
                             modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
@@ -257,12 +261,12 @@ fun TransferScreen(
                             expanded = targetDropdownExpanded,
                             onDismissRequest = { targetDropdownExpanded = false }
                         ) {
-                            uiState.wallets.filter { it.id != uiState.selectedWalletId }.forEach { wallet ->
+                            uiState.wallets.forEach { wallet ->
                                 DropdownMenuItem(
                                     text = {
                                         Column {
                                             Text(wallet.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                            Text("Saldo: ${CurrencyFormatter.formatRupiah(wallet.balance)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                            Text(stringResource(R.string.bills_wallet_balance, CurrencyFormatter.formatRupiah(wallet.balance)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                         }
                                     },
                                     onClick = {
@@ -278,14 +282,14 @@ fun TransferScreen(
 
             // AMOUNT INPUT
             Text(
-                text = "Nominal Transfer",
+                text = stringResource(R.string.tx_transfer_amount),
                 style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
             )
 
             OutlinedTextField(
                 value = uiState.rawAmount,
                 onValueChange = { viewModel.onAmountChange(it) },
-                label = { Text("Jumlah Saldo (Rp)") },
+                label = { Text(stringResource(R.string.tx_transfer_amount_rp)) },
                 placeholder = { Text("Rp 0") },
                 visualTransformation = CurrencyVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -296,7 +300,7 @@ fun TransferScreen(
 
             if (isBalanceInsufficient) {
                 Text(
-                    text = "Nominal melebihi saldo dompet asal (${CurrencyFormatter.formatRupiah(sourceWallet?.balance ?: 0L)})",
+                    text = stringResource(R.string.tx_transfer_exceed, CurrencyFormatter.formatRupiah(sourceWallet?.balance ?: 0L)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.error
                 )
@@ -310,7 +314,7 @@ fun TransferScreen(
                 OutlinedTextField(
                     value = DateUtils.formatDisplayDate(uiState.date),
                     onValueChange = {},
-                    label = { Text("Tanggal Transfer") },
+                    label = { Text(stringResource(R.string.tx_transfer_date)) },
                     readOnly = true,
                     trailingIcon = {
                         IconButton(onClick = { showDatePicker = true }) {
@@ -326,8 +330,8 @@ fun TransferScreen(
             OutlinedTextField(
                 value = uiState.notes,
                 onValueChange = { viewModel.onNotesChange(it) },
-                label = { Text("Catatan / Keterangan (Opsional)") },
-                placeholder = { Text("e.g. Top up saldo GoPay, Tarik tunai BCA") },
+                label = { Text(stringResource(R.string.tx_transfer_notes)) },
+                placeholder = { Text(stringResource(R.string.tx_transfer_notes_hint)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )

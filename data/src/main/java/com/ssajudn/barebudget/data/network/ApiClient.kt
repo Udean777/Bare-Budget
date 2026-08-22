@@ -21,7 +21,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class ApiClient @Inject constructor(
-    private val authInterceptor: AuthInterceptor
+    private val authInterceptor: AuthInterceptor,
+    private val languageInterceptor: LanguageInterceptor
 ) {
 
     val BASE_URL: String = AppConfig.baseUrl
@@ -36,12 +37,16 @@ class ApiClient @Inject constructor(
 
     val okHttpClient: OkHttpClient = OkHttpClient.Builder()
         .addInterceptor(authInterceptor)
+        .addInterceptor(languageInterceptor)
         .addInterceptor(loggingInterceptor)
         .connectTimeout(15, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
         .build()
 
-    // ponytail: LOWER_CASE_WITH_UNDERSCORES keeps DTO snake_case consistent, add when custom Gson needed
+    /**
+     * Configures Gson to use snake_case for consistent JSON serialization/deserialization
+     * matching the backend API specification.
+     */
     private val gson = com.google.gson.GsonBuilder()
         .setFieldNamingPolicy(com.google.gson.FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES)
         .create()

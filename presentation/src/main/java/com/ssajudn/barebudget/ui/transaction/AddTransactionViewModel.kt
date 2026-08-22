@@ -78,18 +78,82 @@ class AddTransactionViewModel @Inject constructor(
             TransactionType.TRANSFER -> TransactionCategory.TRANSFER
             TransactionType.EXPENSE -> TransactionCategory.FOOD
         }
-        _uiState.value = _uiState.value.copy(
+        val currentState = _uiState.value
+        var targetWalletId = currentState.selectedToWalletId
+
+        // When switching to transfer, ensure destination is not identical to source if multiple wallets exist
+        if (type == TransactionType.TRANSFER && currentState.selectedWalletId != null) {
+            if (targetWalletId == null || targetWalletId == currentState.selectedWalletId) {
+                val alternate = currentState.wallets.firstOrNull { it.id != currentState.selectedWalletId }?.id
+                if (alternate != null) {
+                    targetWalletId = alternate
+                }
+            }
+        }
+
+        _uiState.value = currentState.copy(
             transactionType = type,
-            selectedCategory = newCategory
+            selectedCategory = newCategory,
+            selectedToWalletId = targetWalletId
         )
     }
 
     fun onWalletChange(walletId: String) {
-        _uiState.value = _uiState.value.copy(selectedWalletId = walletId)
+        val currentState = _uiState.value
+        var newToWalletId = currentState.selectedToWalletId
+
+        // Smart switch: if selected source matches destination in transfer mode, switch destination
+        if (currentState.transactionType == TransactionType.TRANSFER && walletId == currentState.selectedToWalletId) {
+            val previousSource = currentState.selectedWalletId
+            val alternateWalletId = if (previousSource != null && previousSource != walletId && currentState.wallets.any { it.id == previousSource }) {
+                previousSource
+            } else {
+                currentState.wallets.firstOrNull { it.id != walletId }?.id
+            }
+            if (alternateWalletId != null) {
+                newToWalletId = alternateWalletId
+            }
+        }
+
+        _uiState.value = currentState.copy(
+            selectedWalletId = walletId,
+            selectedToWalletId = newToWalletId
+        )
     }
 
     fun onToWalletChange(walletId: String) {
-        _uiState.value = _uiState.value.copy(selectedToWalletId = walletId)
+        val currentState = _uiState.value
+        var newSourceWalletId = currentState.selectedWalletId
+
+        // Smart switch: if selected destination matches source in transfer mode, switch source
+        if (walletId == currentState.selectedWalletId) {
+            val previousDestination = currentState.selectedToWalletId
+            val alternateWalletId = if (previousDestination != null && previousDestination != walletId && currentState.wallets.any { it.id == previousDestination }) {
+                previousDestination
+            } else {
+                currentState.wallets.firstOrNull { it.id != walletId }?.id
+            }
+            if (alternateWalletId != null) {
+                newSourceWalletId = alternateWalletId
+            }
+        }
+
+        _uiState.value = currentState.copy(
+            selectedWalletId = newSourceWalletId,
+            selectedToWalletId = walletId
+        )
+    }
+
+    fun swapWallets() {
+        val currentState = _uiState.value
+        val source = currentState.selectedWalletId
+        val target = currentState.selectedToWalletId
+        if (source != null && target != null && source != target) {
+            _uiState.value = currentState.copy(
+                selectedWalletId = target,
+                selectedToWalletId = source
+            )
+        }
     }
 
     fun onAmountChange(input: String) {

@@ -12,10 +12,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 
@@ -77,11 +79,11 @@ fun SplitBillBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Smart Split Bill",
+                    text = stringResource(R.string.split_title),
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                 )
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Close")
+                    Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close))
                 }
             }
 
@@ -100,7 +102,7 @@ fun SplitBillBottomSheet(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("Subtotal Tagihan", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.split_subtotal), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(
                             CurrencyFormatter.formatRupiah(totalBillAmount),
                             style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
@@ -113,7 +115,7 @@ fun SplitBillBottomSheet(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Pajak & Service", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(stringResource(R.string.split_tax_service), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             Text(
                                 "+ ${CurrencyFormatter.formatRupiah(taxAmount + serviceAmount)}",
                                 style = MaterialTheme.typography.bodySmall,
@@ -134,12 +136,12 @@ fun SplitBillBottomSheet(
                     ) {
                         Column {
                             Text(
-                                text = "Porsi per Orang",
+                                text = stringResource(R.string.split_per_person),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Text(
-                                text = "Bagi rata ($peopleCount orang)",
+                                text = stringResource(R.string.split_people_count) + " ($peopleCount)",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
                             )
@@ -163,7 +165,7 @@ fun SplitBillBottomSheet(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Jumlah Orang",
+                    text = stringResource(R.string.split_people_count),
                     style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold)
                 )
 
@@ -202,7 +204,7 @@ fun SplitBillBottomSheet(
                 OutlinedTextField(
                     value = taxPercentage,
                     onValueChange = { taxPercentage = it.filter { c -> c.isDigit() }.take(2) },
-                    label = { Text("Pajak PB1 (%)") },
+                    label = { Text(stringResource(R.string.split_tax_service)) },
                     placeholder = { Text("10") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
@@ -241,7 +243,7 @@ fun SplitBillBottomSheet(
                 ) {
                     Icon(Icons.Default.Share, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text("Bagikan Rincian ke WhatsApp", fontWeight = FontWeight.SemiBold)
+                    Text(stringResource(R.string.split_share_whatsapp), fontWeight = FontWeight.SemiBold)
                 }
 
                 // Apply My Share only
@@ -254,7 +256,7 @@ fun SplitBillBottomSheet(
                     shape = MaterialTheme.shapes.medium
                 ) {
                     Text(
-                        "Terapkan Porsi Saya (${CurrencyFormatter.formatRupiah(perPersonAmount)})",
+                        stringResource(R.string.split_apply, CurrencyFormatter.formatRupiah(perPersonAmount)),
                         fontWeight = FontWeight.Bold
                     )
                 }

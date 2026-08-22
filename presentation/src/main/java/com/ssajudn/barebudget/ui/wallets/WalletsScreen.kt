@@ -34,6 +34,8 @@ import com.ssajudn.barebudget.ui.components.AppFormDialog
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.Spacing
 import com.ssajudn.barebudget.ui.theme.crispBorder
+import androidx.compose.ui.res.stringResource
+import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 
@@ -75,10 +77,10 @@ fun WalletsScreen(
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Dompet Saya", fontWeight = FontWeight.Bold) },
+                title = { Text(stringResource(R.string.wallets_title), fontWeight = FontWeight.Bold) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -90,7 +92,7 @@ fun WalletsScreen(
             ExtendedFloatingActionButton(
                 onClick = { showAddDialog = true },
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                text = { Text("Tambah Dompet") },
+                text = { Text(stringResource(R.string.wallets_add)) },
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary
             )
@@ -124,7 +126,7 @@ fun WalletsScreen(
                     horizontalAlignment = Alignment.Start
                 ) {
                     Text(
-                        text = "TOTAL KEKAYAAN BERSIH",
+                        text = stringResource(R.string.wallets_net_worth_label),
                         style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 1.sp),
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
@@ -143,7 +145,7 @@ fun WalletsScreen(
             Spacer(modifier = Modifier.height(Spacing.Large))
 
             Text(
-                text = "Daftar Dompet",
+                text = stringResource(R.string.wallets_list_title),
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold
             )
@@ -244,7 +246,7 @@ fun WalletItem(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "DOMPET AKTIF",
+                                text = stringResource(R.string.wallets_active),
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     letterSpacing = 1.sp,
                                     fontSize = 9.5.sp
@@ -260,7 +262,7 @@ fun WalletItem(
                     ) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "Hapus Dompet",
+                            contentDescription = stringResource(R.string.wallets_delete_desc),
                             tint = MaterialTheme.colorScheme.error.copy(alpha = 0.6f),
                             modifier = Modifier.size(18.dp)
                         )
@@ -270,7 +272,7 @@ fun WalletItem(
                 Spacer(modifier = Modifier.height(18.dp))
 
                 Text(
-                    text = "Saldo Saat Ini",
+                    text = stringResource(R.string.wallets_balance_now),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -289,9 +291,9 @@ fun WalletItem(
 
     if (showDeleteConfirm) {
         AppConfirmDialog(
-            title = "Hapus Dompet?",
-            message = "Apakah Anda yakin ingin menghapus '${wallet.name}'? Histori transaksinya mungkin akan kehilangan referensi dompet ini.",
-            confirmButtonText = "Hapus",
+            title = stringResource(R.string.wallets_delete_title),
+            message = stringResource(R.string.wallets_delete_message, wallet.name),
+            confirmButtonText = stringResource(R.string.wallets_delete_confirm),
             onDismissRequest = { showDeleteConfirm = false },
             onConfirm = {
                 onDelete()
@@ -312,7 +314,7 @@ fun AddWalletDialog(
     var selectedColor by remember { mutableStateOf(colors.first()) }
 
     AppFormDialog(
-        title = "Tambah Dompet",
+        title = stringResource(R.string.wallets_add_title),
         icon = Icons.Default.AccountBalanceWallet,
         onDismissRequest = onDismiss,
         onConfirm = {
@@ -324,7 +326,7 @@ fun AddWalletDialog(
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Nama Dompet (mis. BCA, Tunai)") },
+            label = { Text(stringResource(R.string.wallets_name_label)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             shape = MaterialTheme.shapes.medium
@@ -338,7 +340,7 @@ fun AddWalletDialog(
                     balanceStr = cleanString
                 }
             },
-            label = { Text("Saldo Awal") },
+            label = { Text(stringResource(R.string.wallets_initial_balance)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
             visualTransformation = CurrencyVisualTransformation(),
             modifier = Modifier.fillMaxWidth(),
@@ -349,7 +351,7 @@ fun AddWalletDialog(
         Spacer(modifier = Modifier.height(Spacing.Small))
         
         Text(
-            text = "Warna Dompet",
+            text = stringResource(R.string.wallets_color),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

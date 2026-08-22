@@ -77,7 +77,7 @@ class OutboxWorker @AssistedInject constructor(
         if (hasRetry) Result.retry() else Result.success()
     }
 
-    // ponytail: DTO already snake_case, mapping kept minimal until full DTO wiring
+    // Mappers for converting serialized network request DTOs into domain creation requests
     private fun mapWallet(dto: CreateWalletRequestDto) = com.ssajudn.barebudget.domain.model.CreateWalletRequest(dto.name, dto.balance, dto.colorHex, dto.iconName)
     private fun mapTx(dto: CreateTransactionRequestDto) = com.ssajudn.barebudget.domain.model.CreateTransactionRequest(dto.amount, com.ssajudn.barebudget.data.repository.DomainMappers.safeTransactionType(dto.type), com.ssajudn.barebudget.data.repository.DomainMappers.safeCategory(dto.category), dto.merchant, dto.date, dto.notes ?: "", dto.receiptUrl ?: "", dto.walletId, dto.toWalletId)
     private fun mapGoal(dto: CreateGoalRequestDto) = com.ssajudn.barebudget.domain.model.CreateGoalRequest(dto.name, dto.targetAmount, dto.targetDate ?: "", dto.colorHex, dto.notes ?: "")

@@ -12,9 +12,10 @@ import androidx.room.RoomDatabase
         LocalBudgetEntity::class,
         LocalGoalEntity::class,
         LocalWalletEntity::class,
-        OutboxEntity::class
+        OutboxEntity::class,
+        CachedTranslationEntity::class
     ],
-    version = 9,
+    version = 10,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -25,6 +26,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun goalDao(): GoalDao
     abstract fun walletDao(): WalletDao
     abstract fun outboxDao(): OutboxDao
+    abstract fun cachedTranslationDao(): CachedTranslationDao
 
     companion object {
         @Volatile
@@ -60,6 +62,12 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        val MIGRATION_9_10 = object : androidx.room.migration.Migration(9, 10) {
+            override fun migrate(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+                db.execSQL("CREATE TABLE IF NOT EXISTS cached_translations (cacheKey TEXT NOT NULL PRIMARY KEY, sourceLang TEXT NOT NULL, targetLang TEXT NOT NULL, originalText TEXT NOT NULL, translatedText TEXT NOT NULL, createdAt INTEGER NOT NULL)")
+            }
+        }
+
         fun getInstance(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 val instance = Room.databaseBuilder(
@@ -67,7 +75,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "bare_budget_offline.db"
                 )
-                    .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9)
+                    .addMigrations(MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8, MIGRATION_8_9, MIGRATION_9_10)
                     .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance

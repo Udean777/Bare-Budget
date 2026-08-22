@@ -23,10 +23,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.data.auth.AuthResult
 import com.ssajudn.barebudget.ui.theme.*
+import com.ssajudn.barebudget.utils.LanguageManager
 import kotlinx.coroutines.launch
 
 data class OnboardingPageData(
@@ -57,26 +59,28 @@ fun OnboardingScreen(
 
     val pages = listOf(
         OnboardingPageData(
-            title = "Zero Friction Expense Tracking",
-            description = "Log your daily expenses in seconds. Clean, minimal, and focused on what truly matters to your wallet.",
+            title = stringResource(R.string.onboarding_slide1_title),
+            description = stringResource(R.string.onboarding_slide1_desc),
             imageRes = R.drawable.img_onboarding_expense
         ),
         OnboardingPageData(
-            title = "Track Your Financial Runway",
-            description = "Get honest predictions of how long your money will last based on your real-time daily burn rate.",
+            title = stringResource(R.string.onboarding_slide2_title),
+            description = stringResource(R.string.onboarding_slide2_desc),
             imageRes = R.drawable.img_onboarding_runway
         ),
         OnboardingPageData(
-            title = "Due Bills & Commitments",
-            description = "Never get caught off-guard by PayLater or monthly subscription due dates ever again.",
+            title = stringResource(R.string.onboarding_slide3_title),
+            description = stringResource(R.string.onboarding_slide3_desc),
             imageRes = R.drawable.img_onboarding_bills
         ),
         OnboardingPageData(
-            title = "Choose How You Start",
-            description = "Select whether to sign in or explore immediately in Guest Mode.",
+            title = stringResource(R.string.onboarding_slide4_title),
+            description = stringResource(R.string.onboarding_slide4_desc),
             imageRes = R.drawable.ic_app_logo
         )
     )
+
+    var currentLang by remember { mutableStateOf(LanguageManager.getCurrentLanguageCode(context)) }
 
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val isLastPage = pagerState.currentPage == pages.size - 1
@@ -96,7 +100,7 @@ fun OnboardingScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(48.dp),
+                    .height(44.dp),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -109,7 +113,7 @@ fun OnboardingScreen(
                         }
                     ) {
                         Text(
-                            text = "Skip",
+                            text = stringResource(R.string.tour_skip),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.SemiBold,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -151,8 +155,16 @@ fun OnboardingScreen(
                         }
                     )
                 } else {
-                    // Standard Slide View
-                    OnboardingSlide(data = pages[pageIndex])
+                    // Standard Slide View (Slide 1 includes polished language selector)
+                    OnboardingSlide(
+                        data = pages[pageIndex],
+                        isFirstSlide = pageIndex == 0,
+                        currentLang = currentLang,
+                        onLanguageChange = { code ->
+                            currentLang = code
+                            LanguageManager.setLanguage(context, code)
+                        }
+                    )
                 }
             }
 
@@ -196,7 +208,7 @@ fun OnboardingScreen(
                         modifier = Modifier.height(48.dp)
                     ) {
                         Text(
-                            text = "Next",
+                            text = stringResource(R.string.tour_next),
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.width(6.dp))
@@ -213,7 +225,12 @@ fun OnboardingScreen(
 }
 
 @Composable
-fun OnboardingSlide(data: OnboardingPageData) {
+fun OnboardingSlide(
+    data: OnboardingPageData,
+    isFirstSlide: Boolean = false,
+    currentLang: String = "",
+    onLanguageChange: (String) -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -225,11 +242,56 @@ fun OnboardingSlide(data: OnboardingPageData) {
             painter = painterResource(id = data.imageRes),
             contentDescription = data.title,
             modifier = Modifier
-                .size(230.dp)
+                .size(210.dp)
                 .clip(MaterialTheme.shapes.extraLarge)
         )
 
-        Spacer(modifier = Modifier.height(36.dp))
+        Spacer(modifier = Modifier.height(24.dp))
+
+        if (isFirstSlide) {
+            Surface(
+                shape = AppShapes.Pill,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    LanguageManager.SUPPORTED_LANGUAGES.forEach { (code, label) ->
+                        val isSelected = currentLang == code
+                        Surface(
+                            shape = AppShapes.Pill,
+                            color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
+                            onClick = { onLanguageChange(code) }
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                if (isSelected) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
+                                Text(
+                                    text = label,
+                                    style = MaterialTheme.typography.labelMedium.copy(
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
+                                    ),
+                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         Text(
             text = data.title,
@@ -240,7 +302,7 @@ fun OnboardingSlide(data: OnboardingPageData) {
             color = MaterialTheme.colorScheme.onSurface
         )
 
-        Spacer(modifier = Modifier.height(14.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
             text = data.description,
@@ -280,7 +342,7 @@ fun FinalAuthChoiceStep(
         Spacer(modifier = Modifier.height(20.dp))
 
         Text(
-            text = "Welcome to Bare Budget",
+            text = stringResource(R.string.onboarding_welcome),
             style = MaterialTheme.typography.headlineMedium.copy(
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center
@@ -291,7 +353,7 @@ fun FinalAuthChoiceStep(
         Spacer(modifier = Modifier.height(8.dp))
 
         Text(
-            text = "Select an account mode to proceed",
+            text = stringResource(R.string.onboarding_choose_mode),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -323,7 +385,7 @@ fun FinalAuthChoiceStep(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Sign In with Google",
+                        text = stringResource(R.string.onboarding_google_title),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -334,7 +396,7 @@ fun FinalAuthChoiceStep(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "Recommended. All your transaction history, budgets, and bills are backed up securely to the cloud. You won't lose your data when reinstalling.",
+                    text = stringResource(R.string.onboarding_google_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -359,7 +421,7 @@ fun FinalAuthChoiceStep(
                             modifier = Modifier.size(20.dp)
                         )
                     } else {
-                        Text("Sign In with Google", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.onboarding_google_title), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -391,7 +453,7 @@ fun FinalAuthChoiceStep(
                     }
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = "Guest Mode",
+                        text = stringResource(R.string.onboarding_guest_title),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -402,7 +464,7 @@ fun FinalAuthChoiceStep(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = "100% Offline & tanpa login. Semua data tersimpan di perangkat dan dapat dicadangkan/dipulihkan kapan saja lewat file backup JSON.",
+                    text = stringResource(R.string.onboarding_guest_desc),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -423,7 +485,7 @@ fun FinalAuthChoiceStep(
                             modifier = Modifier.size(20.dp)
                         )
                     } else {
-                        Text("Continue as Guest", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.onboarding_guest_btn), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

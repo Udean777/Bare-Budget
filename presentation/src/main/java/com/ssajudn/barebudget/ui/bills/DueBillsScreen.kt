@@ -36,6 +36,7 @@ import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
 import com.ssajudn.barebudget.ui.components.AppFormDialog
 import com.ssajudn.barebudget.domain.model.RecurringInterval
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.res.stringResource
 import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 
@@ -92,7 +93,7 @@ fun DueBillsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Tagihan & Komitmen",
+                        text = stringResource(R.string.bills_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -101,7 +102,7 @@ fun DueBillsScreen(
                 navigationIcon = {
                     if (onNavigateBack != null) {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                         }
                     }
                 },
@@ -110,7 +111,7 @@ fun DueBillsScreen(
                         editingBill = null
                         showFormDialog = true
                     }) {
-                        Icon(Icons.Default.Add, contentDescription = "Tambah Tagihan")
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.bills_form_add))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -137,7 +138,7 @@ fun DueBillsScreen(
                     onValueChange = { viewModel.onSearchQueryChange(it) },
                     placeholder = {
                         Text(
-                            "Cari tagihan...",
+                            stringResource(R.string.bills_search_hint),
                             maxLines = 1,
                             style = MaterialTheme.typography.bodyMedium
                         )
@@ -145,14 +146,14 @@ fun DueBillsScreen(
                     leadingIcon = {
                         Icon(
                             Icons.Default.Search,
-                            contentDescription = "Search",
+                            contentDescription = stringResource(R.string.common_search),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     trailingIcon = {
                         if (searchQuery.isNotBlank()) {
                             IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-                                Icon(Icons.Default.Close, contentDescription = "Hapus")
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close))
                             }
                         }
                     },
@@ -176,9 +177,9 @@ fun DueBillsScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     val filters = listOf(
-                        Triple(null, "Semua", 0),
-                        Triple(DueBillStatus.UNPAID, "Belum Lunas", 1),
-                        Triple(DueBillStatus.PAID, "Lunas", 2)
+                        Triple(null, stringResource(R.string.bills_filter_all), 0),
+                        Triple(DueBillStatus.UNPAID, stringResource(R.string.bills_filter_unpaid), 1),
+                        Triple(DueBillStatus.PAID, stringResource(R.string.bills_filter_paid), 2)
                     )
                     filters.forEach { (status, label, index) ->
                         SegmentedButton(
@@ -213,7 +214,7 @@ fun DueBillsScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "Gagal memuat daftar tagihan",
+                                text = stringResource(R.string.bills_load_error),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -225,7 +226,7 @@ fun DueBillsScreen(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(onClick = { viewModel.loadDueBills() }) {
-                                Text("Coba Lagi")
+                                Text(stringResource(R.string.common_retry))
                             }
                         }
                     }
@@ -246,14 +247,14 @@ fun DueBillsScreen(
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
-                                        text = "Tidak Ada Tagihan",
+                                        text = stringResource(R.string.bills_empty_title),
                                         style = MaterialTheme.typography.titleLarge.copy(
                                             fontWeight = FontWeight.Bold
                                         )
                                     )
                                     Spacer(modifier = Modifier.height(6.dp))
                                     Text(
-                                        text = "Semua kewajiban dan tagihan Anda sudah terkelola dengan baik.",
+                                        text = stringResource(R.string.bills_empty_desc),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -343,7 +344,7 @@ fun DueBillsScreen(
                                 )
                             )
                             Text(
-                                text = "Jatuh Tempo: ${DateUtils.formatDisplayDate(targetBill.dueDate)}",
+                                text = stringResource(R.string.bills_due_prefix, DateUtils.formatDisplayDate(targetBill.dueDate)),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -352,7 +353,7 @@ fun DueBillsScreen(
                 }
 
                 Text(
-                    text = "Tindakan Cepat",
+                    text = stringResource(R.string.bills_quick_action),
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -378,8 +379,8 @@ fun DueBillsScreen(
                             ) {
                                 Icon(Icons.Default.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
                                 Column {
-                                    Text("Bayar Tagihan Sekarang", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onPrimaryContainer)
-                                    Text("Pilih dompet sumber pembayaran", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                                    Text(stringResource(R.string.bills_pay_now), style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                    Text(stringResource(R.string.bills_pay_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
                                 }
                             }
                         }
@@ -402,8 +403,8 @@ fun DueBillsScreen(
                             ) {
                                 Icon(Icons.Default.Refresh, contentDescription = null, tint = MaterialTheme.colorScheme.onTertiaryContainer)
                                 Column {
-                                    Text("Batalkan Pembayaran (Refund)", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onTertiaryContainer)
-                                    Text("Kembalikan status & saldo ke dompet", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f))
+                                    Text(stringResource(R.string.bills_refund), style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onTertiaryContainer)
+                                    Text(stringResource(R.string.bills_refund_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f))
                                 }
                             }
                         }
@@ -427,7 +428,7 @@ fun DueBillsScreen(
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
-                            Text("Edit Rincian Tagihan", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
+                            Text(stringResource(R.string.bills_edit), style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
                         }
                     }
 
@@ -448,7 +449,7 @@ fun DueBillsScreen(
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                            Text("Hapus Tagihan Ini", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.error)
+                            Text(stringResource(R.string.bills_delete), style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -460,7 +461,7 @@ fun DueBillsScreen(
                         .padding(top = 8.dp),
                     shape = MaterialTheme.shapes.medium
                 ) {
-                    Text("Tutup")
+                    Text(stringResource(R.string.bills_close))
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -505,9 +506,9 @@ fun DueBillsScreen(
     if (unpayingBillConfirm != null) {
         val billToUnpay = unpayingBillConfirm!!
         com.ssajudn.barebudget.ui.components.AppConfirmDialog(
-            title = "Batal Pembayaran?",
-            message = "Tagihan '${billToUnpay.providerName}' akan dikembalikan ke status Belum Lunas. Saldo dompet yang sebelumnya digunakan akan otomatis dikembalikan (refund).",
-            confirmButtonText = "Batal Bayar",
+            title = stringResource(R.string.bills_cancel_title),
+            message = stringResource(R.string.bills_cancel_message, billToUnpay.providerName),
+            confirmButtonText = stringResource(R.string.bills_cancel_confirm),
             onConfirm = {
                 viewModel.markBillAsUnpaid(billToUnpay)
                 unpayingBillConfirm = null
@@ -520,8 +521,8 @@ fun DueBillsScreen(
     if (deletingBillConfirm != null) {
         val billToDelete = deletingBillConfirm!!
         com.ssajudn.barebudget.ui.components.AppConfirmDialog(
-            title = "Hapus Tagihan?",
-            message = "Apakah Anda yakin ingin menghapus tagihan '${billToDelete.providerName}' sebesar ${CurrencyFormatter.formatRupiah(billToDelete.totalAmount)}?",
+            title = stringResource(R.string.bills_delete_title),
+            message = stringResource(R.string.bills_delete_message, billToDelete.providerName, CurrencyFormatter.formatRupiah(billToDelete.totalAmount)),
             confirmButtonText = "Hapus",
             onConfirm = {
                 if (billToDelete.id != null) {
@@ -549,22 +550,22 @@ fun DueBillItem(
         isPaid -> Triple(
             MaterialTheme.colorScheme.primaryContainer,
             MaterialTheme.colorScheme.onPrimaryContainer,
-            "Lunas"
+            stringResource(R.string.bills_badge_paid)
         )
         isOverdue -> Triple(
             MaterialTheme.colorScheme.errorContainer,
             MaterialTheme.colorScheme.onErrorContainer,
-            "Terlambat ${-daysLeft} Hari"
+            stringResource(R.string.bills_badge_overdue, (-daysLeft).toInt())
         )
         daysLeft == 0L -> Triple(
             MaterialTheme.colorScheme.tertiaryContainer,
             MaterialTheme.colorScheme.onTertiaryContainer,
-            "Jatuh Tempo Hari Ini"
+            stringResource(R.string.bills_badge_today)
         )
         else -> Triple(
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer,
-            "Sisa $daysLeft Hari"
+            stringResource(R.string.bills_badge_remaining, daysLeft.toInt())
         )
     }
 
@@ -605,7 +606,7 @@ fun DueBillItem(
             ) {
                 Icon(
                     Icons.Default.Check,
-                    contentDescription = if (isPaid) "Sudah dibayar" else "Tandai sudah dibayar",
+                    contentDescription = if (isPaid) stringResource(R.string.bills_badge_paid_desc) else stringResource(R.string.bills_badge_unpaid_desc),
                     modifier = Modifier.size(20.dp),
                     tint = if (isPaid) LocalContentColor.current else Color.Transparent
                 )
@@ -615,30 +616,48 @@ fun DueBillItem(
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    val resolvedResId: Int? = if (bill.providerIconUrl != null && bill.providerIconUrl!!.startsWith("res://")) {
-                        bill.providerIconUrl!!.removePrefix("res://").toIntOrNull()
-                    } else when {
-                        bill.providerName.contains("Shopee", ignoreCase = true) -> R.drawable.logo_shopee
-                        bill.providerName.contains("Kredivo", ignoreCase = true) -> R.drawable.logo_kredivo
-                        bill.providerName.contains("GoPay", ignoreCase = true) -> R.drawable.logo_gopay
-                        else -> null
+                    val context = androidx.compose.ui.platform.LocalContext.current
+                    // Safely resolve the provider icon (drawable resource ID, local file path, or remote URL)
+                    val iconModel: Any? = remember(bill.providerIconUrl, bill.providerName) {
+                        val url = bill.providerIconUrl
+                        if (url != null && url.startsWith("res://")) {
+                            val payload = url.removePrefix("res://")
+                            val byName = when (payload) {
+                                "logo_shopee", "ic_provider_shopee" -> R.drawable.logo_shopee
+                                "logo_kredivo", "ic_provider_kredivo" -> R.drawable.logo_kredivo
+                                "logo_gopay", "ic_provider_gopay" -> R.drawable.logo_gopay
+                                else -> null
+                            }
+                            if (byName != null) {
+                                byName
+                            } else {
+                                val legacyInt = payload.toIntOrNull()
+                                if (legacyInt != null) {
+                                    runCatching {
+                                        if (context.resources.getResourceTypeName(legacyInt) == "drawable") legacyInt else null
+                                    }.getOrNull()
+                                } else {
+                                    val id = context.resources.getIdentifier(payload, "drawable", context.packageName)
+                                    if (id != 0) id else null
+                                }
+                            }
+                        } else if (url != null && url.isNotBlank()) {
+                            when {
+                                url.startsWith("/") -> java.io.File(url)
+                                url.startsWith("file://") -> java.io.File(url.removePrefix("file://"))
+                                else -> url
+                            }
+                        } else {
+                            when {
+                                bill.providerName.contains("Shopee", ignoreCase = true) -> R.drawable.logo_shopee
+                                bill.providerName.contains("Kredivo", ignoreCase = true) -> R.drawable.logo_kredivo
+                                bill.providerName.contains("GoPay", ignoreCase = true) -> R.drawable.logo_gopay
+                                else -> null
+                            }
+                        }
                     }
 
-                    if (resolvedResId != null) {
-                        androidx.compose.foundation.Image(
-                            painter = androidx.compose.ui.res.painterResource(id = resolvedResId),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(28.dp)
-                                .clip(MaterialTheme.shapes.small)
-                        )
-                        Spacer(modifier = Modifier.width(10.dp))
-                    } else if (bill.providerIconUrl != null && !bill.providerIconUrl!!.startsWith("res://")) {
-                        val iconModel: Any? = when {
-                            bill.providerIconUrl!!.startsWith("/") -> java.io.File(bill.providerIconUrl!!)
-                            bill.providerIconUrl!!.startsWith("file://") -> java.io.File(bill.providerIconUrl!!.removePrefix("file://"))
-                            else -> bill.providerIconUrl!!
-                        }
+                    if (iconModel != null) {
                         AsyncImage(
                             model = iconModel,
                             contentDescription = null,
@@ -716,7 +735,7 @@ fun DueBillItem(
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "Jatuh tempo: ${DateUtils.formatDisplayDate(bill.dueDate)}",
+                    text = stringResource(R.string.bills_due_prefix, DateUtils.formatDisplayDate(bill.dueDate)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp
@@ -769,7 +788,7 @@ fun DueBillFormDialog(
         contract = ActivityResultContracts.GetContent()
     ) { uri: android.net.Uri? ->
         if (uri != null) {
-            // ponytail: copy to internal storage so icon survives restart (content:// permission is transient)
+            // Persist the picked image to internal storage so the icon remains accessible across app restarts
             customProviderIconUrl = persistPickedImage(context, uri) ?: uri.toString()
         }
     }
@@ -794,15 +813,24 @@ fun DueBillFormDialog(
     }
 
     val finalProviderName = if (selectedProvider.isCustom) customProviderName.trim() else selectedProvider.name
-    val finalIconUrl = if (selectedProvider.isCustom) customProviderIconUrl else selectedProvider.iconRes?.let { "res://$it" }
+    // Store drawable entry name (e.g., "logo_shopee") instead of raw integer resource ID for stability across builds
+    val finalIconUrl = if (selectedProvider.isCustom) customProviderIconUrl else selectedProvider.iconRes?.let {
+        val entryName = runCatching { context.resources.getResourceEntryName(it) }.getOrNull() ?: when (it) {
+            R.drawable.logo_shopee -> "logo_shopee"
+            R.drawable.logo_kredivo -> "logo_kredivo"
+            R.drawable.logo_gopay -> "logo_gopay"
+            else -> "logo_shopee"
+        }
+        "res://$entryName"
+    }
 
     val isFormValid = finalProviderName.isNotBlank() && parsedAmount > 0
 
     AppFormDialog(
-        title = if (initialBill != null) "Edit Tagihan" else "Tambah Tagihan Baru",
+        title = if (initialBill != null) stringResource(R.string.bills_form_edit) else stringResource(R.string.bills_form_new),
         icon = Icons.AutoMirrored.Filled.ReceiptLong,
         iconTint = MaterialTheme.colorScheme.primary,
-        confirmButtonText = if (initialBill != null) "Simpan Perubahan" else "Tambah Tagihan",
+        confirmButtonText = if (initialBill != null) stringResource(R.string.bills_form_save) else stringResource(R.string.bills_form_add),
         isConfirmEnabled = isFormValid,
         onDismissRequest = onDismiss,
         onConfirm = {
@@ -829,7 +857,7 @@ fun DueBillFormDialog(
                 value = selectedProvider.name,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Penyedia / Kategori Tagihan") },
+                label = { Text(stringResource(R.string.bills_provider_label)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = providerDropdownExpanded) },
                 leadingIcon = {
                     if (selectedProvider.iconRes != null) {
@@ -912,8 +940,8 @@ fun DueBillFormDialog(
             OutlinedTextField(
                 value = customProviderName,
                 onValueChange = { customProviderName = it },
-                label = { Text("Nama Tagihan / Provider") },
-                placeholder = { Text("e.g. PLN Electricity, Netflix, Wifi") },
+                label = { Text(stringResource(R.string.bills_name_label)) },
+                placeholder = { Text(stringResource(R.string.bills_name_hint)) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
@@ -925,7 +953,7 @@ fun DueBillFormDialog(
             ) {
                 Icon(Icons.Default.Image, contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(if (customProviderIconUrl != null) "Ganti Logo Icon" else "Upload Logo Icon (Opsional)")
+                Text(if (customProviderIconUrl != null) stringResource(R.string.bills_change_icon) else stringResource(R.string.bills_upload_icon))
             }
         }
 
@@ -939,7 +967,7 @@ fun DueBillFormDialog(
                 rawAmount = digitsOnly
                 parsedAmount = digitsOnly.toLongOrNull() ?: 0L
             },
-            label = { Text("Jumlah Tagihan") },
+            label = { Text(stringResource(R.string.bills_amount_label)) },
             placeholder = { Text("Rp 0") },
             singleLine = true,
             visualTransformation = CurrencyVisualTransformation(),
@@ -954,10 +982,10 @@ fun DueBillFormDialog(
             value = DateUtils.formatDisplayDate(dueDateIso),
             onValueChange = {},
             readOnly = true,
-            label = { Text("Tanggal Jatuh Tempo") },
+            label = { Text(stringResource(R.string.bills_due_date)) },
             trailingIcon = {
                 IconButton(onClick = { showDatePicker = true }) {
-                    Icon(Icons.Default.CalendarToday, contentDescription = "Pilih Tanggal")
+                    Icon(Icons.Default.CalendarToday, contentDescription = stringResource(R.string.bills_due_date))
                 }
             },
             modifier = Modifier
@@ -971,7 +999,7 @@ fun DueBillFormDialog(
         OutlinedTextField(
             value = notes,
             onValueChange = { notes = it },
-            label = { Text("Catatan / No. Pelanggan (Opsional)") },
+            label = { Text(stringResource(R.string.bills_notes_label)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -986,11 +1014,11 @@ fun DueBillFormDialog(
         ) {
             Column {
                 Text(
-                    text = "Tagihan Berulang",
+                    text = stringResource(R.string.bills_recurring),
                     style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
                 )
                 Text(
-                    text = "Otomatis diperbarui saat dibayar",
+                    text = stringResource(R.string.bills_recurring_desc),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1032,10 +1060,10 @@ fun PayDueBillDialog(
     var walletDropdownExpanded by remember { mutableStateOf(false) }
 
     AppFormDialog(
-        title = "Bayar Tagihan",
+        title = stringResource(R.string.bills_pay_title),
         icon = Icons.Default.AccountBalanceWallet,
         iconTint = MaterialTheme.colorScheme.primary,
-        confirmButtonText = "Bayar Sekarang",
+        confirmButtonText = stringResource(R.string.bills_pay_btn),
         isConfirmEnabled = selectedWallet?.id != null,
         onDismissRequest = onDismiss,
         onConfirm = {
@@ -1065,7 +1093,7 @@ fun PayDueBillDialog(
                     color = MaterialTheme.colorScheme.primary
                 )
                 Text(
-                    text = "Jatuh tempo: ${DateUtils.formatDisplayDate(bill.dueDate)}",
+                    text = stringResource(R.string.bills_due_prefix, DateUtils.formatDisplayDate(bill.dueDate)),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -1075,7 +1103,7 @@ fun PayDueBillDialog(
         Spacer(modifier = Modifier.height(12.dp))
 
         Text(
-            text = "Pilih Sumber Dompet",
+            text = stringResource(R.string.bills_wallet_choose),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.onSurface
@@ -1091,7 +1119,7 @@ fun PayDueBillDialog(
                 value = selectedWalletText,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Dompet") },
+                label = { Text(stringResource(R.string.bills_wallet_label)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = walletDropdownExpanded) },
                 modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
@@ -1139,7 +1167,7 @@ fun PayDueBillDialog(
             )
             Spacer(modifier = Modifier.width(6.dp))
             Text(
-                text = "Saldo dompet akan otomatis terpotong dan dicatat sebagai pengeluaran.",
+                text = stringResource(R.string.bills_auto_deduct),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -1147,7 +1175,12 @@ fun PayDueBillDialog(
     }
 }
 
-// ponytail: content:// uri permission hilang setelah restart, copy ke filesDir
+/**
+ * Copies a selected `content://` URI to app-private internal storage (`filesDir`).
+ *
+ * Transient content permissions granted by the system file picker do not persist
+ * across app process restarts, so copying the file ensures persistent access.
+ */
 private fun persistPickedImage(context: android.content.Context, uri: android.net.Uri): String? {
     return try {
         val input = context.contentResolver.openInputStream(uri) ?: return null

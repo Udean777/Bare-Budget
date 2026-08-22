@@ -50,6 +50,11 @@ dependencies {
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.hilt.work)
     ksp(libs.hilt.compiler)
+
+    // Translation & Preferences
+    implementation(libs.androidx.datastore.preferences)
+    api(libs.google.mlkit.translate)
+    implementation(libs.kotlinx.coroutines.play.services)
     testImplementation(libs.junit)
     testImplementation(libs.mockwebserver)
     testImplementation(libs.kotlinx.coroutines.test)

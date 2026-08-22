@@ -24,6 +24,8 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
+import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.ui.theme.Spacing
 import com.ssajudn.barebudget.domain.model.AppThemeColorMode
 import com.ssajudn.barebudget.domain.model.AppThemeDarkMode
@@ -48,7 +50,7 @@ fun AppearanceSettingsGroup(
 
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = "Tampilan",
+            text = stringResource(R.string.appearance_title),
             style = MaterialTheme.typography.titleSmall,
             color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(
@@ -73,7 +75,7 @@ fun AppearanceSettingsGroup(
                     verticalArrangement = Arrangement.spacedBy(Spacing.Small),
                 ) {
                     Text(
-                        text = "Mode gelap",
+                        text = stringResource(R.string.appearance_dark_mode),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
@@ -110,13 +112,13 @@ fun AppearanceSettingsGroup(
                             contentDescription = null,
                         )
                     },
-                    headlineContent = { Text("Warna dinamis") },
+                    headlineContent = { Text(stringResource(R.string.appearance_dynamic)) },
                     supportingContent = {
                         Text(
                             if (dynamicColorSupported) {
-                                "Ikuti palet wallpaper (Material You)"
+                                stringResource(R.string.appearance_dynamic_desc)
                             } else {
-                                "Perlu Android 12 atau lebih baru"
+                                stringResource(R.string.appearance_dynamic_need)
                             },
                         )
                     },
@@ -170,3 +172,4 @@ private val DarkModeOptions = listOf(
     DarkModeOption(AppThemeDarkMode.Light, "Terang"),
     DarkModeOption(AppThemeDarkMode.Dark, "Gelap"),
 )
+// ponytail: labels stay hardcoded for enum, add stringResource mapping when needed

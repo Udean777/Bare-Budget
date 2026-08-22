@@ -54,6 +54,11 @@ dependencies {
     implementation(libs.androidx.palette.ktx)
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
+
+    // User Onboarding Tour & Preferences & Translation
+    implementation(libs.compose.showcase)
+    implementation(libs.androidx.datastore.preferences)
+    implementation(libs.kotlinx.coroutines.play.services)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)

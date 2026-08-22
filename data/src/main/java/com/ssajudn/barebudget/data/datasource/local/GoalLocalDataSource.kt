@@ -89,7 +89,7 @@ class GoalLocalDataSource @Inject constructor(
                 }
                 if (!sessionManager.isGuestMode && outboxScheduler != null) {
                     val dto = com.ssajudn.barebudget.data.network.dto.CreateGoalRequestDto("deposit:$id", amount, "", "", "")
-                    // ponytail: deposit outbox uses generic payload, worker maps to deposit endpoint when wiring completes
+                    // Enqueue deposit operation in the offline outbox for synchronization when connectivity is restored
                     try { outboxScheduler.enqueue(sessionManager.userId, "goal_deposit", id, mapOf("id" to id, "amount" to amount, "walletId" to walletId)) } catch (_: Exception) {}
                 }
                 Result.success(true)

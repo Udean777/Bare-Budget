@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.data.auth.AuthResult
@@ -85,7 +86,7 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(28.dp))
 
             Text(
-                text = "Welcome to Bare Budget",
+                text = stringResource(R.string.onboarding_welcome),
                 style = MaterialTheme.typography.headlineMedium.copy(
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
@@ -96,7 +97,7 @@ fun AuthScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Sign in to sync your cloud records or continue instantly with a guest profile.",
+                text = stringResource(R.string.onboarding_auth_desc),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     textAlign = TextAlign.Center,
                     lineHeight = 22.sp
@@ -138,7 +139,7 @@ fun AuthScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.CloudDone, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("Sign In with Google", fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.onboarding_google_title), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -169,7 +170,7 @@ fun AuthScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(Icons.Default.PersonOutline, contentDescription = null, modifier = Modifier.size(20.dp))
                         Spacer(modifier = Modifier.width(10.dp))
-                        Text("Continue as Guest", fontWeight = FontWeight.SemiBold)
+                        Text(stringResource(R.string.onboarding_guest_btn), fontWeight = FontWeight.SemiBold)
                     }
                 }
             }

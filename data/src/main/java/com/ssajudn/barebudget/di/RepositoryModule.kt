@@ -6,6 +6,7 @@ import com.ssajudn.barebudget.data.repository.DueBillRepositoryImpl
 import com.ssajudn.barebudget.data.repository.GoalRepositoryImpl
 import com.ssajudn.barebudget.data.repository.MigrationRepositoryImpl
 import com.ssajudn.barebudget.data.repository.TransactionRepositoryImpl
+import com.ssajudn.barebudget.data.repository.TranslationRepositoryImpl
 import com.ssajudn.barebudget.data.repository.WalletRepositoryImpl
 import com.ssajudn.barebudget.domain.repository.AnalyticsRepository
 import com.ssajudn.barebudget.domain.repository.BudgetRepository
@@ -13,6 +14,7 @@ import com.ssajudn.barebudget.domain.repository.DueBillRepository
 import com.ssajudn.barebudget.domain.repository.GoalRepository
 import com.ssajudn.barebudget.domain.repository.MigrationRepository
 import com.ssajudn.barebudget.domain.repository.TransactionRepository
+import com.ssajudn.barebudget.domain.repository.TranslationRepository
 import com.ssajudn.barebudget.domain.repository.WalletRepository
 import dagger.Binds
 import dagger.Module
@@ -43,4 +45,7 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindMigrationRepository(impl: MigrationRepositoryImpl): MigrationRepository
+
+    @Binds
+    abstract fun bindTranslationRepository(impl: TranslationRepositoryImpl): TranslationRepository
 }

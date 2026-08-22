@@ -187,8 +187,10 @@ class AddTransactionViewModelTest {
     }
 
     @Test
-    fun `saveTransaction rejects transfer where source equals destination`() = runTest {
-        coEvery { walletRepository.getWallets() } returns Result.success(walletsFixture())
+    fun `saveTransaction rejects transfer where source equals destination when only one wallet exists`() = runTest {
+        coEvery { walletRepository.getWallets() } returns Result.success(listOf(
+            Wallet(id = "w1", name = "Cash", balance = 100_000L)
+        ))
         val vm = AddTransactionViewModel(walletRepository, transactionRepository)
         advanceUntilIdle()
 
@@ -202,6 +204,58 @@ class AddTransactionViewModelTest {
             "Dompet asal dan dompet tujuan tidak boleh sama",
             vm.uiState.value.errorMessage
         )
+    }
+
+    @Test
+    fun `onWalletChange smart switches destination wallet when selecting current destination`() = runTest {
+        coEvery { walletRepository.getWallets() } returns Result.success(walletsFixture())
+        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        advanceUntilIdle()
+
+        vm.onTransactionTypeChange(TransactionType.TRANSFER)
+        assertEquals("w1", vm.uiState.value.selectedWalletId)
+        assertEquals("w2", vm.uiState.value.selectedToWalletId)
+
+        // User picks "w2" as source wallet (which matches current destination "w2")
+        vm.onWalletChange("w2")
+
+        // Destination should smart-switch to "w1"
+        assertEquals("w2", vm.uiState.value.selectedWalletId)
+        assertEquals("w1", vm.uiState.value.selectedToWalletId)
+    }
+
+    @Test
+    fun `onToWalletChange smart switches source wallet when selecting current source`() = runTest {
+        coEvery { walletRepository.getWallets() } returns Result.success(walletsFixture())
+        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        advanceUntilIdle()
+
+        vm.onTransactionTypeChange(TransactionType.TRANSFER)
+        assertEquals("w1", vm.uiState.value.selectedWalletId)
+        assertEquals("w2", vm.uiState.value.selectedToWalletId)
+
+        // User picks "w1" as destination wallet (which matches current source "w1")
+        vm.onToWalletChange("w1")
+
+        // Source should smart-switch to "w2"
+        assertEquals("w2", vm.uiState.value.selectedWalletId)
+        assertEquals("w1", vm.uiState.value.selectedToWalletId)
+    }
+
+    @Test
+    fun `swapWallets correctly swaps source and destination wallets`() = runTest {
+        coEvery { walletRepository.getWallets() } returns Result.success(walletsFixture())
+        val vm = AddTransactionViewModel(walletRepository, transactionRepository)
+        advanceUntilIdle()
+
+        vm.onTransactionTypeChange(TransactionType.TRANSFER)
+        assertEquals("w1", vm.uiState.value.selectedWalletId)
+        assertEquals("w2", vm.uiState.value.selectedToWalletId)
+
+        vm.swapWallets()
+
+        assertEquals("w2", vm.uiState.value.selectedWalletId)
+        assertEquals("w1", vm.uiState.value.selectedToWalletId)
     }
 
     @Test

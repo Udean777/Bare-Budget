@@ -28,6 +28,8 @@ import com.ssajudn.barebudget.domain.model.TransactionCategory
 import com.ssajudn.barebudget.domain.model.TransactionType
 import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
+import androidx.compose.ui.res.stringResource
+import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.categoryColors
 import com.ssajudn.barebudget.ui.theme.crispBorder
@@ -67,7 +69,7 @@ fun AddTransactionScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Add Expense",
+                        text = stringResource(R.string.tx_add_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -75,7 +77,7 @@ fun AddTransactionScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -108,7 +110,7 @@ fun AddTransactionScreen(
                         )
                     } else {
                         Text(
-                            text = "Save Expense",
+                            text = stringResource(R.string.common_save),
                             style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold
                             )
@@ -130,9 +132,9 @@ fun AddTransactionScreen(
             // 0. TRANSACTION TYPE (Expense / Income / Transfer)
             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
                 val types = listOf(
-                    Triple(TransactionType.EXPENSE, "Pengeluaran", 0),
-                    Triple(TransactionType.INCOME, "Pemasukan", 1),
-                    Triple(TransactionType.TRANSFER, "Transfer", 2)
+                    Triple(TransactionType.EXPENSE, stringResource(R.string.tx_expense), 0),
+                    Triple(TransactionType.INCOME, stringResource(R.string.tx_income), 1),
+                    Triple(TransactionType.TRANSFER, stringResource(R.string.tx_transfer), 2)
                 )
                 types.forEach { (type, label, index) ->
                     SegmentedButton(
@@ -153,7 +155,7 @@ fun AddTransactionScreen(
                 ) {
                     // Source Wallet (Dari)
                     var fromWalletExpanded by remember { mutableStateOf(false) }
-                    val selectedFromWalletName = uiState.wallets.find { it.id == uiState.selectedWalletId }?.name ?: "Pilih"
+                    val selectedFromWalletName = uiState.wallets.find { it.id == uiState.selectedWalletId }?.name ?: stringResource(R.string.common_add)
                     ExposedDropdownMenuBox(
                         expanded = fromWalletExpanded,
                         onExpandedChange = { fromWalletExpanded = !fromWalletExpanded },
@@ -163,7 +165,7 @@ fun AddTransactionScreen(
                             value = selectedFromWalletName,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Dari Dompet") },
+                            label = { Text(stringResource(R.string.tx_from_wallet)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = fromWalletExpanded) },
                             modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
@@ -186,7 +188,7 @@ fun AddTransactionScreen(
 
                     // Destination Wallet (Ke)
                     var toWalletExpanded by remember { mutableStateOf(false) }
-                    val selectedToWalletName = uiState.wallets.find { it.id == uiState.selectedToWalletId }?.name ?: "Pilih"
+                    val selectedToWalletName = uiState.wallets.find { it.id == uiState.selectedToWalletId }?.name ?: stringResource(R.string.common_add)
                     ExposedDropdownMenuBox(
                         expanded = toWalletExpanded,
                         onExpandedChange = { toWalletExpanded = !toWalletExpanded },
@@ -196,7 +198,7 @@ fun AddTransactionScreen(
                             value = selectedToWalletName,
                             onValueChange = {},
                             readOnly = true,
-                            label = { Text("Ke Dompet") },
+                            label = { Text(stringResource(R.string.tx_to_wallet)) },
                             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = toWalletExpanded) },
                             modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                             colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
@@ -224,12 +226,12 @@ fun AddTransactionScreen(
                     onExpandedChange = { walletDropdownExpanded = !walletDropdownExpanded },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    val selectedWalletName = uiState.wallets.find { it.id == uiState.selectedWalletId }?.name ?: "Pilih Dompet"
+                    val selectedWalletName = uiState.wallets.find { it.id == uiState.selectedWalletId }?.name ?: stringResource(R.string.tx_choose_wallet)
                     OutlinedTextField(
                         value = selectedWalletName,
                         onValueChange = {},
                         readOnly = true,
-                        label = { Text("Dompet") },
+                        label = { Text(stringResource(R.string.tx_wallet_label)) },
                         trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = walletDropdownExpanded) },
                         modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                         colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
@@ -270,9 +272,9 @@ fun AddTransactionScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     val amountLabel = when (uiState.transactionType) {
-                        TransactionType.INCOME -> "Nominal Pemasukan"
-                        TransactionType.TRANSFER -> "Nominal Transfer"
-                        TransactionType.EXPENSE -> "Nominal Pengeluaran"
+                        TransactionType.INCOME -> stringResource(R.string.tx_amount_income)
+                        TransactionType.TRANSFER -> stringResource(R.string.tx_amount_transfer)
+                        TransactionType.EXPENSE -> stringResource(R.string.tx_amount_expense)
                     }
                     Text(
                         text = amountLabel,
@@ -348,7 +350,7 @@ fun AddTransactionScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("Smart Split Bill (Patungan Cerdas)", style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
+                            Text(stringResource(R.string.split_title), style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
                         }
                     }
                 }
@@ -358,7 +360,7 @@ fun AddTransactionScreen(
             if (uiState.transactionType != TransactionType.TRANSFER) {
                 Column {
                     Text(
-                        text = "Kategori",
+                        text = stringResource(R.string.tx_category),
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold
                         ),
@@ -410,7 +412,7 @@ fun AddTransactionScreen(
             // 3. MERCHANT / STORE NAME
             Column {
                 Text(
-                    text = "Merchant / Store (Optional)",
+                    text = stringResource(R.string.tx_merchant_label),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
@@ -420,7 +422,7 @@ fun AddTransactionScreen(
                 OutlinedTextField(
                     value = uiState.merchant,
                     onValueChange = { viewModel.onMerchantChange(it) },
-                    placeholder = { Text("e.g. Starbucks, Indomaret, Grab") },
+                    placeholder = { Text(stringResource(R.string.tx_merchant_hint)) },
                     singleLine = true,
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth()
@@ -440,7 +442,7 @@ fun AddTransactionScreen(
             }
             Column {
                 Text(
-                    text = "Tanggal",
+                    text = stringResource(R.string.tx_date),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
@@ -466,7 +468,7 @@ fun AddTransactionScreen(
             // 4. NOTES
             Column {
                 Text(
-                    text = "Notes (Optional)",
+                    text = stringResource(R.string.tx_notes_label),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.SemiBold
                     ),
@@ -476,7 +478,7 @@ fun AddTransactionScreen(
                 OutlinedTextField(
                     value = uiState.notes,
                     onValueChange = { viewModel.onNotesChange(it) },
-                    placeholder = { Text("Add detail...") },
+                    placeholder = { Text(stringResource(R.string.tx_notes_hint)) },
                     shape = MaterialTheme.shapes.medium,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -502,7 +504,7 @@ fun AddTransactionScreen(
             onApplyMyPortion = { myPortion ->
                 viewModel.onAmountChange(myPortion.toString())
                 if (uiState.notes.isBlank()) {
-                    viewModel.onNotesChange("Split bill (Porsi saya dari total ${CurrencyFormatter.formatRupiah(uiState.parsedAmount)})")
+                    viewModel.onNotesChange("Split bill (${CurrencyFormatter.formatRupiah(uiState.parsedAmount)})")
                 }
                 showSplitBottomSheet = false
             }

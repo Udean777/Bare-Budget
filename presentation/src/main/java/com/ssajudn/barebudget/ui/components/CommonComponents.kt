@@ -1,9 +1,15 @@
 package com.ssajudn.barebudget.ui.components
 
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,12 +46,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ssajudn.barebudget.domain.model.Transaction
+import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.ui.theme.AppShapes
+import com.ssajudn.barebudget.ui.theme.MoneyHeadlineStyle
 import com.ssajudn.barebudget.ui.theme.Spacing
 import com.ssajudn.barebudget.ui.theme.categoryColors
 import com.ssajudn.barebudget.ui.theme.crispBorder
@@ -124,15 +133,21 @@ fun FinancialRunwayCard(
                         .background(contentColor.copy(alpha = 0.12f))
                         .padding(horizontal = 10.dp, vertical = 5.dp)
                 ) {
+                    // Pulsing status dot indicator with infinite alpha animation
+                    val pulse by rememberInfiniteTransition(label = "runwayDot").animateFloat(
+                        initialValue = 0.6f, targetValue = 1f,
+                        animationSpec = infiniteRepeatable(tween(900), RepeatMode.Reverse),
+                        label = "dotAlpha"
+                    )
                     Box(
                         modifier = Modifier
                             .size(8.dp)
                             .clip(CircleShape)
-                            .background(accentColor),
+                            .background(accentColor.copy(alpha = pulse)),
                     )
                     Spacer(Modifier.width(6.dp))
                     Text(
-                        text = "FINANCIAL RUNWAY",
+                        text = stringResource(R.string.runway_label),
                         style = MaterialTheme.typography.labelSmall.copy(
                             letterSpacing = 1.sp
                         ),
@@ -153,7 +168,7 @@ fun FinancialRunwayCard(
                     ),
                 ) {
                     Text(
-                        text = if (totalBudget > 0) "Ubah Target" else "Atur Anggaran",
+                        text = stringResource(if (totalBudget > 0) R.string.runway_edit else R.string.runway_set),
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.Bold,
                     )
@@ -162,29 +177,27 @@ fun FinancialRunwayCard(
 
             Spacer(Modifier.height(12.dp))
 
-            // Big Number Display
+            // Main remaining runway budget display using dedicated money typography
             Text(
                 text = CurrencyFormatter.formatRupiah(remainingBudget),
-                style = MaterialTheme.typography.headlineLarge.copy(
-                    fontWeight = FontWeight.Black,
-                    fontSize = 32.sp
-                ),
+                style = MoneyHeadlineStyle.copy(fontSize = 32.sp),
             )
 
             Spacer(Modifier.height(10.dp))
 
-            // Signature Expressive Gauge Bar
+            // Signature Expressive Gauge Bar — 10dp, subtle track + spring fill
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(8.dp)
+                    .height(10.dp)
                     .clip(AppShapes.Pill)
                     .background(contentColor.copy(alpha = 0.15f))
+                    .border(0.8.dp, contentColor.copy(alpha = 0.08f), AppShapes.Pill)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth(animatedProgress)
-                        .height(8.dp)
+                        .height(10.dp)
                         .clip(AppShapes.Pill)
                         .background(accentColor)
                 )
@@ -199,7 +212,7 @@ fun FinancialRunwayCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "TOTAL KEKAYAAN",
+                    text = stringResource(R.string.runway_total_wealth),
                     style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.8.sp),
                     fontWeight = FontWeight.Bold,
                     color = contentColor.copy(alpha = 0.8f)
@@ -257,6 +270,7 @@ fun TransactionItem(
     transaction: Transaction,
     modifier: Modifier = Modifier,
     onClick: () -> Unit = {},
+    enableTranslation: Boolean = false,
 ) {
     val category = transaction.category
     val colors = categoryColors
@@ -271,8 +285,7 @@ fun TransactionItem(
 
     ListItem(
         modifier = modifier.clickable(
-            // Names the action for accessibility services
-            onClickLabel = "Lihat detail $merchantName",
+            onClickLabel = stringResource(R.string.runway_view_detail, merchantName),
             onClick = onClick,
         ),
         colors = ListItemDefaults.colors(
@@ -295,18 +308,18 @@ fun TransactionItem(
             }
         },
         headlineContent = {
-            Text(
-                text = merchantName,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
+            if (enableTranslation && merchantName != category.displayName) {
+                TranslatableUserText(text = merchantName, style = MaterialTheme.typography.bodyLarge, enabled = true)
+            } else {
+                Text(text = merchantName, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         },
         supportingContent = {
             Text(
                 text = if (transaction.type == TransactionType.TRANSFER) {
-                    "Transfer Antar Dompet • ${DateUtils.formatDisplayDate(transaction.date)}"
+                    stringResource(R.string.tx_transfer_label) + " • " + DateUtils.formatDisplayDate(transaction.date)
                 } else {
-                    "${category.displayName} • ${DateUtils.formatDisplayDate(transaction.date)}"
+                    category.displayName + " • " + DateUtils.formatDisplayDate(transaction.date)
                 },
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -363,12 +376,12 @@ fun AppDatePickerDialog(
                     onDismiss()
                 }
             ) {
-                Text("OK")
+                Text(stringResource(R.string.common_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     ) {

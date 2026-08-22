@@ -1,0 +1,14 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <plurals name="transactions_count">
+        <item quantity="one"><xliff:g id="count">%d</xliff:g> transaction</item>
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> transactions</item>
+    </plurals>
+    <plurals name="goals_count">
+        <item quantity="one"><xliff:g id="count">%d</xliff:g> goal</item>
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> goals</item>
+    </plurals>
+    <plurals name="days_left">
+        <item quantity="one"><xliff:g id="count">%d</xliff:g> day left</item>
+        <item quantity="other"><xliff:g id="count">%d</xliff:g> days left</item>
+    </plurals>
+</resources>

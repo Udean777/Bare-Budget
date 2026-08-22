@@ -1,6 +1,8 @@
 package com.ssajudn.barebudget.ui.theme
 
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Typography
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -11,52 +13,52 @@ import com.ssajudn.barebudget.presentation.R
 private fun buildTypography(fontFamily: FontFamily) = Typography(
     displayLarge = TextStyle(
         fontFamily = fontFamily,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.Black,
         fontSize = 57.sp,
         lineHeight = 64.sp,
-        letterSpacing = 0.sp
+        letterSpacing = (-0.5).sp
     ),
     displayMedium = TextStyle(
         fontFamily = fontFamily,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.ExtraBold,
         fontSize = 45.sp,
         lineHeight = 52.sp,
-        letterSpacing = 0.sp
+        letterSpacing = (-0.25).sp
     ),
     displaySmall = TextStyle(
         fontFamily = fontFamily,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.Bold,
         fontSize = 36.sp,
         lineHeight = 44.sp,
         letterSpacing = 0.sp
     ),
     headlineLarge = TextStyle(
         fontFamily = fontFamily,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.Black,
         fontSize = 32.sp,
         lineHeight = 40.sp,
-        letterSpacing = 0.sp
+        letterSpacing = (-0.5).sp
     ),
     headlineMedium = TextStyle(
         fontFamily = fontFamily,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.ExtraBold,
         fontSize = 28.sp,
         lineHeight = 36.sp,
-        letterSpacing = 0.sp
+        letterSpacing = (-0.25).sp
     ),
     headlineSmall = TextStyle(
         fontFamily = fontFamily,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.Bold,
         fontSize = 24.sp,
         lineHeight = 32.sp,
         letterSpacing = 0.sp
     ),
     titleLarge = TextStyle(
         fontFamily = fontFamily,
-        fontWeight = FontWeight.Normal,
+        fontWeight = FontWeight.Bold,
         fontSize = 22.sp,
         lineHeight = 28.sp,
-        letterSpacing = 0.sp
+        letterSpacing = (-0.15).sp
     ),
     titleMedium = TextStyle(
         fontFamily = fontFamily,
@@ -120,5 +122,17 @@ val AppFontFamily = FontFamily(Font(R.font.poppins))
 val LyricsFontFamily = FontFamily(Font(R.font.sfprodisplaybold))
 val Typography = buildTypography(AppFontFamily)
 val SystemTypography = buildTypography(FontFamily.Default)
+
+/**
+ * Dedicated typography style for currency and balance heroes, using SF Pro Display Bold
+ * for clear tabular numeric readability alongside Poppins in the main UI.
+ */
+val MoneyFontFamily: FontFamily get() = LyricsFontFamily
+val MoneyHeadlineStyle
+    @Composable get() = MaterialTheme.typography.headlineLarge.copy(
+        fontFamily = MoneyFontFamily,
+        fontWeight = FontWeight.Bold,
+        letterSpacing = (-0.5).sp
+    )
 
 fun typographyFor(fontFamily: FontFamily) = buildTypography(fontFamily)

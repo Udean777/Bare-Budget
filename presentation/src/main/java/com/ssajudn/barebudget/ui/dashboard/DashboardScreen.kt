@@ -37,6 +37,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import com.ssajudn.barebudget.presentation.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,7 +78,7 @@ fun DashboardScreen(
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
                             painter = painterResource(id = R.drawable.ic_app_logo),
-                            contentDescription = "BareBudget Logo",
+                            contentDescription = stringResource(R.string.app_name),
                             modifier = Modifier
                                 .size(38.dp)
                                 .clip(MaterialTheme.shapes.small)
@@ -91,7 +92,7 @@ fun DashboardScreen(
                                 )
                             )
                             Text(
-                                text = "Frictionless Expense Tracker",
+                                text = stringResource(R.string.dashboard_subtitle),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -113,12 +114,12 @@ fun DashboardScreen(
                     IconButton(onClick = { showThemeDialog = true }) {
                         Icon(
                             imageVector = themeIcon,
-                            contentDescription = "Tema Tampilan"
+                            contentDescription = stringResource(R.string.dashboard_theme_desc)
                         )
                     }
 
                     IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        Icon(Icons.Default.Settings, contentDescription = stringResource(R.string.settings_title))
                     }
 
                     if (showThemeDialog) {
@@ -126,16 +127,16 @@ fun DashboardScreen(
                             onDismissRequest = { showThemeDialog = false },
                             title = {
                                 Text(
-                                    text = "Pilih Tema Tampilan",
+                                    text = stringResource(R.string.dashboard_choose_theme),
                                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
                                 )
                             },
                             text = {
                                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     val options = listOf(
-                                        Triple(AppThemeDarkMode.FollowSystem, "Ikuti Sistem", Icons.Default.BrightnessAuto),
-                                        Triple(AppThemeDarkMode.Light, "Mode Terang", Icons.Default.LightMode),
-                                        Triple(AppThemeDarkMode.Dark, "Mode Gelap", Icons.Default.DarkMode)
+                                        Triple(AppThemeDarkMode.FollowSystem, stringResource(R.string.dashboard_follow_system), Icons.Default.BrightnessAuto),
+                                        Triple(AppThemeDarkMode.Light, stringResource(R.string.dashboard_light), Icons.Default.LightMode),
+                                        Triple(AppThemeDarkMode.Dark, stringResource(R.string.dashboard_dark), Icons.Default.DarkMode)
                                     )
 
                                     options.forEach { (mode, label, icon) ->
@@ -184,7 +185,7 @@ fun DashboardScreen(
                             },
                             confirmButton = {
                                 TextButton(onClick = { showThemeDialog = false }) {
-                                    Text("Tutup")
+                                    Text(stringResource(R.string.common_close))
                                 }
                             }
                         )
@@ -219,7 +220,7 @@ fun DashboardScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "Failed to load data",
+                            text = stringResource(R.string.dashboard_load_error),
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
@@ -231,7 +232,7 @@ fun DashboardScreen(
                         )
                         Spacer(modifier = Modifier.height(16.dp))
                         Button(onClick = { viewModel.loadDashboardData() }) {
-                            Text("Retry")
+                            Text(stringResource(R.string.common_retry))
                         }
                     }
                 }
@@ -292,8 +293,8 @@ fun DashboardContent(
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 QuickActionCard(
-                    title = "Dompet",
-                    subtitle = "Manajemen",
+                    title = stringResource(R.string.dashboard_quick_wallet),
+                    subtitle = stringResource(R.string.dashboard_quick_wallet_desc),
                     icon = Icons.Default.AccountBalanceWallet,
                     bgColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     tintColor = MaterialTheme.colorScheme.primary,
@@ -302,10 +303,10 @@ fun DashboardContent(
                 )
 
                 QuickActionCard(
-                    title = "Tagihan",
+                    title = stringResource(R.string.dashboard_quick_bills),
                     subtitle = if (summary.unpaidDueBillsSum > 0) {
                         CurrencyFormatter.formatCompact(summary.unpaidDueBillsSum)
-                    } else "Lunas",
+                    } else stringResource(R.string.bills_badge_paid),
                     icon = Icons.Default.ReceiptLong,
                     bgColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     tintColor = MaterialTheme.colorScheme.primary,
@@ -314,8 +315,8 @@ fun DashboardContent(
                 )
 
                 QuickActionCard(
-                    title = "Target",
-                    subtitle = "Pockets",
+                    title = stringResource(R.string.dashboard_quick_goals),
+                    subtitle = stringResource(R.string.dashboard_quick_goals_desc),
                     icon = Icons.Default.Payments,
                     bgColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     tintColor = MaterialTheme.colorScheme.primary,
@@ -324,8 +325,8 @@ fun DashboardContent(
                 )
 
                 QuickActionCard(
-                    title = "Analitik",
-                    subtitle = "Review",
+                    title = stringResource(R.string.dashboard_quick_analytics),
+                    subtitle = stringResource(R.string.dashboard_quick_analytics_desc),
                     icon = Icons.Default.TrendingUp,
                     bgColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     tintColor = MaterialTheme.colorScheme.primary,
@@ -350,7 +351,7 @@ fun DashboardContent(
                 ) {
                     Column {
                         Text(
-                            text = "Total Spent This Month",
+                            text = stringResource(R.string.dashboard_total_spent),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -366,7 +367,7 @@ fun DashboardContent(
 
                     Column(horizontalAlignment = Alignment.End) {
                         Text(
-                            text = "Daily Average",
+                            text = stringResource(R.string.dashboard_daily_avg),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -391,7 +392,7 @@ fun DashboardContent(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Recent Transactions",
+                    text = stringResource(R.string.dashboard_recent),
                     style = MaterialTheme.typography.titleMedium.copy(
                         fontWeight = FontWeight.Bold
                     ),
@@ -399,7 +400,7 @@ fun DashboardContent(
                 )
 
                 Text(
-                    text = "See All",
+                    text = stringResource(R.string.dashboard_see_all),
                     style = MaterialTheme.typography.labelLarge.copy(
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.primary
@@ -426,7 +427,7 @@ fun DashboardContent(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "No transactions recorded yet. Log your first expense!",
+                            text = stringResource(R.string.dashboard_no_tx),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -530,14 +531,14 @@ fun SetBudgetDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Set Monthly Budget",
+                text = stringResource(R.string.dashboard_set_budget),
                 fontWeight = FontWeight.Bold
             )
         },
         text = {
             Column {
                 Text(
-                    text = "What is your target spending limit for this month?",
+                    text = stringResource(R.string.dashboard_budget_hint),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -545,7 +546,7 @@ fun SetBudgetDialog(
                 OutlinedTextField(
                     value = rawInput,
                     onValueChange = { rawInput = it },
-                    label = { Text("Budget Amount (Rp)") },
+                    label = { Text(stringResource(R.string.dashboard_budget_amount)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -560,12 +561,12 @@ fun SetBudgetDialog(
                     }
                 }
             ) {
-                Text("Save")
+                Text(stringResource(R.string.common_save))
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(R.string.common_cancel))
             }
         }
     )

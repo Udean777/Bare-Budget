@@ -31,6 +31,8 @@ import com.ssajudn.barebudget.domain.model.TransactionCategory
 import com.ssajudn.barebudget.domain.model.TransactionType
 import com.ssajudn.barebudget.ui.components.TransactionItem
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
+import androidx.compose.ui.res.stringResource
+import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.categoryColors
 import com.ssajudn.barebudget.ui.theme.crispBorder
@@ -66,7 +68,7 @@ fun AllTransactionsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Semua Transaksi",
+                        text = stringResource(R.string.tx_all_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -74,7 +76,7 @@ fun AllTransactionsScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -116,7 +118,7 @@ fun AllTransactionsScreen(
                                     onValueChange = { viewModel.onSearchQueryChange(it) },
                                     placeholder = {
                                         Text(
-                                            "Cari transaksi...",
+                                            stringResource(R.string.tx_search_hint),
                                             maxLines = 1,
                                             style = MaterialTheme.typography.bodyMedium
                                         )
@@ -124,14 +126,14 @@ fun AllTransactionsScreen(
                                     leadingIcon = {
                                         Icon(
                                             Icons.Default.Search,
-                                            contentDescription = "Search",
+                                            contentDescription = stringResource(R.string.common_search),
                                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                     },
                                     trailingIcon = {
                                         if (state.searchQuery.isNotBlank()) {
                                             IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-                                                Icon(Icons.Default.Close, contentDescription = "Hapus")
+                                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close))
                                             }
                                         }
                                     },
@@ -165,7 +167,7 @@ fun AllTransactionsScreen(
                                     Box(contentAlignment = Alignment.Center) {
                                         Icon(
                                             imageVector = Icons.Default.FilterList,
-                                            contentDescription = "Filter Transaksi",
+                                            contentDescription = stringResource(R.string.tx_filter),
                                             tint = if (activeFilterCount > 0) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         if (activeFilterCount > 0) {
@@ -203,13 +205,13 @@ fun AllTransactionsScreen(
                                 ) {
                                     Column {
                                         Text(
-                                            text = "TOTAL DITEMUKAN",
+                                            text = stringResource(R.string.tx_total_found),
                                             style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.6.sp, fontSize = 9.5.sp),
                                             fontWeight = FontWeight.Bold,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
                                         Text(
-                                            text = "${state.transactions.size} Transaksi",
+                                            text = "${state.transactions.size} " + stringResource(R.string.tx_all_title),
                                             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                                             color = MaterialTheme.colorScheme.onSurface
                                         )
@@ -261,7 +263,7 @@ fun AllTransactionsScreen(
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
                                         Text(
-                                            text = "Filter Transaksi",
+                                            text = stringResource(R.string.tx_filter),
                                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                                         )
                                         if (isAnyDraftActive) {
@@ -270,7 +272,7 @@ fun AllTransactionsScreen(
                                                 draftCategory = null
                                                 draftWalletId = null
                                             }) {
-                                                Text("Reset Filter")
+                                                Text(stringResource(R.string.tx_reset_filter))
                                             }
                                         }
                                     }
@@ -278,7 +280,7 @@ fun AllTransactionsScreen(
                                     // 1. Tipe Transaksi
                                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                         Text(
-                                            text = "Tipe Transaksi",
+                                            text = stringResource(R.string.tx_type),
                                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -288,7 +290,7 @@ fun AllTransactionsScreen(
                                                 FilterChip(
                                                     selected = isAll,
                                                     onClick = { draftType = null },
-                                                    label = { Text("Semua Tipe") },
+                                                    label = { Text(stringResource(R.string.tx_type_all)) },
                                                     shape = AppShapes.Pill,
                                                     colors = FilterChipDefaults.filterChipColors(
                                                         selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
@@ -296,12 +298,13 @@ fun AllTransactionsScreen(
                                                     )
                                                 )
                                             }
-                                            val types = listOf(
-                                                TransactionType.EXPENSE to "Pengeluaran 🔴",
-                                                TransactionType.INCOME to "Pemasukan 🟢",
-                                                TransactionType.TRANSFER to "Transfer ⇄"
-                                            )
-                                            items(types) { (type, label) ->
+                                            val types = listOf(TransactionType.EXPENSE, TransactionType.INCOME, TransactionType.TRANSFER)
+                                            items(types) { type ->
+                                                val label = when (type) {
+                                                    TransactionType.EXPENSE -> stringResource(R.string.tx_expense)
+                                                    TransactionType.INCOME -> stringResource(R.string.tx_income)
+                                                    else -> stringResource(R.string.tx_transfer)
+                                                }
                                                 val isSelected = draftType == type
                                                 FilterChip(
                                                     selected = isSelected,
@@ -320,7 +323,7 @@ fun AllTransactionsScreen(
                                     // 2. Kategori
                                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                         Text(
-                                            text = "Kategori",
+                                            text = stringResource(R.string.tx_category),
                                             style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                             color = MaterialTheme.colorScheme.onSurfaceVariant
                                         )
@@ -355,7 +358,7 @@ fun AllTransactionsScreen(
                                     if (state.wallets.isNotEmpty()) {
                                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                             Text(
-                                                text = "Dompet Akun",
+                                                text = stringResource(R.string.tx_wallet_account),
                                                 style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                                             )
@@ -405,7 +408,7 @@ fun AllTransactionsScreen(
                                             .padding(top = 8.dp),
                                         shape = AppShapes.Pill
                                     ) {
-                                        Text("Terapkan Filter", fontWeight = FontWeight.Bold)
+                                        Text(stringResource(R.string.tx_apply_filter), fontWeight = FontWeight.Bold)
                                     }
                                 }
                             }
@@ -437,7 +440,7 @@ fun AllTransactionsScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally
                             ) {
                                 Text(
-                                    text = "Failed to load transactions",
+                                    text = stringResource(R.string.tx_load_error),
                                     style = MaterialTheme.typography.titleMedium,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -449,7 +452,7 @@ fun AllTransactionsScreen(
                                 )
                                 Spacer(modifier = Modifier.height(16.dp))
                                 Button(onClick = { viewModel.loadTransactions() }) {
-                                    Text("Retry")
+                                    Text(stringResource(R.string.common_retry))
                                 }
                             }
                         }
@@ -463,9 +466,9 @@ fun AllTransactionsScreen(
                                 ) {
                                     Text(
                                         text = if (state.searchQuery.isNotBlank() || state.selectedCategory != null) {
-                                            "No transactions match your search or filter."
+                                            stringResource(R.string.tx_no_match)
                                         } else {
-                                            "No transactions recorded yet."
+                                            stringResource(R.string.tx_no_data)
                                         },
                                         style = MaterialTheme.typography.bodyLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant

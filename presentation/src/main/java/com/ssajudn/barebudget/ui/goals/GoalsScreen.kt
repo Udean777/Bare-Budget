@@ -29,6 +29,9 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.ssajudn.barebudget.domain.model.Goal
 import com.ssajudn.barebudget.ui.components.AppConfirmDialog
 import com.ssajudn.barebudget.ui.components.AppFormDialog
+import com.ssajudn.barebudget.ui.components.TranslatableUserText
+import androidx.compose.ui.res.stringResource
+import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.ui.theme.*
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 import com.ssajudn.barebudget.utils.DateUtils
@@ -36,10 +39,10 @@ import com.ssajudn.barebudget.utils.CurrencyVisualTransformation
 import com.ssajudn.barebudget.ui.components.AppDatePickerDialog
 import com.ssajudn.barebudget.domain.model.Wallet
 
-enum class GoalFilter(val label: String) {
-    ALL("Semua"),
-    ACTIVE("Aktif"),
-    COMPLETED("Tercapai")
+enum class GoalFilter(val labelRes: Int) {
+    ALL(R.string.goals_filter_all),
+    ACTIVE(R.string.goals_filter_active),
+    COMPLETED(R.string.goals_filter_completed)
 }
 
 val presetGoalColors = listOf(
@@ -100,7 +103,7 @@ fun GoalsScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Target Tabungan",
+                        text = stringResource(R.string.goals_title),
                         style = MaterialTheme.typography.titleLarge.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -109,7 +112,7 @@ fun GoalsScreen(
                 navigationIcon = {
                     if (onNavigateBack != null) {
                         IconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Kembali")
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                         }
                     }
                 },
@@ -118,7 +121,7 @@ fun GoalsScreen(
                         editingGoal = null
                         showAddDialog = true
                     }) {
-                        Icon(Icons.Default.Add, contentDescription = "Tambah Target")
+                        Icon(Icons.Default.Add, contentDescription = stringResource(R.string.goals_create))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -145,7 +148,7 @@ fun GoalsScreen(
                     onValueChange = { viewModel.onSearchQueryChange(it) },
                     placeholder = {
                         Text(
-                            "Cari target tabungan...",
+                            stringResource(R.string.goals_search_hint),
                             maxLines = 1,
                             style = MaterialTheme.typography.bodyMedium
                         )
@@ -153,14 +156,14 @@ fun GoalsScreen(
                     leadingIcon = {
                         Icon(
                             Icons.Default.Search,
-                            contentDescription = "Search",
+                            contentDescription = stringResource(R.string.common_search),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     },
                     trailingIcon = {
                         if (searchQuery.isNotBlank()) {
                             IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-                                Icon(Icons.Default.Close, contentDescription = "Hapus")
+                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close))
                             }
                         }
                     },
@@ -189,7 +192,7 @@ fun GoalsScreen(
                             onClick = { selectedFilter = filter },
                             shape = SegmentedButtonDefaults.itemShape(index = index, count = GoalFilter.entries.size)
                         ) {
-                            Text(filter.label, style = MaterialTheme.typography.labelSmall.copy(fontWeight = if (selectedFilter == filter) FontWeight.Bold else FontWeight.Medium))
+                            Text(stringResource(filter.labelRes), style = MaterialTheme.typography.labelSmall.copy(fontWeight = if (selectedFilter == filter) FontWeight.Bold else FontWeight.Medium))
                         }
                     }
                 }
@@ -216,7 +219,7 @@ fun GoalsScreen(
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
-                                text = "Gagal memuat target tabungan",
+                                text = stringResource(R.string.goals_load_error),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
                             )
@@ -228,7 +231,7 @@ fun GoalsScreen(
                             )
                             Spacer(modifier = Modifier.height(16.dp))
                             Button(enabled = !isOperationLoading, onClick = { viewModel.loadGoals() }) {
-                                Text("Coba Lagi")
+                                Text(stringResource(R.string.common_retry))
                             }
                         }
                     }
@@ -259,14 +262,14 @@ fun GoalsScreen(
                                     )
                                     Spacer(modifier = Modifier.height(16.dp))
                                     Text(
-                                        text = "Tidak Ada Target Tabungan",
+                                        text = stringResource(R.string.goals_empty_title),
                                         style = MaterialTheme.typography.titleLarge.copy(
                                             fontWeight = FontWeight.Bold
                                         )
                                     )
                                     Spacer(modifier = Modifier.height(6.dp))
                                     Text(
-                                        text = "Mulai buat target dana darurat, liburan, atau impian gadget Anda!",
+                                        text = stringResource(R.string.goals_empty_desc),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -275,7 +278,7 @@ fun GoalsScreen(
                                         editingGoal = null
                                         showAddDialog = true
                                     }) {
-                                        Text("Buat Target Pertama")
+                                        Text(stringResource(R.string.goals_create_first))
                                     }
                                 }
                             }
@@ -362,7 +365,7 @@ fun GoalsScreen(
                                 )
                             )
                             Text(
-                                text = "Target: ${CurrencyFormatter.formatRupiah(targetGoal.targetAmount)}",
+                                text = stringResource(R.string.goals_target_prefix, CurrencyFormatter.formatRupiah(targetGoal.targetAmount)),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -371,7 +374,7 @@ fun GoalsScreen(
                 }
 
                 Text(
-                    text = "Tindakan Cepat",
+                    text = stringResource(R.string.goals_quick_action),
                     style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -397,8 +400,8 @@ fun GoalsScreen(
                         ) {
                             Icon(Icons.Default.Add, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
                             Column {
-                                Text("Setor Tabungan (Deposit)", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onPrimaryContainer)
-                                Text("Alokasikan uang dari dompet ke target", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
+                                Text(stringResource(R.string.goals_deposit_title), style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onPrimaryContainer)
+                                Text(stringResource(R.string.goals_deposit_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f))
                             }
                         }
                     }
@@ -422,8 +425,8 @@ fun GoalsScreen(
                         ) {
                             Icon(Icons.Default.Remove, contentDescription = null, tint = MaterialTheme.colorScheme.onErrorContainer)
                             Column {
-                                Text("Tarik Tabungan (Withdraw)", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onErrorContainer)
-                                Text("Kembalikan saldo target ke dompet", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f))
+                                Text(stringResource(R.string.goals_withdraw_title), style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onErrorContainer)
+                                Text(stringResource(R.string.goals_withdraw_desc), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f))
                             }
                         }
                     }
@@ -446,7 +449,7 @@ fun GoalsScreen(
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             Icon(Icons.Default.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
-                            Text("Edit Target Tabungan", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
+                            Text(stringResource(R.string.goals_edit), style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold))
                         }
                     }
 
@@ -467,7 +470,7 @@ fun GoalsScreen(
                             horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
                             Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
-                            Text("Hapus Target Ini", style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.error)
+                            Text(stringResource(R.string.goals_delete), style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -479,7 +482,7 @@ fun GoalsScreen(
                         .padding(top = 8.dp),
                     shape = MaterialTheme.shapes.medium
                 ) {
-                    Text("Tutup")
+                    Text(stringResource(R.string.goals_close))
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -527,9 +530,9 @@ fun GoalsScreen(
     if (goalToDelete != null) {
         val target = goalToDelete!!
         AppConfirmDialog(
-            title = "Hapus Target Tabungan?",
-            message = "Apakah Anda yakin ingin menghapus target '${target.name}'? Seluruh progres tabungan ini akan dihapus.",
-            confirmButtonText = "Hapus Target",
+            title = stringResource(R.string.goals_delete_title),
+            message = stringResource(R.string.goals_delete_message, target.name),
+            confirmButtonText = stringResource(R.string.goals_delete_confirm),
             onDismissRequest = { goalToDelete = null },
             onConfirm = {
                 target.id?.let { viewModel.deleteGoal(it) }
@@ -542,7 +545,7 @@ fun GoalsScreen(
 @Composable
 fun GoalCard(
     goal: Goal,
-    onClick: () -> Unit
+    onClick: () -> Unit,
 ) {
     val isCompleted = goal.currentAmount >= goal.targetAmount
     val progressPercentInt = (goal.progressPercentage * 100).toInt()
@@ -551,9 +554,9 @@ fun GoalCard(
     val isNearDeadline = daysLeft != null && daysLeft in 0..30 && goal.progressPercentage < 0.8f
 
     val (badgeBgColor, badgeTextColor, badgeLabel) = when {
-        isCompleted -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, "Tercapai 100%")
-        isNearDeadline -> Triple(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer, "Mendekati Deadline")
-        else -> Triple(MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, "On Track")
+        isCompleted -> Triple(MaterialTheme.colorScheme.primaryContainer, MaterialTheme.colorScheme.onPrimaryContainer, stringResource(R.string.goals_badge_completed))
+        isNearDeadline -> Triple(MaterialTheme.colorScheme.errorContainer, MaterialTheme.colorScheme.onErrorContainer, stringResource(R.string.goals_badge_near_deadline))
+        else -> Triple(MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, stringResource(R.string.goals_badge_on_track))
     }
 
     val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
@@ -606,12 +609,9 @@ fun GoalCard(
                             .background(cardAccentColor)
                     )
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text(
+                    TranslatableUserText(
                         text = goal.name,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp
-                        ),
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold, fontSize = 16.sp),
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 }
@@ -637,7 +637,7 @@ fun GoalCard(
             ) {
                 Column {
                     Text(
-                        text = "Terkumpul",
+                        text = stringResource(R.string.goals_collected),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -652,13 +652,13 @@ fun GoalCard(
 
                 Column(horizontalAlignment = Alignment.End) {
                     Text(
-                        text = "Target: ${CurrencyFormatter.formatRupiah(goal.targetAmount)}",
+                        text = stringResource(R.string.goals_target_prefix, CurrencyFormatter.formatRupiah(goal.targetAmount)),
                         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     if (!goal.targetDate!!.isNullOrBlank()) {
                         Text(
-                            text = "s/d ${DateUtils.formatDisplayDate(goal.targetDate!!)}",
+                            text = stringResource(R.string.goals_until, DateUtils.formatDisplayDate(goal.targetDate!!)),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                         )
@@ -685,13 +685,13 @@ fun GoalCard(
                 ) {
                     if (isCompleted) {
                         Text(
-                            text = "Target Tercapai!",
+                            text = stringResource(R.string.goals_completed_msg),
                             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.primary
                         )
                     } else {
                         Text(
-                            text = "Sisa ${CurrencyFormatter.formatRupiah(goal.remainingAmount)}",
+                            text = stringResource(R.string.goals_remaining, CurrencyFormatter.formatRupiah(goal.remainingAmount)),
                             style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.SemiBold),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -728,7 +728,7 @@ fun GoalCard(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Rekomendasi: Tabung ${CurrencyFormatter.formatCompact(perMonth)}/bln (${CurrencyFormatter.formatCompact(perDay)}/hari)",
+                            text = stringResource(R.string.goals_recommend, CurrencyFormatter.formatCompact(perMonth), CurrencyFormatter.formatCompact(perDay)),
                             style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -746,7 +746,7 @@ fun GoalColorRow(
 ) {
     Column {
         Text(
-            text = "Warna Aksen",
+            text = stringResource(R.string.goals_accent),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold
         )
@@ -809,10 +809,10 @@ fun GoalFormDialog(
     }
 
     AppFormDialog(
-        title = if (initialGoal != null) "Edit Target Tabungan" else "Target Tabungan Baru",
+        title = if (initialGoal != null) stringResource(R.string.goals_form_edit) else stringResource(R.string.goals_form_new),
         icon = Icons.Default.Payments,
         iconTint = MaterialTheme.colorScheme.primary,
-        confirmButtonText = if (initialGoal != null) "Simpan Perubahan" else "Buat Target",
+        confirmButtonText = if (initialGoal != null) stringResource(R.string.goals_save_changes) else stringResource(R.string.goals_create),
         isConfirmEnabled = isFormValid,
         onDismissRequest = onDismiss,
         onConfirm = {
@@ -822,8 +822,8 @@ fun GoalFormDialog(
         OutlinedTextField(
             value = name,
             onValueChange = { name = it },
-            label = { Text("Nama Target") },
-            placeholder = { Text("e.g. Dana Darurat, Liburan Bali, iPhone 16") },
+            label = { Text(stringResource(R.string.goals_name_label)) },
+            placeholder = { Text(stringResource(R.string.goals_name_hint)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -837,7 +837,7 @@ fun GoalFormDialog(
                 rawAmount = digitsOnly
                 parsedAmount = digitsOnly.toLongOrNull() ?: 0L
             },
-            label = { Text("Target Nominal") },
+            label = { Text(stringResource(R.string.goals_amount_label)) },
             placeholder = { Text("Rp 0") },
             singleLine = true,
             visualTransformation = CurrencyVisualTransformation(),
@@ -850,12 +850,12 @@ fun GoalFormDialog(
         OutlinedTextField(
             value = if (targetDateIso.isNotBlank()) DateUtils.formatDisplayDate(targetDateIso) else "",
             onValueChange = {},
-            label = { Text("Tanggal Target (Opsional)") },
-            placeholder = { Text("Pilih tanggal target") },
+            label = { Text(stringResource(R.string.goals_date_label)) },
+            placeholder = { Text(stringResource(R.string.goals_date_hint)) },
             readOnly = true,
             trailingIcon = {
                 IconButton(onClick = { showDatePicker = true }) {
-                    Icon(Icons.Default.CalendarToday, contentDescription = "Pilih Tanggal")
+                    Icon(Icons.Default.CalendarToday, contentDescription = stringResource(R.string.goals_date_hint))
                 }
             },
             modifier = Modifier
@@ -875,7 +875,7 @@ fun GoalFormDialog(
         OutlinedTextField(
             value = notes,
             onValueChange = { notes = it },
-            label = { Text("Catatan Tambahan (Opsional)") },
+            label = { Text(stringResource(R.string.goals_notes_label)) },
             singleLine = true,
             modifier = Modifier.fillMaxWidth()
         )
@@ -903,10 +903,10 @@ fun DepositGoalDialog(
     val isFormValid = isAmountValid && isBalanceValid && selectedWallet?.id != null
 
     AppFormDialog(
-        title = if (isWithdraw) "Tarik Tabungan" else "Setor Tabungan",
+        title = if (isWithdraw) stringResource(R.string.goals_withdraw_dialog) else stringResource(R.string.goals_deposit_dialog),
         icon = if (isWithdraw) Icons.Default.Payments else Icons.Default.Savings,
         iconTint = if (isWithdraw) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-        confirmButtonText = if (isWithdraw) "Tarik Dana" else "Setor Sekarang",
+        confirmButtonText = if (isWithdraw) stringResource(R.string.goals_withdraw_btn) else stringResource(R.string.goals_deposit_btn),
         confirmButtonContainerColor = if (isWithdraw) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
         isConfirmEnabled = isFormValid,
         onDismissRequest = onDismiss,
@@ -925,14 +925,14 @@ fun DepositGoalDialog(
                 selected = !isWithdraw,
                 onClick = { isWithdraw = false },
                 leadingIcon = { Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                label = { Text("Setor (Deposit)") },
+                label = { Text(stringResource(R.string.goals_chip_deposit)) },
                 modifier = Modifier.weight(1f)
             )
             FilterChip(
                 selected = isWithdraw,
                 onClick = { isWithdraw = true },
                 leadingIcon = { Icon(Icons.Default.Remove, contentDescription = null, modifier = Modifier.size(16.dp)) },
-                label = { Text("Tarik (Withdraw)") },
+                label = { Text(stringResource(R.string.goals_chip_withdraw)) },
                 modifier = Modifier.weight(1f)
             )
         }
@@ -941,7 +941,7 @@ fun DepositGoalDialog(
 
         // Wallet Selector Dropdown
         Text(
-            text = if (isWithdraw) "Tujuan Dompet Penarikan" else "Sumber Dompet Setoran",
+            text = if (isWithdraw) stringResource(R.string.goals_wallet_withdraw) else stringResource(R.string.goals_wallet_deposit),
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold
         )
@@ -951,12 +951,12 @@ fun DepositGoalDialog(
             onExpandedChange = { walletDropdownExpanded = !walletDropdownExpanded },
             modifier = Modifier.fillMaxWidth()
         ) {
-            val selectedText = selectedWallet?.let { "${it.name} (${CurrencyFormatter.formatRupiah(it.balance)})" } ?: "Pilih Dompet"
+            val selectedText = selectedWallet?.let { "${it.name} (${CurrencyFormatter.formatRupiah(it.balance)})" } ?: stringResource(R.string.goals_wallet_choose)
             OutlinedTextField(
                 value = selectedText,
                 onValueChange = {},
                 readOnly = true,
-                label = { Text("Dompet") },
+                label = { Text(stringResource(R.string.goals_wallet_label)) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = walletDropdownExpanded) },
                 modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
@@ -970,7 +970,7 @@ fun DepositGoalDialog(
                         text = {
                             Column {
                                 Text(wallet.name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold)
-                                Text("Saldo: ${CurrencyFormatter.formatRupiah(wallet.balance)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(R.string.goals_balance_prefix, CurrencyFormatter.formatRupiah(wallet.balance)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         },
                         onClick = {
@@ -991,7 +991,7 @@ fun DepositGoalDialog(
                 rawAmount = digitsOnly
                 parsedAmount = digitsOnly.toLongOrNull() ?: 0L
             },
-            label = { Text("Nominal Rp") },
+            label = { Text(stringResource(R.string.goals_amount_rp)) },
             placeholder = { Text("Rp 0") },
             visualTransformation = CurrencyVisualTransformation(),
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
@@ -1003,8 +1003,8 @@ fun DepositGoalDialog(
         if (parsedAmount > 0 && !isBalanceValid) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = if (isWithdraw) "Nominal melebihi saldo terkumpul target (${CurrencyFormatter.formatRupiah(goal.currentAmount)})"
-                       else "Nominal melebihi saldo dompet terpilih (${CurrencyFormatter.formatRupiah(walletBalance)})",
+                text = if (isWithdraw) stringResource(R.string.goals_error_exceed_goal, CurrencyFormatter.formatRupiah(goal.currentAmount))
+                       else stringResource(R.string.goals_error_exceed_wallet, CurrencyFormatter.formatRupiah(walletBalance)),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error
             )

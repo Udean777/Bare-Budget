@@ -29,7 +29,10 @@ object DatabaseModule {
         )
             .addMigrations(
                 AppDatabase.MIGRATION_5_6,
-                AppDatabase.MIGRATION_6_7
+                AppDatabase.MIGRATION_6_7,
+                AppDatabase.MIGRATION_7_8,
+                AppDatabase.MIGRATION_8_9,
+                AppDatabase.MIGRATION_9_10
             )
             .fallbackToDestructiveMigration()
             .build()
@@ -49,4 +52,7 @@ object DatabaseModule {
 
     @Provides
     fun provideWalletDao(db: AppDatabase): WalletDao = db.walletDao()
+
+    @Provides
+    fun provideCachedTranslationDao(db: AppDatabase) = db.cachedTranslationDao()
 }

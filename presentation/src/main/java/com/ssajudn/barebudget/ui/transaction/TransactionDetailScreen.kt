@@ -26,6 +26,8 @@ import com.ssajudn.barebudget.domain.model.Transaction
 import com.ssajudn.barebudget.domain.model.TransactionType
 import com.ssajudn.barebudget.ui.components.getCategoryIcon
 import com.ssajudn.barebudget.ui.components.AppConfirmDialog
+import androidx.compose.ui.res.stringResource
+import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.ui.theme.AppShapes
 import com.ssajudn.barebudget.ui.theme.categoryColors
 import com.ssajudn.barebudget.ui.theme.crispBorder
@@ -67,10 +69,10 @@ fun TransactionDetailScreen(
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("Detail Transaksi", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)) },
+                title = { Text(stringResource(R.string.tx_detail_title), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
                     }
                 },
                 actions = {
@@ -78,7 +80,7 @@ fun TransactionDetailScreen(
                         IconButton(enabled = !isOperationLoading, onClick = { showDeleteConfirmDialog = true }) {
                             Icon(
                                 Icons.Default.Delete,
-                                contentDescription = "Delete",
+                                contentDescription = stringResource(R.string.common_delete),
                                 tint = MaterialTheme.colorScheme.error
                             )
                         }
@@ -166,7 +168,7 @@ fun TransactionDetailScreen(
                             Spacer(modifier = Modifier.height(20.dp))
 
                             Text(
-                                text = if (isTransfer) "Transfer Antar Dompet" else (tx.merchant?.takeIf { it.isNotBlank() } ?: tx.category.displayName),
+                                text = if (isTransfer) stringResource(R.string.tx_transfer_title) else (tx.merchant?.takeIf { it.isNotBlank() } ?: tx.category.displayName),
                                 style = MaterialTheme.typography.headlineSmall.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
@@ -201,36 +203,36 @@ fun TransactionDetailScreen(
                             verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
                             val typeLabel = when {
-                                isIncome -> "Pemasukan"
-                                isTransfer -> "Transfer Antar Dompet"
-                                else -> "Pengeluaran"
+                                isIncome -> stringResource(R.string.tx_income)
+                                isTransfer -> stringResource(R.string.tx_transfer_title)
+                                else -> stringResource(R.string.tx_expense)
                             }
-                            DetailRow(label = "Tipe Transaksi", value = typeLabel)
+                            DetailRow(label = stringResource(R.string.tx_type_label), value = typeLabel)
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
                             if (isTransfer) {
-                                DetailRow(label = "Dari Dompet (Asal)", value = uiState.walletName ?: "Dompet Asal")
+                                DetailRow(label = stringResource(R.string.tx_from_label), value = uiState.walletName ?: stringResource(R.string.tx_from_wallet))
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                                DetailRow(label = "Ke Dompet (Tujuan)", value = uiState.toWalletName ?: "Dompet Tujuan")
+                                DetailRow(label = stringResource(R.string.tx_to_label), value = uiState.toWalletName ?: stringResource(R.string.tx_to_wallet))
                             } else {
-                                DetailRow(label = "Sumber / Dompet", value = uiState.walletName ?: "Uang Tunai")
+                                DetailRow(label = stringResource(R.string.tx_source_label), value = uiState.walletName ?: stringResource(R.string.tx_cash))
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                                DetailRow(label = "Kategori", value = tx.category.displayName)
+                                DetailRow(label = stringResource(R.string.tx_category), value = tx.category.displayName)
                             }
 
                             HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                            DetailRow(label = "Tanggal", value = DateUtils.formatDisplayDate(tx.date))
+                            DetailRow(label = stringResource(R.string.tx_date), value = DateUtils.formatDisplayDate(tx.date))
                             
                             if (!isTransfer) {
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                                DetailRow(label = "Merchant / Toko", value = tx.merchant?.ifBlank { "-" } ?: "-")
+                                DetailRow(label = stringResource(R.string.tx_merchant), value = tx.merchant?.ifBlank { "-" } ?: "-")
                             }
                             
                             if (!tx.notes.isNullOrBlank()) {
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Text(
-                                        text = "Catatan",
+                                        text = stringResource(R.string.tx_notes),
                                         style = MaterialTheme.typography.bodyMedium,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
@@ -254,7 +256,7 @@ fun TransactionDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Transaksi tidak ditemukan",
+                        text = stringResource(R.string.tx_not_found),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -264,8 +266,8 @@ fun TransactionDetailScreen(
     }
     if (showDeleteConfirmDialog) {
         AppConfirmDialog(
-            title = "Hapus Transaksi?",
-            message = "Apakah Anda yakin ingin menghapus catatan pengeluaran ini secara permanen?",
+            title = stringResource(R.string.tx_delete_title),
+            message = stringResource(R.string.tx_delete_message),
             onDismissRequest = { showDeleteConfirmDialog = false },
             onConfirm = {
                 showDeleteConfirmDialog = false

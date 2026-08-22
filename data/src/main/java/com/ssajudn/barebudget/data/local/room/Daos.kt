@@ -181,3 +181,18 @@ interface WalletDao {
     @Query("DELETE FROM local_wallets")
     fun clearAll()
 }
+
+@Dao
+interface CachedTranslationDao {
+    @Query("SELECT * FROM cached_translations WHERE cacheKey = :key LIMIT 1")
+    fun getByKey(key: String): CachedTranslationEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insert(entity: CachedTranslationEntity)
+
+    @Query("DELETE FROM cached_translations WHERE createdAt < :before")
+    fun evictOlderThan(before: Long)
+
+    @Query("DELETE FROM cached_translations")
+    fun clearAll()
+}

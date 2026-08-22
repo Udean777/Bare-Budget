@@ -12,7 +12,9 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ssajudn.barebudget.data.local.ThemePreferences
 import com.ssajudn.barebudget.ui.navigation.AppNavigation
+import com.ssajudn.barebudget.domain.model.AppThemeDarkMode
 import com.ssajudn.barebudget.ui.theme.BareBudgetTheme
+import com.ssajudn.barebudget.ui.theme.ThemeColorMode
 import com.ssajudn.barebudget.ui.theme.ThemeDarkMode
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -27,9 +29,9 @@ class MainActivity : ComponentActivity() {
             val darkMode by themePrefs.darkMode.collectAsStateWithLifecycle()
 
             val darkTheme = when (darkMode) {
-                ThemeDarkMode.FollowSystem -> isSystemInDarkTheme()
-                ThemeDarkMode.Light -> false
-                ThemeDarkMode.Dark -> true
+                AppThemeDarkMode.FollowSystem -> isSystemInDarkTheme()
+                AppThemeDarkMode.Light -> false
+                AppThemeDarkMode.Dark -> true
             }
 
             // Status/navigation bar icon contrast lives here, in the Activity,
@@ -48,8 +50,8 @@ class MainActivity : ComponentActivity() {
             }
 
             BareBudgetTheme(
-                colorMode = colorMode,
-                darkMode = darkMode,
+                colorMode = ThemeColorMode.valueOf(colorMode.name),
+                darkMode = ThemeDarkMode.valueOf(darkMode.name),
             ) {
                 AppNavigation()
             }

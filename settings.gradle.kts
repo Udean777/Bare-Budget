@@ -19,8 +19,12 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        maven { url = java.net.URI.create("https://jitpack.io") }
     }
 }
 
 rootProject.name = "Bare Budget"
 include(":app")
+include(":domain")
+include(":data")
+include(":presentation")

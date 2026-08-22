@@ -1,0 +1,339 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Bare Budget</string>
+    <!-- Language -->
+    <string name="language_settings">Bahasa</string>
+    <string name="language_english">English</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+    <!-- Translation -->
+    <string name="see_translation">Lihat Terjemahan</string>
+    <string name="see_original">Lihat Asli</string>
+    <string name="translating">Menerjemahkan…</string>
+    <string name="translation_failed">Gagal menerjemahkan</string>
+    <!-- Navigation -->
+    <string name="nav_home">Beranda</string>
+    <string name="nav_bills">Tagihan</string>
+    <string name="nav_transfer">Transfer</string>
+    <string name="nav_goals">Target</string>
+    <string name="nav_analytics">Analitik</string>
+    <!-- Onboarding tour -->
+    <string name="tour_skip">Lewati</string>
+    <string name="tour_next">Lanjut</string>
+    <string name="tour_finish">Selesai</string>
+    <!-- Common -->
+    <string name="common_close">Tutup</string>
+    <string name="common_back">Kembali</string>
+    <string name="common_cancel">Batal</string>
+    <string name="common_save">Simpan</string>
+    <string name="common_retry">Coba Lagi</string>
+    <string name="common_search">Cari</string>
+    <string name="common_delete">Hapus</string>
+    <string name="common_edit">Edit</string>
+    <string name="common_add">Tambah</string>
+    <!-- Settings -->
+    <string name="settings_title">Pengaturan</string>
+    <string name="settings_google_connected">Akun Google Terhubung</string>
+    <string name="settings_backup_title">Cadangan Offline</string>
+    <string name="settings_export_title">Ekspor File Cadangan (Unduh)</string>
+    <string name="settings_export_desc">Simpan semua transaksi, tagihan, dompet, dan target ke file JSON</string>
+    <string name="settings_import_title">Impor File Cadangan (Pulihkan)</string>
+    <string name="settings_import_desc">Pulihkan semua data dari file cadangan JSON sebelumnya</string>
+    <string name="settings_cloud_title">Akun &amp; Sinkronisasi Cloud (Opsional)</string>
+    <string name="settings_link_google_title">Hubungkan Akun Google</string>
+    <string name="settings_link_google_desc">Sinkronisasi data otomatis ke cloud</string>
+    <string name="settings_support_title">Dukungan &amp; Apresiasi</string>
+    <string name="settings_donate_title">Donasi untuk Pengembang</string>
+    <string name="settings_donate_desc">Traktir kopi atau dukung pengembangan BareBudget</string>
+    <string name="settings_star_title">Beri Bintang di GitHub</string>
+    <string name="settings_star_desc">Beri bintang pada repositori BareBudget di GitHub</string>
+    <string name="settings_share_title">Bagikan Aplikasi</string>
+    <string name="settings_share_desc">Ajak teman mengelola keuangan &amp; financial runway</string>
+    <string name="settings_share_message">Kelola keuangan dan pantau runway finansialmu dengan BareBudget! Cek repositori di: https://github.com/Udean777/Bare-Budget</string>
+    <string name="settings_share_chooser">Bagikan BareBudget</string>
+    <string name="settings_danger_title">Sesi &amp; Zona Bahaya</string>
+    <string name="settings_danger_desc">Hapus sesi saat ini dan kembali ke onboarding</string>
+    <string name="settings_reset_local">Reset Data Lokal</string>
+    <string name="settings_sign_out">Keluar Akun</string>
+    <string name="settings_footer_tagline">Keuangan Pribadi Tanpa Ribet</string>
+    <string name="settings_dialog_reset_title">Reset Sesi Tamu?</string>
+    <string name="settings_dialog_signout_title">Keluar Akun?</string>
+    <string name="settings_dialog_reset_message">Yakin ingin keluar? Karena kamu berada dalam Mode Tamu, transaksi dan catatan lokalmu akan dihapus.</string>
+    <string name="settings_dialog_signout_message">Yakin ingin keluar dari akun Google di perangkat ini?</string>
+    <string name="settings_dialog_reset_confirm">Reset</string>
+    <string name="settings_dialog_signout_confirm">Keluar</string>
+    <!-- Formatted -->
+    <string name="remaining_amount">Sisa <xliff:g id="amount">%1$s</xliff:g></string>
+    <!-- Runway / CommonComponents -->
+    <string name="runway_label">FINANCIAL RUNWAY</string>
+    <string name="runway_edit">Ubah Target</string>
+    <string name="runway_set">Atur Anggaran</string>
+    <string name="runway_total_wealth">TOTAL KEKAYAAN</string>
+    <string name="runway_view_detail">Lihat detail <xliff:g id="name">%1$s</xliff:g></string>
+    <string name="tx_transfer_label">Transfer Antar Dompet</string>
+    <!-- Analytics -->
+    <string name="analytics_title">Analisis Finansial</string>
+    <string name="analytics_error_title">Gagal memuat analisis</string>
+    <string name="analytics_tab_cashflow">Arus Kas</string>
+    <string name="analytics_tab_networth">Kekayaan Bersih</string>
+    <string name="analytics_tab_categories">Kategori</string>
+    <string name="analytics_cashflow_summary">RINGKASAN ARUS KAS</string>
+    <string name="analytics_income">Pemasukan</string>
+    <string name="analytics_expense">Pengeluaran</string>
+    <string name="analytics_net_cashflow_surplus">Arus Kas Bersih (Surplus)</string>
+    <string name="analytics_net_cashflow_deficit">Arus Kas Bersih (Defisit)</string>
+    <string name="analytics_cashflow_trend">Tren Arus Kas (6 Bulan Terakhir)</string>
+    <string name="analytics_networth_current">Total Kekayaan Saat Ini</string>
+    <string name="analytics_networth_growth">Pertumbuhan Kekayaan Bersih</string>
+    <string name="analytics_savage_streak"><xliff:g id="days">%1$d</xliff:g> Hari Savage Streak!</string>
+    <string name="analytics_savage_desc">Pengeluaran disiplin &amp; terkontrol.</string>
+    <string name="analytics_top_spending">Pengeluaran Terbesar</string>
+    <string name="analytics_no_expense">Belum ada pengeluaran bulan ini.</string>
+    <string name="analytics_distribution">Distribusi Berdasarkan Kategori</string>
+    <string name="analytics_no_category">Belum ada data kategori.</string>
+    <string name="analytics_percent_of_total"><xliff:g id="percent">%1$d</xliff:g>%% dari total pengeluaran</string>
+    <string name="analytics_no_cashflow_data">Belum ada data arus kas.</string>
+    <string name="analytics_tap_bar_detail">Ketuk bar untuk detail</string>
+    <string name="analytics_month_prefix">Bulan <xliff:g id="month">%1$s</xliff:g></string>
+    <string name="analytics_surplus_prefix">Surplus: +<xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="analytics_deficit_prefix">Defisit: -<xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="analytics_no_networth_data">Belum ada data kekayaan.</string>
+    <string name="analytics_networth_month">Kekayaan Bersih (<xliff:g id="month">%1$s</xliff:g>)</string>
+    <string name="analytics_tap_point_detail">Ketuk titik untuk melihat</string>
+    <!-- Wallets -->
+    <string name="wallets_title">Dompet Saya</string>
+    <string name="wallets_add">Tambah Dompet</string>
+    <string name="wallets_net_worth_label">TOTAL KEKAYAAN BERSIH</string>
+    <string name="wallets_list_title">Daftar Dompet</string>
+    <string name="wallets_active">DOMPET AKTIF</string>
+    <string name="wallets_delete_desc">Hapus Dompet</string>
+    <string name="wallets_balance_now">Saldo Saat Ini</string>
+    <string name="wallets_delete_title">Hapus Dompet?</string>
+    <string name="wallets_delete_message">Yakin ingin menghapus \'<xliff:g id="name">%1$s</xliff:g>\'? Riwayat transaksi mungkin kehilangan referensi dompet.</string>
+    <string name="wallets_delete_confirm">Hapus</string>
+    <string name="wallets_add_title">Tambah Dompet Baru</string>
+    <string name="wallets_name_label">Nama Dompet (contoh: BCA, Tunai)</string>
+    <string name="wallets_initial_balance">Saldo Awal</string>
+    <string name="wallets_color">Warna Dompet</string>
+    <!-- Goals -->
+    <string name="goals_title">Target Menabung</string>
+    <string name="goals_filter_all">Semua</string>
+    <string name="goals_filter_active">Aktif</string>
+    <string name="goals_filter_completed">Tercapai</string>
+    <string name="goals_search_hint">Cari target menabung…</string>
+    <string name="goals_load_error">Gagal memuat target menabung</string>
+    <string name="goals_empty_title">Belum Ada Target</string>
+    <string name="goals_empty_desc">Mulai buat target dana darurat, liburan, atau gadget impian!</string>
+    <string name="goals_create_first">Buat Target Pertama</string>
+    <string name="goals_quick_action">Aksi Cepat</string>
+    <string name="goals_deposit_title">Setor Tabungan</string>
+    <string name="goals_deposit_desc">Alokasikan saldo dari dompet ke target</string>
+    <string name="goals_withdraw_title">Tarik Tabungan</string>
+    <string name="goals_withdraw_desc">Kembalikan saldo target ke dompet</string>
+    <string name="goals_edit">Edit Target Menabung</string>
+    <string name="goals_delete">Hapus Target Ini</string>
+    <string name="goals_close">Tutup</string>
+    <string name="goals_delete_title">Hapus Target Menabung?</string>
+    <string name="goals_delete_message">Yakin ingin menghapus target \'<xliff:g id="name">%1$s</xliff:g>\'? Seluruh progres menabung akan terhapus.</string>
+    <string name="goals_delete_confirm">Hapus Target</string>
+    <string name="goals_badge_completed">Tercapai 100%</string>
+    <string name="goals_badge_near_deadline">Mendekati Deadline</string>
+    <string name="goals_badge_on_track">Sesuai Rencana</string>
+    <string name="goals_collected">Terkumpul</string>
+    <string name="goals_target_prefix">Target: <xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="goals_until">sampai <xliff:g id="date">%1$s</xliff:g></string>
+    <string name="goals_completed_msg">Target Tercapai!</string>
+    <string name="goals_remaining">Sisa <xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="goals_recommend">Rekomendasi: Tabung <xliff:g id="perMonth">%1$s</xliff:g>/bln (<xliff:g id="perDay">%2$s</xliff:g>/hari)</string>
+    <string name="goals_accent">Warna Aksen</string>
+    <string name="goals_form_new">Target Menabung Baru</string>
+    <string name="goals_form_edit">Edit Target Menabung</string>
+    <string name="goals_save_changes">Simpan Perubahan</string>
+    <string name="goals_create">Buat Target</string>
+    <string name="goals_name_label">Nama Target</string>
+    <string name="goals_name_hint">contoh: Dana Darurat, Liburan Bali, iPhone 16</string>
+    <string name="goals_amount_label">Jumlah Target (Rp)</string>
+    <string name="goals_date_label">Tanggal Target (Opsional)</string>
+    <string name="goals_date_hint">Pilih tanggal target</string>
+    <string name="goals_notes_label">Catatan Tambahan (Opsional)</string>
+    <string name="goals_withdraw_dialog">Tarik Tabungan</string>
+    <string name="goals_deposit_dialog">Setor Tabungan</string>
+    <string name="goals_withdraw_btn">Tarik Dana</string>
+    <string name="goals_deposit_btn">Setor Sekarang</string>
+    <string name="goals_chip_deposit">Setor</string>
+    <string name="goals_chip_withdraw">Tarik</string>
+    <string name="goals_wallet_withdraw">Dompet Tujuan Penarikan</string>
+    <string name="goals_wallet_deposit">Dompet Asal Setoran</string>
+    <string name="goals_wallet_choose">Pilih Dompet</string>
+    <string name="goals_wallet_label">Dompet</string>
+    <string name="goals_balance_prefix">Saldo: <xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="goals_amount_rp">Jumlah Rp</string>
+    <string name="goals_error_exceed_goal">Jumlah melebihi saldo tabungan (<xliff:g id="amount">%1$s</xliff:g>)</string>
+    <string name="goals_error_exceed_wallet">Jumlah melebihi saldo dompet yang dipilih (<xliff:g id="amount">%1$s</xliff:g>)</string>
+    <!-- Bills -->
+    <string name="bills_title">Tagihan &amp; Komitmen</string>
+    <string name="bills_search_hint">Cari tagihan…</string>
+    <string name="bills_filter_all">Semua</string>
+    <string name="bills_filter_unpaid">Belum Bayar</string>
+    <string name="bills_filter_paid">Lunas</string>
+    <string name="bills_load_error">Gagal memuat tagihan</string>
+    <string name="bills_empty_title">Belum Ada Tagihan</string>
+    <string name="bills_empty_desc">Semua kewajiban dan tagihan terkelola dengan baik.</string>
+    <string name="bills_due_prefix">Jatuh tempo: <xliff:g id="date">%1$s</xliff:g></string>
+    <string name="bills_quick_action">Aksi Cepat</string>
+    <string name="bills_pay_now">Bayar Tagihan Sekarang</string>
+    <string name="bills_pay_desc">Pilih dompet sumber untuk pembayaran</string>
+    <string name="bills_refund">Batalkan Pembayaran (Refund)</string>
+    <string name="bills_refund_desc">Kembalikan status &amp; saldo ke dompet</string>
+    <string name="bills_edit">Edit Rincian Tagihan</string>
+    <string name="bills_delete">Hapus Tagihan Ini</string>
+    <string name="bills_close">Tutup</string>
+    <string name="bills_cancel_title">Batalkan Pembayaran?</string>
+    <string name="bills_cancel_message">Tagihan \'<xliff:g id="name">%1$s</xliff:g>\' akan dikembalikan ke status Belum Bayar. Saldo dompet yang sebelumnya terpotong akan dikembalikan.</string>
+    <string name="bills_cancel_confirm">Batalkan Pembayaran</string>
+    <string name="bills_delete_title">Hapus Tagihan?</string>
+    <string name="bills_delete_message">Yakin ingin menghapus tagihan \'<xliff:g id="name">%1$s</xliff:g>\' sebesar <xliff:g id="amount">%2$s</xliff:g>?</string>
+    <string name="bills_delete_confirm">Hapus</string>
+    <string name="bills_badge_paid">Lunas</string>
+    <string name="bills_badge_overdue">Lewat <xliff:g id="days">%1$d</xliff:g> Hari</string>
+    <string name="bills_badge_today">Jatuh Tempo Hari Ini</string>
+    <string name="bills_badge_remaining">Sisa <xliff:g id="days">%1$d</xliff:g> Hari</string>
+    <string name="bills_badge_paid_desc">Sudah dibayar</string>
+    <string name="bills_badge_unpaid_desc">Tandai sudah dibayar</string>
+    <string name="bills_form_edit">Edit Tagihan</string>
+    <string name="bills_form_new">Tambah Tagihan Baru</string>
+    <string name="bills_form_save">Simpan Perubahan</string>
+    <string name="bills_form_add">Tambah Tagihan</string>
+    <string name="bills_provider_label">Penyedia / Kategori Tagihan</string>
+    <string name="bills_name_label">Nama Tagihan / Provider</string>
+    <string name="bills_name_hint">contoh: Listrik PLN, Netflix, Wifi</string>
+    <string name="bills_change_icon">Ubah Ikon</string>
+    <string name="bills_upload_icon">Unggah Ikon (Opsional)</string>
+    <string name="bills_amount_label">Nominal Tagihan (Rp)</string>
+    <string name="bills_due_date">Tanggal Jatuh Tempo</string>
+    <string name="bills_notes_label">Catatan / No. Pelanggan (Opsional)</string>
+    <string name="bills_recurring">Tagihan Berulang</string>
+    <string name="bills_recurring_desc">Otomatis diperbarui saat dibayar</string>
+    <string name="bills_pay_title">Bayar Tagihan</string>
+    <string name="bills_pay_btn">Bayar Sekarang</string>
+    <string name="bills_wallet_choose">Pilih Dompet Sumber</string>
+    <string name="bills_wallet_label">Dompet</string>
+    <string name="bills_wallet_balance">Saldo: <xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="bills_auto_deduct">Saldo dompet akan otomatis terpotong dan dicatat sebagai pengeluaran.</string>
+    <!-- Dashboard -->
+    <string name="dashboard_subtitle">Pencatat Pengeluaran Tanpa Ribet</string>
+    <string name="dashboard_theme_desc">Tema</string>
+    <string name="dashboard_choose_theme">Pilih Tema Tampilan</string>
+    <string name="dashboard_follow_system">Ikuti Sistem</string>
+    <string name="dashboard_light">Mode Terang</string>
+    <string name="dashboard_dark">Mode Gelap</string>
+    <string name="dashboard_load_error">Gagal memuat data</string>
+    <string name="dashboard_total_spent">Total Pengeluaran Bulan Ini</string>
+    <string name="dashboard_daily_avg">Rata-rata Harian</string>
+    <string name="dashboard_recent">Transaksi Terbaru</string>
+    <string name="dashboard_see_all">Lihat Semua</string>
+    <string name="dashboard_no_tx">Belum ada transaksi tercatat. Catat pengeluaran pertamamu!</string>
+    <string name="dashboard_set_budget">Atur Budget Bulanan</string>
+    <string name="dashboard_budget_hint">Berapa target batas belanja yang ingin kamu tetapkan bulan ini?</string>
+    <string name="dashboard_budget_amount">Nominal Budget (Rp)</string>
+    <string name="dashboard_quick_wallet">Dompet</string>
+    <string name="dashboard_quick_wallet_desc">Kelola</string>
+    <string name="dashboard_quick_bills">Tagihan</string>
+    <string name="dashboard_quick_bills_desc">Periksa</string>
+    <string name="dashboard_quick_goals">Target</string>
+    <string name="dashboard_quick_goals_desc">Kantong</string>
+    <string name="dashboard_quick_analytics">Analisis</string>
+    <string name="dashboard_quick_analytics_desc">Tinjau</string>
+    <!-- Budget Screen -->
+    <string name="budget_title">Anggaran Bulanan</string>
+    <string name="budget_locked_btn">Budget Terkunci Bulan Ini</string>
+    <string name="budget_save_btn">Simpan Anggaran Bulanan</string>
+    <string name="budget_runway_banner_title">LACAK FINANCIAL RUNWAY</string>
+    <string name="budget_runway_banner_desc">Menentukan batas belanja bulanan memungkinkan Bare Budget menghitung kecepatan pengeluaran harian dan tanggal bertahan hidup finansialmu secara akurat.</string>
+    <string name="budget_locked_title">Budget bulan ini sudah terkunci</string>
+    <string name="budget_locked_desc">Saat ini %1$s. Kamu hanya bisa mengubah budget 1x per bulan. Budget akan bisa diubah lagi bulan depan.</string>
+    <string name="budget_input_label">Target Anggaran Bulanan</string>
+    <string name="budget_presets_label">Preset Cepat</string>
+    <!-- Appearance -->
+    <string name="appearance_title">Tampilan</string>
+    <string name="appearance_dark_mode">Mode Gelap</string>
+    <string name="appearance_dynamic">Warna Dinamis</string>
+    <string name="appearance_dynamic_desc">Mengikuti palet wallpaper (Material You)</string>
+    <string name="appearance_dynamic_need">Memerlukan Android 12 ke atas</string>
+    <!-- Transactions -->
+    <string name="tx_add_title">Tambah Transaksi</string>
+    <string name="tx_expense">Pengeluaran</string>
+    <string name="tx_income">Pemasukan</string>
+    <string name="tx_transfer">Transfer</string>
+    <string name="tx_choose_wallet">Pilih Dompet</string>
+    <string name="tx_from_wallet">Dari Dompet</string>
+    <string name="tx_to_wallet">Ke Dompet</string>
+    <string name="tx_wallet_label">Dompet</string>
+    <string name="tx_amount_income">Nominal Pemasukan</string>
+    <string name="tx_amount_expense">Nominal Pengeluaran</string>
+    <string name="tx_amount_transfer">Nominal Transfer</string>
+    <string name="tx_category">Kategori</string>
+    <string name="tx_merchant_label">Merchant / Toko (Opsional)</string>
+    <string name="tx_merchant_hint">contoh: Starbucks, Indomaret, Grab</string>
+    <string name="tx_date">Tanggal</string>
+    <string name="tx_notes_label">Catatan (Opsional)</string>
+    <string name="tx_notes_hint">Tambah keterangan…</string>
+    <string name="tx_all_title">Semua Transaksi</string>
+    <string name="tx_search_hint">Cari transaksi…</string>
+    <string name="tx_filter">Filter Transaksi</string>
+    <string name="tx_total_found">TOTAL DITEMUKAN</string>
+    <string name="tx_reset_filter">Reset Filter</string>
+    <string name="tx_type">Jenis Transaksi</string>
+    <string name="tx_type_all">Semua Jenis</string>
+    <string name="tx_wallet_account">Akun Dompet</string>
+    <string name="tx_apply_filter">Terapkan Filter</string>
+    <string name="tx_load_error">Gagal memuat transaksi</string>
+    <string name="tx_no_match">Tidak ada transaksi yang sesuai dengan pencarian atau filter.</string>
+    <string name="tx_no_data">Belum ada transaksi tercatat.</string>
+    <string name="tx_detail_title">Rincian Transaksi</string>
+    <string name="tx_type_label">Tipe Transaksi</string>
+    <string name="tx_from_label">Dari Dompet (Sumber)</string>
+    <string name="tx_to_label">Ke Dompet (Tujuan)</string>
+    <string name="tx_source_label">Sumber / Dompet</string>
+    <string name="tx_cash">Tunai</string>
+    <string name="tx_merchant">Merchant / Toko</string>
+    <string name="tx_notes">Catatan</string>
+    <string name="tx_not_found">Transaksi tidak ditemukan</string>
+    <string name="tx_delete_title">Hapus Transaksi?</string>
+    <string name="tx_delete_message">Yakin ingin menghapus catatan pengeluaran ini secara permanen?</string>
+    <string name="tx_transfer_title">Transfer Antar Dompet</string>
+    <string name="tx_transfer_btn">Kirim Transfer Sekarang</string>
+    <string name="tx_transfer_from">DOMPET ASAL (PENGIRIM)</string>
+    <string name="tx_transfer_choose_from">Pilih Dompet Asal</string>
+    <string name="tx_transfer_to">DOMPET TUJUAN (PENERIMA)</string>
+    <string name="tx_transfer_choose_to">Pilih Dompet Tujuan</string>
+    <string name="tx_transfer_amount">Nominal Transfer</string>
+    <string name="tx_transfer_amount_rp">Jumlah Saldo (Rp)</string>
+    <string name="tx_transfer_exceed">Nominal melebihi saldo dompet asal (<xliff:g id="amount">%1$s</xliff:g>)</string>
+    <string name="tx_transfer_date">Tanggal Transfer</string>
+    <string name="tx_transfer_notes">Catatan / Keterangan (Opsional)</string>
+    <string name="tx_transfer_notes_hint">contoh: Top up GoPay, Tarik tunai BCA</string>
+    <string name="tx_transfer_swap">Tukar Dompet</string>
+    <string name="split_title">Split Bill Pintar</string>
+    <string name="split_subtotal">Subtotal</string>
+    <string name="split_tax_service">Pajak &amp; Layanan</string>
+    <string name="split_per_person">Per Orang</string>
+    <string name="split_people_count">Jumlah Orang</string>
+    <string name="split_share_whatsapp">Bagikan Rincian ke WhatsApp</string>
+    <string name="split_apply">Terapkan Porsi Saya (<xliff:g id="amount">%1$s</xliff:g>)</string>
+    <!-- Onboarding -->
+    <string name="onboarding_welcome">Selamat Datang di Bare Budget</string>
+    <string name="onboarding_choose_mode">Pilih mode akun untuk melanjutkan</string>
+    <string name="onboarding_auth_desc">Masuk untuk sinkronisasi data cloud atau langsung lanjutkan dengan profil tamu.</string>
+    <string name="onboarding_google_title">Masuk dengan Google</string>
+    <string name="onboarding_google_desc">Direkomendasikan. Semua riwayat transaksi, budget, dan tagihan tersimpan aman di cloud. Data tidak akan hilang saat berganti perangkat.</string>
+    <string name="onboarding_guest_title">Mode Tamu</string>
+    <string name="onboarding_guest_desc">100% Offline &amp; tanpa login. Seluruh data tersimpan di perangkat lokal dan dapat dicadangkan/dipulihkan kapan saja via file JSON.</string>
+    <string name="onboarding_guest_btn">Lanjut sebagai Tamu</string>
+    <string name="onboarding_slide1_title">Pencatatan Pengeluaran Cepat &amp; Praktis</string>
+    <string name="onboarding_slide1_desc">Catat pengeluaran harian dalam hitungan detik. Bersih, minimalis, dan fokus pada hal terpenting untuk keuanganmu.</string>
+    <string name="onboarding_slide2_title">Pantau Runway Finansialmu</string>
+    <string name="onboarding_slide2_desc">Dapatkan prediksi akurat berapa lama uangmu bertahan berdasarkan laju pengeluaran harianmu.</string>
+    <string name="onboarding_slide3_title">Tagihan Jatuh Tempo &amp; Komitmen</string>
+    <string name="onboarding_slide3_desc">Jangan sampai terlewat tanggal jatuh tempo PayLater atau langganan bulanan lagi.</string>
+    <string name="onboarding_slide4_title">Pilih Cara Memulai</string>
+    <string name="onboarding_slide4_desc">Pilih untuk masuk dengan akun Google atau langsung coba dalam Mode Tamu.</string>
+</resources>

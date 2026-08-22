@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/ssajudn/barebudget-server/internal/i18n"
 	"github.com/ssajudn/barebudget-server/internal/models"
 	"github.com/ssajudn/barebudget-server/internal/repository"
 )
@@ -134,6 +135,10 @@ func (s *Service) SetBudget(userID string, limit int64, monthYear string) error 
 }
 
 func (s *Service) GetDashboardSummary(userID string, now time.Time) (*DashboardSummary, error) {
+	return s.GetDashboardSummaryWithLang(userID, now, "en")
+}
+
+func (s *Service) GetDashboardSummaryWithLang(userID string, now time.Time, lang string) (*DashboardSummary, error) {
 	monthYear := now.Format("2006-01")
 	// Start from beginning of current month (00:00:00) to the end of the month (23:59:59)
 	startOfMonth := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
@@ -165,22 +170,22 @@ func (s *Service) GetDashboardSummary(userID string, now time.Time) (*DashboardS
 	var runwayMsg string
 
 	if monthlyBudget <= 0 {
-		runwayMsg = "Monthly budget is not set yet. Set your budget to track your financial runway!"
+		runwayMsg = i18n.T(lang, "runway.no_budget")
 	} else if remainingBudget <= 0 {
 		estimatedDeathDay = daysPassed
-		runwayMsg = fmt.Sprintf("Runway exhausted! Your budget was exceeded on day %d.", daysPassed)
+		runwayMsg = i18n.T(lang, "runway.exhausted", daysPassed)
 	} else if avgDailySpend > 0 {
 		daysLeft := int(remainingBudget / avgDailySpend)
 		projectedDay := daysPassed + daysLeft
 		if projectedDay < daysInMonth {
 			estimatedDeathDay = projectedDay
-			runwayMsg = fmt.Sprintf("At your current spending rate (Rp %s/day), your budget will run out on day %d!", formatCurrency(avgDailySpend), projectedDay)
+			runwayMsg = i18n.T(lang, "runway.will_run_out", formatCurrency(avgDailySpend), projectedDay)
 		} else {
 			estimatedDeathDay = daysInMonth
-			runwayMsg = "Your financial runway is safe until the end of the month. Keep it up!"
+			runwayMsg = i18n.T(lang, "runway.safe")
 		}
 	} else {
-		runwayMsg = "No expenses recorded this month yet. Your budget is untouched!"
+		runwayMsg = i18n.T(lang, "runway.no_expenses")
 	}
 
 	// 4. Get Category Breakdown

@@ -1,0 +1,339 @@
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+    <string name="app_name">Bare Budget</string>
+    <!-- Language -->
+    <string name="language_settings">Language</string>
+    <string name="language_english">English</string>
+    <string name="language_indonesian">Bahasa Indonesia</string>
+    <!-- Translation -->
+    <string name="see_translation">See Translation</string>
+    <string name="see_original">See Original</string>
+    <string name="translating">Translating…</string>
+    <string name="translation_failed">Translation failed</string>
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_bills">Bills</string>
+    <string name="nav_transfer">Transfer</string>
+    <string name="nav_goals">Goals</string>
+    <string name="nav_analytics">Analytics</string>
+    <!-- Onboarding tour -->
+    <string name="tour_skip">Skip</string>
+    <string name="tour_next">Next</string>
+    <string name="tour_finish">Finish</string>
+    <!-- Common -->
+    <string name="common_close">Close</string>
+    <string name="common_back">Back</string>
+    <string name="common_cancel">Cancel</string>
+    <string name="common_save">Save</string>
+    <string name="common_retry">Retry</string>
+    <string name="common_search">Search</string>
+    <string name="common_delete">Delete</string>
+    <string name="common_edit">Edit</string>
+    <string name="common_add">Add</string>
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_google_connected">Google Account Connected</string>
+    <string name="settings_backup_title">Offline Backup</string>
+    <string name="settings_export_title">Export Backup File (Download)</string>
+    <string name="settings_export_desc">Save all transactions, bills, wallets, and savings goals to a JSON file</string>
+    <string name="settings_import_title">Import Backup File (Restore)</string>
+    <string name="settings_import_desc">Restore all data from a previous JSON backup file</string>
+    <string name="settings_cloud_title">Account &amp; Cloud Sync (Optional)</string>
+    <string name="settings_link_google_title">Link Google Account</string>
+    <string name="settings_link_google_desc">Sync data automatically to the cloud</string>
+    <string name="settings_support_title">Support &amp; Appreciation</string>
+    <string name="settings_donate_title">Donate to Developer</string>
+    <string name="settings_donate_desc">Buy a coffee or support BareBudget development</string>
+    <string name="settings_star_title">Star on GitHub</string>
+    <string name="settings_star_desc">Star the BareBudget repository on GitHub</string>
+    <string name="settings_share_title">Share App</string>
+    <string name="settings_share_desc">Invite friends to manage finances &amp; financial runway</string>
+    <string name="settings_share_message">Manage your finances and calculate your financial runway with BareBudget! Check the repo at: https://github.com/Udean777/Bare-Budget</string>
+    <string name="settings_share_chooser">Share BareBudget</string>
+    <string name="settings_danger_title">Session &amp; Danger Zone</string>
+    <string name="settings_danger_desc">Clear current session and return to onboarding</string>
+    <string name="settings_reset_local">Reset Local Data</string>
+    <string name="settings_sign_out">Sign Out</string>
+    <string name="settings_footer_tagline">Frictionless Personal Finance</string>
+    <string name="settings_dialog_reset_title">Reset Guest Session?</string>
+    <string name="settings_dialog_signout_title">Sign Out?</string>
+    <string name="settings_dialog_reset_message">Are you sure you want to exit? Since you are in Guest Mode, your local transactions and records will be cleared.</string>
+    <string name="settings_dialog_signout_message">Are you sure you want to sign out from your Google account on this device?</string>
+    <string name="settings_dialog_reset_confirm">Reset</string>
+    <string name="settings_dialog_signout_confirm">Sign Out</string>
+    <!-- Formatted -->
+    <string name="remaining_amount">Remaining <xliff:g id="amount">%1$s</xliff:g></string>
+    <!-- Runway / CommonComponents -->
+    <string name="runway_label">FINANCIAL RUNWAY</string>
+    <string name="runway_edit">Change Target</string>
+    <string name="runway_set">Set Budget</string>
+    <string name="runway_total_wealth">TOTAL WEALTH</string>
+    <string name="runway_view_detail">View detail <xliff:g id="name">%1$s</xliff:g></string>
+    <string name="tx_transfer_label">Wallet Transfer</string>
+    <!-- Analytics -->
+    <string name="analytics_title">Financial Analytics</string>
+    <string name="analytics_error_title">Failed to load analytics</string>
+    <string name="analytics_tab_cashflow">Cash Flow</string>
+    <string name="analytics_tab_networth">Net Worth</string>
+    <string name="analytics_tab_categories">Categories</string>
+    <string name="analytics_cashflow_summary">CASH FLOW SUMMARY</string>
+    <string name="analytics_income">Income</string>
+    <string name="analytics_expense">Expense</string>
+    <string name="analytics_net_cashflow_surplus">Net Cash Flow (Surplus)</string>
+    <string name="analytics_net_cashflow_deficit">Net Cash Flow (Deficit)</string>
+    <string name="analytics_cashflow_trend">Cash Flow Trend (Last 6 Months)</string>
+    <string name="analytics_networth_current">Current Net Worth</string>
+    <string name="analytics_networth_growth">Net Worth Growth</string>
+    <string name="analytics_savage_streak"><xliff:g id="days">%1$d</xliff:g> Days Savage Streak!</string>
+    <string name="analytics_savage_desc">Disciplined &amp; controlled spending.</string>
+    <string name="analytics_top_spending">Top Spending</string>
+    <string name="analytics_no_expense">No expenses this month.</string>
+    <string name="analytics_distribution">Distribution by Category</string>
+    <string name="analytics_no_category">No category data yet.</string>
+    <string name="analytics_percent_of_total"><xliff:g id="percent">%1$d</xliff:g>%% of total expense</string>
+    <string name="analytics_no_cashflow_data">No cash flow data yet.</string>
+    <string name="analytics_tap_bar_detail">Tap bar for details</string>
+    <string name="analytics_month_prefix">Month <xliff:g id="month">%1$s</xliff:g></string>
+    <string name="analytics_surplus_prefix">Surplus: +<xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="analytics_deficit_prefix">Deficit: -<xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="analytics_no_networth_data">No net worth data yet.</string>
+    <string name="analytics_networth_month">Net Worth (<xliff:g id="month">%1$s</xliff:g>)</string>
+    <string name="analytics_tap_point_detail">Tap point to view</string>
+    <!-- Wallets -->
+    <string name="wallets_title">My Wallets</string>
+    <string name="wallets_add">Add Wallet</string>
+    <string name="wallets_net_worth_label">TOTAL NET WORTH</string>
+    <string name="wallets_list_title">Wallet List</string>
+    <string name="wallets_active">ACTIVE WALLET</string>
+    <string name="wallets_delete_desc">Delete Wallet</string>
+    <string name="wallets_balance_now">Current Balance</string>
+    <string name="wallets_delete_title">Delete Wallet?</string>
+    <string name="wallets_delete_message">Are you sure you want to delete \'<xliff:g id="name">%1$s</xliff:g>\'? Transaction history may lose wallet reference.</string>
+    <string name="wallets_delete_confirm">Delete</string>
+    <string name="wallets_add_title">Add Wallet</string>
+    <string name="wallets_name_label">Wallet Name (e.g. BCA, Cash)</string>
+    <string name="wallets_initial_balance">Initial Balance</string>
+    <string name="wallets_color">Wallet Color</string>
+    <!-- Goals -->
+    <string name="goals_title">Savings Goals</string>
+    <string name="goals_filter_all">All</string>
+    <string name="goals_filter_active">Active</string>
+    <string name="goals_filter_completed">Completed</string>
+    <string name="goals_search_hint">Search savings goals…</string>
+    <string name="goals_load_error">Failed to load savings goals</string>
+    <string name="goals_empty_title">No Savings Goals</string>
+    <string name="goals_empty_desc">Start creating emergency fund, vacation, or gadget dream goals!</string>
+    <string name="goals_create_first">Create First Goal</string>
+    <string name="goals_quick_action">Quick Actions</string>
+    <string name="goals_deposit_title">Deposit Savings</string>
+    <string name="goals_deposit_desc">Allocate money from wallet to goal</string>
+    <string name="goals_withdraw_title">Withdraw Savings</string>
+    <string name="goals_withdraw_desc">Return goal balance to wallet</string>
+    <string name="goals_edit">Edit Savings Goal</string>
+    <string name="goals_delete">Delete This Goal</string>
+    <string name="goals_close">Close</string>
+    <string name="goals_delete_title">Delete Savings Goal?</string>
+    <string name="goals_delete_message">Are you sure you want to delete goal \'<xliff:g id="name">%1$s</xliff:g>\'? All progress will be deleted.</string>
+    <string name="goals_delete_confirm">Delete Goal</string>
+    <string name="goals_badge_completed">Completed 100%</string>
+    <string name="goals_badge_near_deadline">Near Deadline</string>
+    <string name="goals_badge_on_track">On Track</string>
+    <string name="goals_collected">Collected</string>
+    <string name="goals_target_prefix">Target: <xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="goals_until">until <xliff:g id="date">%1$s</xliff:g></string>
+    <string name="goals_completed_msg">Goal Achieved!</string>
+    <string name="goals_remaining">Remaining <xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="goals_recommend">Recommendation: Save <xliff:g id="perMonth">%1$s</xliff:g>/mo (<xliff:g id="perDay">%2$s</xliff:g>/day)</string>
+    <string name="goals_accent">Accent Color</string>
+    <string name="goals_form_new">New Savings Goal</string>
+    <string name="goals_form_edit">Edit Savings Goal</string>
+    <string name="goals_save_changes">Save Changes</string>
+    <string name="goals_create">Create Goal</string>
+    <string name="goals_name_label">Goal Name</string>
+    <string name="goals_name_hint">e.g. Emergency Fund, Bali Vacation, iPhone 16</string>
+    <string name="goals_amount_label">Target Amount</string>
+    <string name="goals_date_label">Target Date (Optional)</string>
+    <string name="goals_date_hint">Pick target date</string>
+    <string name="goals_notes_label">Additional Notes (Optional)</string>
+    <string name="goals_withdraw_dialog">Withdraw Savings</string>
+    <string name="goals_deposit_dialog">Deposit Savings</string>
+    <string name="goals_withdraw_btn">Withdraw Funds</string>
+    <string name="goals_deposit_btn">Deposit Now</string>
+    <string name="goals_chip_deposit">Deposit</string>
+    <string name="goals_chip_withdraw">Withdraw</string>
+    <string name="goals_wallet_withdraw">Destination Wallet for Withdrawal</string>
+    <string name="goals_wallet_deposit">Source Wallet for Deposit</string>
+    <string name="goals_wallet_choose">Choose Wallet</string>
+    <string name="goals_wallet_label">Wallet</string>
+    <string name="goals_balance_prefix">Balance: <xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="goals_amount_rp">Amount Rp</string>
+    <string name="goals_error_exceed_goal">Amount exceeds goal balance (<xliff:g id="amount">%1$s</xliff:g>)</string>
+    <string name="goals_error_exceed_wallet">Amount exceeds selected wallet balance (<xliff:g id="amount">%1$s</xliff:g>)</string>
+    <!-- Bills -->
+    <string name="bills_title">Bills &amp; Commitments</string>
+    <string name="bills_search_hint">Search bills…</string>
+    <string name="bills_filter_all">All</string>
+    <string name="bills_filter_unpaid">Unpaid</string>
+    <string name="bills_filter_paid">Paid</string>
+    <string name="bills_load_error">Failed to load bills</string>
+    <string name="bills_empty_title">No Bills</string>
+    <string name="bills_empty_desc">All obligations and bills are well managed.</string>
+    <string name="bills_due_prefix">Due: <xliff:g id="date">%1$s</xliff:g></string>
+    <string name="bills_quick_action">Quick Actions</string>
+    <string name="bills_pay_now">Pay Bill Now</string>
+    <string name="bills_pay_desc">Choose source wallet for payment</string>
+    <string name="bills_refund">Cancel Payment (Refund)</string>
+    <string name="bills_refund_desc">Restore status &amp; return balance to wallet</string>
+    <string name="bills_edit">Edit Bill Details</string>
+    <string name="bills_delete">Delete This Bill</string>
+    <string name="bills_close">Close</string>
+    <string name="bills_cancel_title">Cancel Payment?</string>
+    <string name="bills_cancel_message">Bill \'<xliff:g id="name">%1$s</xliff:g>\' will be returned to Unpaid status. Previously used wallet balance will be refunded.</string>
+    <string name="bills_cancel_confirm">Cancel Payment</string>
+    <string name="bills_delete_title">Delete Bill?</string>
+    <string name="bills_delete_message">Are you sure you want to delete bill \'<xliff:g id="name">%1$s</xliff:g>\' of <xliff:g id="amount">%2$s</xliff:g>?</string>
+    <string name="bills_delete_confirm">Delete</string>
+    <string name="bills_badge_paid">Paid</string>
+    <string name="bills_badge_overdue">Overdue <xliff:g id="days">%1$d</xliff:g> Days</string>
+    <string name="bills_badge_today">Due Today</string>
+    <string name="bills_badge_remaining">Remaining <xliff:g id="days">%1$d</xliff:g> Days</string>
+    <string name="bills_badge_paid_desc">Already paid</string>
+    <string name="bills_badge_unpaid_desc">Mark as paid</string>
+    <string name="bills_form_edit">Edit Bill</string>
+    <string name="bills_form_new">Add New Bill</string>
+    <string name="bills_form_save">Save Changes</string>
+    <string name="bills_form_add">Add Bill</string>
+    <string name="bills_provider_label">Provider / Bill Category</string>
+    <string name="bills_name_label">Bill / Provider Name</string>
+    <string name="bills_name_hint">e.g. PLN Electricity, Netflix, Wifi</string>
+    <string name="bills_change_icon">Change Icon</string>
+    <string name="bills_upload_icon">Upload Icon (Optional)</string>
+    <string name="bills_amount_label">Bill Amount</string>
+    <string name="bills_due_date">Due Date</string>
+    <string name="bills_notes_label">Notes / Customer No. (Optional)</string>
+    <string name="bills_recurring">Recurring Bill</string>
+    <string name="bills_recurring_desc">Automatically renewed when paid</string>
+    <string name="bills_pay_title">Pay Bill</string>
+    <string name="bills_pay_btn">Pay Now</string>
+    <string name="bills_wallet_choose">Choose Source Wallet</string>
+    <string name="bills_wallet_label">Wallet</string>
+    <string name="bills_wallet_balance">Balance: <xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="bills_auto_deduct">Wallet balance will be automatically deducted and recorded as expense.</string>
+    <!-- Dashboard -->
+    <string name="dashboard_subtitle">Frictionless Expense Tracker</string>
+    <string name="dashboard_theme_desc">Theme</string>
+    <string name="dashboard_choose_theme">Choose Theme</string>
+    <string name="dashboard_follow_system">Follow System</string>
+    <string name="dashboard_light">Light Mode</string>
+    <string name="dashboard_dark">Dark Mode</string>
+    <string name="dashboard_load_error">Failed to load data</string>
+    <string name="dashboard_total_spent">Total Spent This Month</string>
+    <string name="dashboard_daily_avg">Daily Average</string>
+    <string name="dashboard_recent">Recent Transactions</string>
+    <string name="dashboard_see_all">See All</string>
+    <string name="dashboard_no_tx">No transactions recorded yet. Log your first expense!</string>
+    <string name="dashboard_set_budget">Set Monthly Budget</string>
+    <string name="dashboard_budget_hint">What is your target spending limit for this month?</string>
+    <string name="dashboard_budget_amount">Budget Amount (Rp)</string>
+    <string name="dashboard_quick_wallet">Wallet</string>
+    <string name="dashboard_quick_wallet_desc">Management</string>
+    <string name="dashboard_quick_bills">Bills</string>
+    <string name="dashboard_quick_bills_desc">Check</string>
+    <string name="dashboard_quick_goals">Goals</string>
+    <string name="dashboard_quick_goals_desc">Pockets</string>
+    <string name="dashboard_quick_analytics">Analytics</string>
+    <string name="dashboard_quick_analytics_desc">Review</string>
+    <!-- Budget Screen -->
+    <string name="budget_title">Monthly Budget</string>
+    <string name="budget_locked_btn">Budget Locked This Month</string>
+    <string name="budget_save_btn">Save Monthly Budget</string>
+    <string name="budget_runway_banner_title">TRACK FINANCIAL RUNWAY</string>
+    <string name="budget_runway_banner_desc">Setting a monthly spending limit allows BareBudget to calculate your daily burn rate and financial survival horizon accurately.</string>
+    <string name="budget_locked_title">This month\'s budget is locked</string>
+    <string name="budget_locked_desc">Currently %1$s. You can only change your budget once per month. It will be editable again next month.</string>
+    <string name="budget_input_label">Target Monthly Budget</string>
+    <string name="budget_presets_label">Quick Presets</string>
+    <!-- Appearance -->
+    <string name="appearance_title">Appearance</string>
+    <string name="appearance_dark_mode">Dark Mode</string>
+    <string name="appearance_dynamic">Dynamic Colors</string>
+    <string name="appearance_dynamic_desc">Follow wallpaper palette (Material You)</string>
+    <string name="appearance_dynamic_need">Requires Android 12 or higher</string>
+    <!-- Transactions -->
+    <string name="tx_add_title">Add Transaction</string>
+    <string name="tx_expense">Expense</string>
+    <string name="tx_income">Income</string>
+    <string name="tx_transfer">Transfer</string>
+    <string name="tx_choose_wallet">Choose Wallet</string>
+    <string name="tx_from_wallet">From Wallet</string>
+    <string name="tx_to_wallet">To Wallet</string>
+    <string name="tx_wallet_label">Wallet</string>
+    <string name="tx_amount_income">Income Amount</string>
+    <string name="tx_amount_expense">Expense Amount</string>
+    <string name="tx_amount_transfer">Transfer Amount</string>
+    <string name="tx_category">Category</string>
+    <string name="tx_merchant_label">Merchant / Store (Optional)</string>
+    <string name="tx_merchant_hint">e.g. Starbucks, Indomaret, Grab</string>
+    <string name="tx_date">Date</string>
+    <string name="tx_notes_label">Notes (Optional)</string>
+    <string name="tx_notes_hint">Add detail…</string>
+    <string name="tx_all_title">All Transactions</string>
+    <string name="tx_search_hint">Search transactions…</string>
+    <string name="tx_filter">Filter Transactions</string>
+    <string name="tx_total_found">TOTAL FOUND</string>
+    <string name="tx_reset_filter">Reset Filter</string>
+    <string name="tx_type">Transaction Type</string>
+    <string name="tx_type_all">All Types</string>
+    <string name="tx_wallet_account">Wallet Account</string>
+    <string name="tx_apply_filter">Apply Filter</string>
+    <string name="tx_load_error">Failed to load transactions</string>
+    <string name="tx_no_match">No transactions match your search or filter.</string>
+    <string name="tx_no_data">No transactions recorded yet.</string>
+    <string name="tx_detail_title">Transaction Detail</string>
+    <string name="tx_type_label">Transaction Type</string>
+    <string name="tx_from_label">From Wallet (Source)</string>
+    <string name="tx_to_label">To Wallet (Destination)</string>
+    <string name="tx_source_label">Source / Wallet</string>
+    <string name="tx_cash">Cash</string>
+    <string name="tx_merchant">Merchant / Store</string>
+    <string name="tx_notes">Notes</string>
+    <string name="tx_not_found">Transaction not found</string>
+    <string name="tx_delete_title">Delete Transaction?</string>
+    <string name="tx_delete_message">Are you sure you want to permanently delete this expense record?</string>
+    <string name="tx_transfer_title">Wallet Transfer</string>
+    <string name="tx_transfer_btn">Send Transfer Now</string>
+    <string name="tx_transfer_from">SOURCE WALLET (SENDER)</string>
+    <string name="tx_transfer_choose_from">Choose Source Wallet</string>
+    <string name="tx_transfer_to">DESTINATION WALLET (RECEIVER)</string>
+    <string name="tx_transfer_choose_to">Choose Destination Wallet</string>
+    <string name="tx_transfer_amount">Transfer Amount</string>
+    <string name="tx_transfer_amount_rp">Amount (Rp)</string>
+    <string name="tx_transfer_exceed">Amount exceeds source wallet balance (<xliff:g id="amount">%1$s</xliff:g>)</string>
+    <string name="tx_transfer_date">Transfer Date</string>
+    <string name="tx_transfer_notes">Notes / Description (Optional)</string>
+    <string name="tx_transfer_notes_hint">e.g. Top up GoPay, Withdraw BCA</string>
+    <string name="tx_transfer_swap">Swap Wallets</string>
+    <string name="split_title">Smart Split Bill</string>
+    <string name="split_subtotal">Subtotal</string>
+    <string name="split_tax_service">Tax &amp; Service</string>
+    <string name="split_per_person">Per Person</string>
+    <string name="split_people_count">Number of People</string>
+    <string name="split_share_whatsapp">Share Details to WhatsApp</string>
+    <string name="split_apply">Apply My Share (<xliff:g id="amount">%1$s</xliff:g>)</string>
+    <!-- Onboarding -->
+    <string name="onboarding_welcome">Welcome to Bare Budget</string>
+    <string name="onboarding_choose_mode">Select an account mode to proceed</string>
+    <string name="onboarding_auth_desc">Sign in to sync your cloud records or continue instantly with a guest profile.</string>
+    <string name="onboarding_google_title">Sign In with Google</string>
+    <string name="onboarding_google_desc">Recommended. All your transaction history, budgets, and bills are backed up securely to the cloud. You won\'t lose your data when reinstalling.</string>
+    <string name="onboarding_guest_title">Guest Mode</string>
+    <string name="onboarding_guest_desc">100% Offline &amp; without login. All data is stored on device and can be backed up/restored anytime via JSON file.</string>
+    <string name="onboarding_guest_btn">Continue as Guest</string>
+    <string name="onboarding_slide1_title">Zero Friction Expense Tracking</string>
+    <string name="onboarding_slide1_desc">Log your daily expenses in seconds. Clean, minimal, and focused on what truly matters to your wallet.</string>
+    <string name="onboarding_slide2_title">Track Your Financial Runway</string>
+    <string name="onboarding_slide2_desc">Get honest predictions of how long your money will last based on your real-time daily burn rate.</string>
+    <string name="onboarding_slide3_title">Due Bills &amp; Commitments</string>
+    <string name="onboarding_slide3_desc">Never get caught off-guard by PayLater or monthly subscription due dates ever again.</string>
+    <string name="onboarding_slide4_title">Choose How You Start</string>
+    <string name="onboarding_slide4_desc">Select whether to sign in or explore immediately in Guest Mode.</string>
+</resources>

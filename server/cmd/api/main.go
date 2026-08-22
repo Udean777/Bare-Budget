@@ -42,9 +42,10 @@ func main() {
 	app.Use(recover.New())
 	app.Use(cors.New(cors.Config{
 		AllowOrigins: strings.Join(cfg.CORSAllowedOrigins, ", "),
-		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-User-Email",
+		AllowHeaders: "Origin, Content-Type, Accept, Authorization, X-User-Email, Accept-Language",
 		AllowMethods: "GET, POST, PUT, PATCH, DELETE, OPTIONS",
 	}))
+	app.Use(middleware.LocaleMiddleware())
 
 	// Health Check
 	app.Get("/health", func(c *fiber.Ctx) error {

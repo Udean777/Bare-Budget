@@ -343,7 +343,8 @@ func (h *Handler) SetBudget(c *fiber.Ctx) error {
 
 func (h *Handler) GetDashboardSummary(c *fiber.Ctx) error {
 	userID := middleware.GetUserID(c)
-	summary, err := h.svc.GetDashboardSummary(userID, time.Now())
+	lang := middleware.GetLang(c)
+	summary, err := h.svc.GetDashboardSummaryWithLang(userID, time.Now(), lang)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
 	}

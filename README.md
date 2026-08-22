@@ -39,11 +39,13 @@ Dengan arsitektur **Offline-First**, BareBudget dapat langsung digunakan seketik
 * Memprediksi tanggal persis kapan saldo budget Anda akan habis di bulan berjalan.
 * Memberikan indikator status kesehatan keuangan secara real-time (*Aman*, *Waspada*, atau *Kritis*).
 * **Monthly Budget Lock & Audit**: Budget bulanan hanya dapat diset 1x per bulan untuk menjaga disiplin keuangan dan konsistensi audit (*expenses only*, tidak bercampur dengan alokasi tagihan/bills).
+* **Budget Gate**: Transaksi *expense* dan *income* hanya dapat dicatat setelah anggaran bulan berjalan diset — transfer antar dompet tetap bebas. Layar catat transaksi menampilkan banner pengingat beserta pintasan langsung ke layar anggaran.
 
 ### 2. 🔄 Multi-Wallet Transfer, Smart Switch & Arus Kas Real-Time
 * Lacak transaksi harian dengan kategori lengkap: **Pemasukan (Income)**, **Pengeluaran (Expense)**, dan **Transfer Antar Dompet**.
 * **Layar & Tab Navigasi "Transfer" Khusus**: Menu transfer ditempatkan di tengah *Bottom Navigation Bar* untuk akses instan transfer antar dompet (Tunai, BCA, Mandiri, GoPay, OVO, ShopeePay, dll).
 * **Smart Switch & 1-Tap Wallet Swap**: Pencegahan otomatis pemilihan dompet asal dan tujuan yang sama dengan sistem *smart switch* cerdas dan tombol *swap* instan.
+* **Wallet CRUD Lengkap**: Tambah, lihat saldo, **edit** (nama & warna), dan hapus dompet. Dompet default *"Uang Tunai"* otomatis tersedia saat pertama kali digunakan; semua transaksi wajib melewati dompet.
 * Kalkulasi total kekayaan bersih (**Net Worth**) otomatis dan pembaruan saldo real-time pada seluruh layar tanpa perlu refresh manual.
 
 ### 3. 🎯 Smart Savings Goals & Pockets (With Wallet Integration)
@@ -88,9 +90,10 @@ Dengan arsitektur **Offline-First**, BareBudget dapat langsung digunakan seketik
 * Ekspor seluruh data transaksi, dompet, tagihan, dan target tabungan ke file `.json` lokal sebagai salinan cadangan.
 * Impor kembali data JSON kapan saja dengan pemulihan database Room instan.
 
-### 10. 🚀 Animated Splash Screen & Illustrated Onboarding
+### 10. 🚀 Animated Splash Screen, Illustrated Onboarding & Interactive Tour Guide
 * **Branded Splash Screen**: Transisi *fade & spring scale* yang mulus serta dukungan penuh *Android 12+ SplashScreen API*.
 * **3D Vector Illustrated Onboarding**: Alur pengenalan aplikasi interaktif dengan ilustrasi *semi-3D cartoonish* yang modern dan ramah pengguna.
+* **Multi-Screen Tour Guide (Coach Marks)**: Tur interaktif 7 langkah yang mengikuti alur inti aplikasi (*budget → dompet → catat transaksi → fitur pendukung*) dengan efek *spotlight* pada elemen target, tooltip berisi penjelasan, progres dots, tombol lewati/lanjut, navigasi layar otomatis antar langkah, dan dukungan dua bahasa. Berjalan otomatis sekali untuk user baru dan dapat diputar ulang dari menu Pengaturan.
 
 ### 11. 🔒 Clean Architecture & Offline-First Cloud Sync
 * **Multi-module ter-enforce**: `:domain` pure Kotlin (tanpa Android/Room/Retrofit), `:data` Android library (Room/Retrofit/Firebase/WorkManager), `:presentation` Compose UI library + ViewModels (MaterialKolor, Compose Navigation, Hilt), `:app` composition root — `app → presentation → data → domain`. Guard compile-time terisolasi bersih.
@@ -138,6 +141,7 @@ BareBudget/
 │       │   ├── settings/       # Appearance (MaterialKolor Expressive), JSON Backup/Restore, Profile
 │       │   ├── splash/         # Animated Branded Splash Screen
 │       │   ├── theme/          # AppShapes (AsymmetricHero, Squircle, Pill), crispBorder, Theme.kt
+│       │   ├── tour/           # TourScript, TourOverlay (spotlight coach marks), TourRegistry
 │       │   ├── transaction/    # Add Expense, TransferScreen, AllTransactions (Search & Filter BottomSheet)
 │       │   └── wallets/        # Physical Debit-Style Wallet Cards
 │       └── utils/              # CurrencyFormatter, CurrencyVisualTransformation, DateUtils (UI)

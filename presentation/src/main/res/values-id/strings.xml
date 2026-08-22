@@ -87,9 +87,17 @@
     <string name="analytics_savage_desc">Pengeluaran disiplin &amp; terkontrol.</string>
     <string name="analytics_top_spending">Pengeluaran Terbesar</string>
     <string name="analytics_no_expense">Belum ada pengeluaran bulan ini.</string>
-    <string name="analytics_distribution">Distribusi per Kategori</string>
+    <string name="analytics_distribution">Distribusi Berdasarkan Kategori</string>
     <string name="analytics_no_category">Belum ada data kategori.</string>
     <string name="analytics_percent_of_total"><xliff:g id="percent">%1$d</xliff:g>%% dari total pengeluaran</string>
+    <string name="analytics_no_cashflow_data">Belum ada data arus kas.</string>
+    <string name="analytics_tap_bar_detail">Ketuk bar untuk detail</string>
+    <string name="analytics_month_prefix">Bulan <xliff:g id="month">%1$s</xliff:g></string>
+    <string name="analytics_surplus_prefix">Surplus: +<xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="analytics_deficit_prefix">Defisit: -<xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="analytics_no_networth_data">Belum ada data kekayaan.</string>
+    <string name="analytics_networth_month">Kekayaan Bersih (<xliff:g id="month">%1$s</xliff:g>)</string>
+    <string name="analytics_tap_point_detail">Ketuk titik untuk melihat</string>
     <!-- Wallets -->
     <string name="wallets_title">Dompet Saya</string>
     <string name="wallets_add">Tambah Dompet</string>

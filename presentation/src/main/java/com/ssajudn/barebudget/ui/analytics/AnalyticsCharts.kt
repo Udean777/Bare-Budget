@@ -19,12 +19,14 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.ssajudn.barebudget.domain.model.CashflowDataPoint
 import com.ssajudn.barebudget.domain.model.NetWorthDataPoint
+import com.ssajudn.barebudget.presentation.R
 import com.ssajudn.barebudget.utils.CurrencyFormatter
 
 @Composable
@@ -40,7 +42,7 @@ fun CashflowBarChart(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Belum ada data arus kas",
+                text = stringResource(R.string.analytics_no_cashflow_data),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -70,7 +72,7 @@ fun CashflowBarChart(
                     Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(incomeColor))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        "Pemasukan",
+                        stringResource(R.string.analytics_income),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -79,7 +81,7 @@ fun CashflowBarChart(
                     Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(expenseColor))
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(
-                        "Pengeluaran",
+                        stringResource(R.string.analytics_expense),
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -87,7 +89,7 @@ fun CashflowBarChart(
             }
 
             Text(
-                text = "Ketuk bar untuk detail",
+                text = stringResource(R.string.analytics_tap_bar_detail),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                 fontSize = 11.sp
@@ -113,17 +115,13 @@ fun CashflowBarChart(
                     ) {
                         Column {
                             Text(
-                                text = "Bulan ${item.label}",
+                                text = stringResource(R.string.analytics_month_prefix, item.label),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = if (net >= 0) "Surplus: +${CurrencyFormatter.formatRupiah(net)}" else "Defisit: -${
-                                    CurrencyFormatter.formatRupiah(
-                                        -net
-                                    )
-                                }",
+                                text = if (net >= 0) stringResource(R.string.analytics_surplus_prefix, CurrencyFormatter.formatRupiah(net)) else stringResource(R.string.analytics_deficit_prefix, CurrencyFormatter.formatRupiah(-net)),
                                 style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.SemiBold,
                                 color = if (net >= 0) incomeColor else expenseColor
@@ -260,7 +258,7 @@ fun NetWorthLineChart(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Belum ada data kekayaan",
+                text = stringResource(R.string.analytics_no_networth_data),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -297,7 +295,7 @@ fun NetWorthLineChart(
                     ) {
                         Column {
                             Text(
-                                text = "Kekayaan Bersih (${item.label})",
+                                text = stringResource(R.string.analytics_networth_month, item.label),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -310,7 +308,7 @@ fun NetWorthLineChart(
                         }
 
                         Text(
-                            text = "Ketuk titik untuk melihat",
+                            text = stringResource(R.string.analytics_tap_point_detail),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                             fontSize = 11.sp

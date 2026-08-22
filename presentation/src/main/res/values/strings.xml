@@ -90,6 +90,14 @@
     <string name="analytics_distribution">Distribution by Category</string>
     <string name="analytics_no_category">No category data yet.</string>
     <string name="analytics_percent_of_total"><xliff:g id="percent">%1$d</xliff:g>%% of total expense</string>
+    <string name="analytics_no_cashflow_data">No cash flow data yet.</string>
+    <string name="analytics_tap_bar_detail">Tap bar for details</string>
+    <string name="analytics_month_prefix">Month <xliff:g id="month">%1$s</xliff:g></string>
+    <string name="analytics_surplus_prefix">Surplus: +<xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="analytics_deficit_prefix">Deficit: -<xliff:g id="amount">%1$s</xliff:g></string>
+    <string name="analytics_no_networth_data">No net worth data yet.</string>
+    <string name="analytics_networth_month">Net Worth (<xliff:g id="month">%1$s</xliff:g>)</string>
+    <string name="analytics_tap_point_detail">Tap point to view</string>
     <!-- Wallets -->
     <string name="wallets_title">My Wallets</string>
     <string name="wallets_add">Add Wallet</string>

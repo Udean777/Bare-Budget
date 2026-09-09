@@ -2,6 +2,7 @@ package com.ssajudn.bareuang.data.repository
 
 import com.ssajudn.bareuang.domain.model.CreateTransactionRequest
 import com.ssajudn.bareuang.domain.model.Transaction
+import com.ssajudn.bareuang.domain.model.DashboardTransactionData
 import com.ssajudn.bareuang.data.datasource.local.TransactionLocalDataSource
 import com.ssajudn.bareuang.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
@@ -12,6 +13,9 @@ import javax.inject.Singleton
 class TransactionRepositoryImpl @Inject constructor(
     private val local: TransactionLocalDataSource
 ) : TransactionRepository {
+
+    override suspend fun getDashboardTransactions(monthYear: String, todayIso: String): Result<DashboardTransactionData> =
+        local.getDashboardTransactions(monthYear, todayIso)
 
     override suspend fun getTransactions(category: String?, page: Int, limit: Int): Result<List<Transaction>> =
         local.getTransactions(category, page, limit)

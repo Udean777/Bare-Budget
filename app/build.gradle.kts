@@ -123,13 +123,11 @@ dependencies {
     implementation(libs.androidx.glance.appwidget)
     implementation(libs.androidx.glance.material3)
 
-    // Room Database (Local Offline Storage)
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    ksp(libs.androidx.room.compiler)
-    // Room schema export for Phase 8
-
     testImplementation(libs.junit)
+    // Required only by repository integration fakes in app unit tests; production
+    // Room implementation remains encapsulated by :data.
+    testImplementation(libs.androidx.room.runtime)
+    testImplementation(libs.androidx.room.ktx)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.mockk)

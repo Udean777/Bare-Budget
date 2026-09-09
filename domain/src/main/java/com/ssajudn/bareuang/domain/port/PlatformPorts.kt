@@ -6,6 +6,13 @@ import com.ssajudn.bareuang.domain.model.ImportDraft
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.Flow
 
+/**
+ * Platform ports intentionally remain small domain-owned boundaries. Their
+ * implementations live in app/data modules so use cases never depend on
+ * Android, Room, or provider SDKs. Keep a port only when it has an active
+ * adapter or represents a planned replaceable integration boundary.
+ */
+
 interface ThemePreferencesPort { val darkMode: StateFlow<AppThemeDarkMode>; fun setDarkMode(mode: AppThemeDarkMode) }
 interface CurrencyPreferencesPort { val currency: StateFlow<AppCurrency>; fun setCurrency(currency: AppCurrency); fun getCurrency(): AppCurrency }
 interface WidgetPreferencesPort { val hideBalance: StateFlow<Boolean>; fun setHideBalance(hidden: Boolean) }
@@ -37,6 +44,8 @@ interface BillReminderPreferencesPort {
 interface DailyPacingPreferencesPort {
     /** Null means automatic pacing derived from the monthly budget. */
     val customTarget: StateFlow<Long?>
+    /** Last saved custom value, retained when automatic mode is selected. */
+    val lastCustomTarget: StateFlow<Long?>
     fun setCustomTarget(amount: Long?)
     fun reset()
 }

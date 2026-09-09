@@ -1,19 +1,63 @@
 package com.ssajudn.bareuang.ui.transaction
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 
+import com.ssajudn.bareuang.domain.model.RecurringInterval
+import androidx.compose.ui.text.style.TextAlign
 import com.ssajudn.bareuang.ui.common.OperationState
 import com.ssajudn.bareuang.ui.common.UiEffect
 import com.ssajudn.bareuang.ui.common.asString
+import com.ssajudn.bareuang.ui.common.labelRes
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Update
-import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,7 +75,8 @@ import com.ssajudn.bareuang.ui.theme.AppShapes
 import com.ssajudn.bareuang.ui.theme.categoryColors
 import com.ssajudn.bareuang.ui.theme.crispBorder
 import com.ssajudn.bareuang.utils.CurrencyFormatter
-import com.ssajudn.bareuang.utils.DateUtils
+import com.ssajudn.bareuang.domain.utils.DateUtils
+import com.ssajudn.bareuang.ui.common.DateFormatter
 import com.ssajudn.bareuang.ui.components.AppIconButton
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +94,12 @@ fun TransactionDetailScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is UiEffect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
-                is UiEffect.ShowSnackbarRes -> snackbarHostState.showSnackbar(effect.uiText.asString(context))
+                is UiEffect.ShowSnackbarRes -> snackbarHostState.showSnackbar(
+                    effect.uiText.asString(
+                        context
+                    )
+                )
+
                 is UiEffect.Navigate -> {}
                 is UiEffect.PopBackStack -> {}
             }
@@ -68,18 +118,29 @@ fun TransactionDetailScreen(
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) },
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.tx_detail_title), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)) },
+                title = {
+                    Text(
+                        stringResource(R.string.tx_detail_title),
+                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+                    )
+                },
                 navigationIcon = {
                     AppIconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.common_back)
+                        )
                     }
                 },
                 actions = {
                     if (uiState.transaction != null) {
-                        AppIconButton(enabled = !isOperationLoading, onClick = { showDeleteConfirmDialog = true }) {
+                        AppIconButton(
+                            enabled = !isOperationLoading,
+                            onClick = { showDeleteConfirmDialog = true }) {
                             Icon(
                                 Icons.Default.Delete,
                                 contentDescription = stringResource(R.string.common_delete),
@@ -114,7 +175,8 @@ fun TransactionDetailScreen(
 
                 val isIncome = tx.type == TransactionType.INCOME
                 val isTransfer = tx.type == TransactionType.TRANSFER
-                val isRecurringTemplate = tx.isRecurringParent && tx.recurringInterval != com.ssajudn.bareuang.domain.model.RecurringInterval.NONE
+                val isRecurringTemplate =
+                    tx.isRecurringParent && tx.recurringInterval != RecurringInterval.NONE
 
                 val amountColor = when {
                     isRecurringTemplate -> MaterialTheme.colorScheme.onSurface
@@ -137,7 +199,7 @@ fun TransactionDetailScreen(
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
                     Spacer(modifier = Modifier.height(4.dp))
-                    
+
                     // Header Amount Card (M3 ElevatedCard)
                     ElevatedCard(
                         modifier = Modifier
@@ -153,7 +215,9 @@ fun TransactionDetailScreen(
                         elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
                     ) {
                         Column(
-                            modifier = Modifier.padding(32.dp).fillMaxWidth(),
+                            modifier = Modifier
+                                .padding(32.dp)
+                                .fillMaxWidth(),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Box(
@@ -178,7 +242,10 @@ fun TransactionDetailScreen(
                                     color = MaterialTheme.colorScheme.secondaryContainer
                                 ) {
                                     Row(
-                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                        modifier = Modifier.padding(
+                                            horizontal = 10.dp,
+                                            vertical = 4.dp
+                                        ),
                                         verticalAlignment = Alignment.CenterVertically,
                                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                                     ) {
@@ -189,8 +256,12 @@ fun TransactionDetailScreen(
                                             modifier = Modifier.size(14.dp)
                                         )
                                         Text(
-                                            text = stringResource(R.string.dashboard_recurring_schedule) + " • " + tx.recurringInterval.displayName,
-                                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                            text = stringResource(R.string.dashboard_recurring_schedule) + " • " + stringResource(
+                                                tx.recurringInterval.labelRes()
+                                            ),
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontWeight = FontWeight.Bold
+                                            ),
                                             color = MaterialTheme.colorScheme.onSecondaryContainer
                                         )
                                     }
@@ -200,12 +271,13 @@ fun TransactionDetailScreen(
                             Spacer(modifier = Modifier.height(16.dp))
 
                             Text(
-                                text = if (isTransfer) stringResource(R.string.tx_transfer_title) else (tx.merchant?.takeIf { it.isNotBlank() } ?: tx.category.displayName),
+                                text = if (isTransfer) stringResource(R.string.tx_transfer_title) else (tx.merchant?.takeIf { it.isNotBlank() }
+                                    ?: stringResource(tx.category.labelRes())),
                                 style = MaterialTheme.typography.headlineSmall.copy(
                                     fontWeight = FontWeight.Bold
                                 ),
                                 color = MaterialTheme.colorScheme.onSurface,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                textAlign = TextAlign.Center
                             )
 
                             Spacer(modifier = Modifier.height(8.dp))
@@ -216,7 +288,7 @@ fun TransactionDetailScreen(
                                     fontWeight = FontWeight.Bold
                                 ),
                                 color = amountColor,
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
@@ -239,43 +311,104 @@ fun TransactionDetailScreen(
                                 isTransfer -> stringResource(R.string.tx_transfer_title)
                                 else -> stringResource(R.string.tx_expense)
                             }
-                            DetailRow(label = stringResource(R.string.tx_type_label), value = typeLabel)
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            DetailRow(
+                                label = stringResource(R.string.tx_type_label),
+                                value = typeLabel
+                            )
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                    alpha = 0.4f
+                                )
+                            )
 
                             if (isTransfer) {
-                                DetailRow(label = stringResource(R.string.tx_from_label), value = uiState.walletName ?: stringResource(R.string.tx_from_wallet))
-                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                                DetailRow(label = stringResource(R.string.tx_to_label), value = uiState.toWalletName ?: stringResource(R.string.tx_to_wallet))
+                                DetailRow(
+                                    label = stringResource(R.string.tx_from_label),
+                                    value = uiState.walletName
+                                        ?: stringResource(R.string.tx_from_wallet)
+                                )
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                        alpha = 0.4f
+                                    )
+                                )
+                                DetailRow(
+                                    label = stringResource(R.string.tx_to_label),
+                                    value = uiState.toWalletName
+                                        ?: stringResource(R.string.tx_to_wallet)
+                                )
                             } else {
-                                DetailRow(label = stringResource(R.string.tx_source_label), value = uiState.walletName ?: stringResource(R.string.tx_cash))
-                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                                DetailRow(label = stringResource(R.string.tx_category), value = tx.category.displayName)
+                                DetailRow(
+                                    label = stringResource(R.string.tx_source_label),
+                                    value = uiState.walletName ?: stringResource(R.string.tx_cash)
+                                )
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                        alpha = 0.4f
+                                    )
+                                )
+                                DetailRow(
+                                    label = stringResource(R.string.tx_category),
+                                    value = stringResource(tx.category.labelRes())
+                                )
                             }
 
-                            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                            DetailRow(label = stringResource(R.string.tx_date), value = DateUtils.formatDisplayDate(tx.date))
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                    alpha = 0.4f
+                                )
+                            )
+                            DetailRow(
+                                label = stringResource(R.string.tx_date),
+                                value = DateFormatter.formatDisplayDate(tx.date)
+                            )
                             if (!isTransfer) {
-                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                                DetailRow(label = stringResource(R.string.tx_merchant), value = tx.merchant?.ifBlank { "-" } ?: "-")
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                        alpha = 0.4f
+                                    )
+                                )
+                                DetailRow(
+                                    label = stringResource(R.string.tx_merchant),
+                                    value = tx.merchant?.ifBlank { "-" } ?: "-")
                             }
 
-                            if (tx.isRecurringParent || tx.recurringInterval != com.ssajudn.bareuang.domain.model.RecurringInterval.NONE) {
-                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                            if (tx.isRecurringParent || tx.recurringInterval != RecurringInterval.NONE) {
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                        alpha = 0.4f
+                                    )
+                                )
                                 DetailRow(
                                     label = stringResource(R.string.tx_recurring_label),
-                                    value = stringResource(R.string.tx_badge_recurring) + " (${tx.recurringInterval.displayName})"
+                                    value = stringResource(R.string.tx_badge_recurring) + " (${
+                                        stringResource(
+                                            tx.recurringInterval.labelRes()
+                                        )
+                                    })"
                                 )
                                 tx.nextOccurrenceDate?.let { nextDate ->
-                                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                                    HorizontalDivider(
+                                        color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                            alpha = 0.4f
+                                        )
+                                    )
                                     DetailRow(
-                                        label = stringResource(R.string.dashboard_recurring_next, ""),
-                                        value = DateUtils.formatDisplayDate(nextDate)
+                                        label = stringResource(
+                                            R.string.dashboard_recurring_next,
+                                            ""
+                                        ),
+                                        value = DateFormatter.formatDisplayDate(nextDate)
                                     )
                                 }
                             }
-                            
+
                             if (!tx.notes.isNullOrBlank()) {
-                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(
+                                        alpha = 0.4f
+                                    )
+                                )
                                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                     Text(
                                         text = stringResource(R.string.tx_notes),
@@ -291,7 +424,7 @@ fun TransactionDetailScreen(
                             }
                         }
                     }
-                    
+
                     Spacer(modifier = Modifier.height(24.dp))
                 }
             } else {

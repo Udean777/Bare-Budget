@@ -10,8 +10,7 @@ import com.ssajudn.bareuang.domain.model.TransactionCategory
 import com.ssajudn.bareuang.domain.model.TransactionType
 import com.ssajudn.bareuang.domain.model.UpdateGoalRequest
 import com.ssajudn.bareuang.data.service.WalletBalanceService
-import com.ssajudn.bareuang.domain.repository.GoalRepository
-import com.ssajudn.bareuang.utils.DateUtils
+import com.ssajudn.bareuang.domain.utils.DateUtils
 import com.ssajudn.bareuang.data.error.ApiErrorParser
 import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers

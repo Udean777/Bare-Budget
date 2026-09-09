@@ -1,11 +1,32 @@
 package com.ssajudn.bareuang.ui.goals
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Payments
-import androidx.compose.material3.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -20,7 +41,8 @@ import com.ssajudn.bareuang.ui.components.AmountTextField
 import com.ssajudn.bareuang.ui.components.AppDatePickerDialog
 import com.ssajudn.bareuang.ui.components.AppFormDialog
 import com.ssajudn.bareuang.ui.components.bareuangOutlinedTextFieldColors
-import com.ssajudn.bareuang.utils.DateUtils
+import com.ssajudn.bareuang.domain.utils.DateUtils
+import com.ssajudn.bareuang.ui.common.DateFormatter
 
 @Composable
 fun GoalFormDialog(
@@ -81,7 +103,7 @@ fun GoalFormDialog(
         )
 
         OutlinedTextField(
-            value = if (targetDateIso.isNotBlank()) DateUtils.formatDisplayDate(targetDateIso) else "",
+            value = if (targetDateIso.isNotBlank()) DateFormatter.formatDisplayDate(targetDateIso) else "",
             onValueChange = {},
             label = { Text(stringResource(R.string.goals_date_label)) },
             placeholder = { Text(stringResource(R.string.goals_date_hint)) },

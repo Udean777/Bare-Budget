@@ -6,23 +6,24 @@ package com.ssajudn.bareuang.domain.error
  */
 sealed class AppException(
     override val message: String?,
-    override val cause: Throwable? = null
+    override val cause: Throwable? = null,
+    open val code: AppErrorCode = AppErrorCode.UNKNOWN,
 ) : Exception(message, cause) {
 
     class NetworkException(
-        message: String? = "Koneksi bermasalah, coba lagi",
+        message: String? = null,
         cause: Throwable? = null
-    ) : AppException(message, cause)
+    ) : AppException(message, cause, AppErrorCode.NETWORK)
 
     class AuthException(
-        message: String? = "Sesi berakhir, silakan login kembali",
+        message: String? = null,
         cause: Throwable? = null
-    ) : AppException(message, cause)
+    ) : AppException(message, cause, AppErrorCode.AUTH)
 
     class DataException(
-        message: String? = "Data tidak valid",
+        message: String? = null,
         cause: Throwable? = null
-    ) : AppException(message, cause)
+    ) : AppException(message, cause, AppErrorCode.DATA)
 
     /**
      * Distinct marker for the daily-budget soft nudge: lets callers distinguish
@@ -30,29 +31,26 @@ sealed class AppException(
      * "save anyway" confirmation instead of a hard error.
      */
     class DailyBudgetExceededException(
-        message: String? = "Jatah harian terlampaui",
+        message: String? = null,
         cause: Throwable? = null
-    ) : AppException(message, cause)
+    ) : AppException(message, cause, AppErrorCode.DAILY_BUDGET_EXCEEDED)
 
     class SyncException(
-        message: String? = "Gagal sinkronisasi",
+        message: String? = null,
         cause: Throwable? = null
-    ) : AppException(message, cause)
+    ) : AppException(message, cause, AppErrorCode.SYNC)
 
     class UnknownError(
-        message: String? = "Terjadi kesalahan tidak diketahui",
+        message: String? = null,
         cause: Throwable? = null
-    ) : AppException(message, cause)
+    ) : AppException(message, cause, AppErrorCode.UNKNOWN)
 }
 
-/**
- * Helper untuk ui: pesan spesifik per tipe (DIP — ui depend domain/error, bukan data).
- */
-fun AppException.userMessage(): String = when (this) {
-    is AppException.NetworkException -> message ?: "Koneksi bermasalah"
-    is AppException.AuthException -> message ?: "Sesi berakhir"
-    is AppException.DataException -> message ?: "Data tidak valid"
-    is AppException.DailyBudgetExceededException -> message ?: "Jatah harian terlampaui"
-    is AppException.SyncException -> message ?: "Gagal sinkron"
-    is AppException.UnknownError -> message ?: "Terjadi kesalahan"
+enum class AppErrorCode {
+    NETWORK,
+    AUTH,
+    DATA,
+    DAILY_BUDGET_EXCEEDED,
+    SYNC,
+    UNKNOWN,
 }

@@ -38,6 +38,7 @@ import androidx.glance.text.Text
 import androidx.glance.text.TextStyle
 import com.ssajudn.bareuang.MainActivity
 import com.ssajudn.bareuang.domain.model.DashboardSummary
+import com.ssajudn.bareuang.domain.model.RunwayStatus
 import com.ssajudn.bareuang.domain.utils.DomainCurrencyFormatter
 import dagger.hilt.android.EntryPointAccessors
 
@@ -171,7 +172,7 @@ class BudgetWidget : GlanceAppWidget() {
                     Spacer(modifier = GlanceModifier.height(2.dp))
                     // Runway message preview (first line)
                     Text(
-                        text = summary.runwayMessage.take(48),
+                        text = summary.runwayStatus.widgetMessage(context).take(48),
                         style = TextStyle(color = GlanceTheme.colors.onSurfaceVariant, fontSize = 10.sp),
                         maxLines = 1,
                     )
@@ -236,6 +237,14 @@ class BudgetWidget : GlanceAppWidget() {
 
     private fun mask(formatted: String, hidden: Boolean, currency: com.ssajudn.bareuang.domain.model.AppCurrency = com.ssajudn.bareuang.domain.model.AppCurrency.IDR): String =
         if (hidden) "${currency.prefix}\u2022\u2022\u2022\u2022\u2022\u2022" else formatted
+}
+
+private fun RunwayStatus.widgetMessage(context: Context): String = when (this) {
+    RunwayStatus.BudgetNotSet -> context.getString(com.ssajudn.bareuang.presentation.R.string.runway_status_budget_not_set)
+    RunwayStatus.Exhausted -> context.getString(com.ssajudn.bareuang.presentation.R.string.runway_status_exhausted)
+    RunwayStatus.NoSpending -> context.getString(com.ssajudn.bareuang.presentation.R.string.runway_status_no_spending)
+    is RunwayStatus.Warning -> context.getString(com.ssajudn.bareuang.presentation.R.string.runway_status_warning, deathDay, daysRemaining)
+    RunwayStatus.Healthy -> context.getString(com.ssajudn.bareuang.presentation.R.string.runway_status_healthy)
 }
 
 class BudgetWidgetReceiver : GlanceAppWidgetReceiver() {

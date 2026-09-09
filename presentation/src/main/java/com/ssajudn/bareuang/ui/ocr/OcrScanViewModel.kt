@@ -15,7 +15,7 @@ import com.ssajudn.bareuang.domain.usecase.CheckDailyBudgetUseCase
 import com.ssajudn.bareuang.domain.usecase.HasMonthlyBudgetUseCase
 import com.ssajudn.bareuang.ui.common.UiEffect
 import com.ssajudn.bareuang.ui.common.UiText
-import com.ssajudn.bareuang.utils.DateUtils
+import com.ssajudn.bareuang.domain.utils.DateUtils
 import com.ssajudn.bareuang.domain.port.NetworkMonitorPort
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -147,7 +147,7 @@ class OcrScanViewModel @Inject constructor(
                     is com.ssajudn.bareuang.domain.error.AppException.NetworkException ->
                         UiText.Res(com.ssajudn.bareuang.presentation.R.string.ocr_error_no_internet)
                     is com.ssajudn.bareuang.domain.error.AppException ->
-                        UiText.Dyn(e.message ?: "Gagal memproses struk.")
+                        UiText.Res(com.ssajudn.bareuang.presentation.R.string.ocr_error_generic)
                     else -> UiText.Res(com.ssajudn.bareuang.presentation.R.string.ocr_error_generic)
                 }
                 _effect.send(UiEffect.ShowSnackbarRes(res))
@@ -204,7 +204,7 @@ class OcrScanViewModel @Inject constructor(
             amount = s.parsedAmount,
             type = TransactionType.EXPENSE,
             category = s.category,
-            merchant = s.merchant.ifBlank { s.category.displayName },
+            merchant = s.merchant.ifBlank { s.category.name },
             date = s.date,
             walletId = s.selectedWalletId
         )

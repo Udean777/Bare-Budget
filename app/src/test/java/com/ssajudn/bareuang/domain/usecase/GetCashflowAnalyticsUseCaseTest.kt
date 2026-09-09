@@ -1,55 +1,38 @@
 package com.ssajudn.bareuang.domain.usecase
 
 import com.ssajudn.bareuang.domain.error.AppException
-import com.ssajudn.bareuang.domain.model.CreateTransactionRequest
-import com.ssajudn.bareuang.domain.model.Transaction
-import com.ssajudn.bareuang.domain.model.TransactionCategory
-import com.ssajudn.bareuang.domain.model.TransactionType
-import com.ssajudn.bareuang.domain.repository.TransactionRepository
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
+import com.ssajudn.bareuang.domain.model.CashflowDataPoint
+import com.ssajudn.bareuang.domain.model.NetWorthDataPoint
+import com.ssajudn.bareuang.domain.repository.AnalyticsRepository
+import com.ssajudn.bareuang.domain.repository.AnalyticsData
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Locale
+import java.time.Clock
 
-private class AnalyticsTxRepo(private val result: Result<List<Transaction>>) : TransactionRepository {
-    var requestedLimit: Int = 0
-    override suspend fun getTransactions(category: String?, page: Int, limit: Int): Result<List<Transaction>> {
-        requestedLimit = limit
-        return result
-    }
-    override suspend fun createTransaction(request: CreateTransactionRequest) = Result.failure<Transaction>(UnsupportedOperationException())
-    override suspend fun bulkCreate(requests: List<CreateTransactionRequest>) = Result.success(0)
-    override suspend fun deleteTransaction(id: String) = Result.success(false)
-    override fun observeTransactions(): Flow<List<Transaction>> = flowOf(emptyList())
+private class AnalyticsRepo(
+    private val cashflow: Result<List<CashflowDataPoint>>
+) : AnalyticsRepository {
+    override suspend fun getAnalytics(clock: Clock) = Result.success(AnalyticsData(cashflow = cashflow.getOrNull().orEmpty(), netWorth = emptyList()))
+    override suspend fun getCashflowAnalytics(clock: Clock) = cashflow
+    override suspend fun getNetWorthAnalytics(clock: Clock) = Result.success(emptyList<NetWorthDataPoint>())
 }
 
 class GetCashflowAnalyticsUseCaseTest {
     @Test
-    fun `cashflow includes transactions beyond previous 500 row cap`() = runTest {
-        val month = SimpleDateFormat("yyyy-MM", Locale.getDefault()).format(Calendar.getInstance().time)
-        val transactions = (1..600).map { index ->
-            Transaction(
-                id = index.toString(), amount = 1L, type = TransactionType.EXPENSE,
-                category = TransactionCategory.FOOD, date = "$month-01"
-            )
-        }
-        val repo = AnalyticsTxRepo(Result.success(transactions))
-        val result = GetCashflowAnalyticsUseCase(repo)()
+    fun `cashflow delegates to repository projection`() = runTest {
+        val repo = AnalyticsRepo(Result.success(listOf(CashflowDataPoint("2026-09", "Sep", 0L, 600L))))
+        val result = GetCashflowAnalyticsUseCase(repo, Clock.systemUTC())()
 
         assertTrue(result.isSuccess)
         assertEquals(600L, result.getOrThrow().last().expense)
-        assertEquals(Int.MAX_VALUE, repo.requestedLimit)
     }
 
     @Test
     fun `cashflow propagates repository failure`() = runTest {
         val failure = AppException.DataException("database unavailable")
-        val result = GetCashflowAnalyticsUseCase(AnalyticsTxRepo(Result.failure(failure)))()
+        val result = GetCashflowAnalyticsUseCase(AnalyticsRepo(Result.failure(failure)), Clock.systemUTC())()
 
         assertTrue(result.isFailure)
         assertEquals(failure, result.exceptionOrNull())

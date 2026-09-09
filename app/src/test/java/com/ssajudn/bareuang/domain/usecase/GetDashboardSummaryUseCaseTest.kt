@@ -27,6 +27,7 @@ import org.junit.Test
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
+import java.time.Clock
 
 private class FakeBudgetRepo(var budget: Long = 0L) : BudgetRepository {
     override suspend fun setBudget(monthlyLimit: Long, monthYear: String) = Result.success(true)
@@ -67,11 +68,64 @@ private class FakeDueBillRepo(var bills: List<DueBill> = emptyList()) : DueBillR
 
 private class FakeDailyPacingPrefs : DailyPacingPreferencesPort {
     override val customTarget = MutableStateFlow<Long?>(null)
+    override val lastCustomTarget = MutableStateFlow<Long?>(null)
     override fun setCustomTarget(amount: Long?) { customTarget.value = amount }
     override fun reset() { customTarget.value = null }
 }
 
 class GetDashboardSummaryUseCaseTest {
+
+    private fun useCase(transactions: List<Transaction>, budget: Long = 1_000_000L) =
+        GetDashboardSummaryUseCase(
+            budgetRepository = FakeBudgetRepo(budget),
+            transactionRepository = FakeTxRepo(transactions),
+            walletRepository = FakeWalletRepo(),
+            dueBillRepository = FakeDueBillRepo(),
+            dailyPacingPreferences = FakeDailyPacingPrefs(),
+            clock = Clock.systemDefaultZone(),
+        )
+
+    @Test
+    fun `empty database produces zeroed summary`() = runTest {
+        val summary = useCase(emptyList())().getOrThrow()
+
+        assertEquals(0L, summary.totalSpent)
+        assertEquals(1_000_000L, summary.remainingBudget)
+        assertEquals(0L, summary.netWorth)
+        assertEquals(0L, summary.unpaidDueBillsSum)
+    }
+
+    @Test
+    fun `overflow is mapped to data error`() = runTest {
+        val month = java.time.YearMonth.now().toString()
+        val transactions = listOf(
+            Transaction("1", Long.MAX_VALUE, TransactionType.EXPENSE, TransactionCategory.FOOD, date = "$month-01"),
+            Transaction("2", 1L, TransactionType.EXPENSE, TransactionCategory.FOOD, date = "$month-02"),
+        )
+
+        val result = useCase(transactions)()
+
+        assertTrue(result.exceptionOrNull() is com.ssajudn.bareuang.domain.error.AppException.DataException)
+    }
+
+    @Test
+    fun `large transaction collection remains accurate`() = runTest {
+        val month = java.time.YearMonth.now().toString()
+        val transactions = List(10_000) { index ->
+            Transaction(
+                id = index.toString(),
+                amount = 1L,
+                type = TransactionType.EXPENSE,
+                category = TransactionCategory.FOOD,
+                date = "$month-01",
+            )
+        }
+
+        val result = useCase(transactions)()
+
+        assertTrue(result.isSuccess)
+        assertEquals(10_000L, result.getOrThrow().totalSpent)
+    }
 
     @Test
     fun `dashboard calculations with transactions`() = runTest {
@@ -94,7 +148,8 @@ class GetDashboardSummaryUseCaseTest {
             transactionRepository = txRepo,
             walletRepository = FakeWalletRepo(wallets),
             dueBillRepository = FakeDueBillRepo(bills),
-            dailyPacingPreferences = FakeDailyPacingPrefs()
+            dailyPacingPreferences = FakeDailyPacingPrefs(),
+            clock = Clock.systemDefaultZone(),
         )
 
         val res = useCase()

@@ -3,8 +3,7 @@ package com.ssajudn.bareuang.data.datasource.local
 import com.ssajudn.bareuang.data.local.room.AppDatabase
 import com.ssajudn.bareuang.data.local.room.LocalBudgetEntity
 import com.ssajudn.bareuang.domain.model.TransactionType
-import com.ssajudn.bareuang.data.repository.DomainMappers
-import com.ssajudn.bareuang.domain.repository.BudgetRepository
+import com.ssajudn.bareuang.data.mapper.PersistenceMappers
 import com.ssajudn.bareuang.data.error.ApiErrorParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -63,13 +62,13 @@ class BudgetLocalDataSource @Inject constructor(private val db: AppDatabase) {
         ) { categoryEntities, transactions ->
             val monthTx = transactions.filter {
                 it.date.startsWith(my) &&
-                DomainMappers.safeTransactionType(it.type) == TransactionType.EXPENSE
+                PersistenceMappers.safeTransactionType(it.type) == TransactionType.EXPENSE
             }
             val spentPerCategory = monthTx.groupBy { it.category }
                 .mapValues { (_, txList) -> txList.sumOf { it.amount } }
 
             categoryEntities.map { entity ->
-                val cat = DomainMappers.safeCategory(entity.category)
+                val cat = PersistenceMappers.safeCategory(entity.category)
                 com.ssajudn.bareuang.domain.model.CategoryBudget(
                     category = cat,
                     limitAmount = entity.limitAmount,

@@ -15,7 +15,7 @@ import com.ssajudn.bareuang.data.local.room.AppDatabase
 import com.ssajudn.bareuang.data.local.room.LocalTransactionEntity
 import com.ssajudn.bareuang.domain.model.CreateTransactionRequest
 import com.ssajudn.bareuang.domain.usecase.ProcessRecurringTransactionsUseCase
-import com.ssajudn.bareuang.utils.DateUtils
+import com.ssajudn.bareuang.domain.utils.DateUtils
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.concurrent.TimeUnit

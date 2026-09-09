@@ -36,6 +36,8 @@ private data class ProxyResponse(
     @SerializedName("detail") val detail: String?,
 )
 
+private const val GENERIC_OCR_ERROR = "Scan struk gagal. Silakan coba lagi."
+
 @Singleton
 class ReceiptAiService @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -69,18 +71,16 @@ class ReceiptAiService @Inject constructor(
             val resp = client.newCall(req).execute()
             val bodyStr = resp.body?.string() ?: ""
             if (!resp.isSuccessful) {
-                val message = when (resp.code) {
-                    401 -> "Scan struk membutuhkan identitas aplikasi yang valid."
-                    413 -> "Ukuran gambar terlalu besar."
-                    429 -> "Batas scan harian tercapai. Coba lagi besok."
-                    503 -> "Layanan scan sedang tidak tersedia."
-                    else -> "Gagal memproses struk. Coba lagi."
-                }
-                throw AppException.DataException(message)
+                throw AppException.DataException(proxyErrorMessage(resp.code, bodyStr))
             }
             val pr = gson.fromJson(bodyStr, ProxyResponse::class.java)
                 ?: throw AppException.DataException("Gagal memproses struk. Coba lagi.")
-            if (pr.error != null) throw AppException.DataException("Gagal memproses struk. Coba lagi.")
+            if (pr.error != null) {
+                throw AppException.DataException(
+                    if (BuildConfig.DEBUG) pr.error?.takeIf { it.isNotBlank() } ?: GENERIC_OCR_ERROR
+                    else GENERIC_OCR_ERROR,
+                )
+            }
             // Sanitize client-side (proxy already does, but never trust)
             val allowed = setOf("FOOD","SHOPPING","TRANSPORT","BILLS","ENTERTAINMENT","HEALTH","EDUCATION","SOCIAL","OTHER")
             val cat = pr.category?.trim()?.uppercase() ?: "OTHER"
@@ -96,11 +96,30 @@ class ReceiptAiService @Inject constructor(
             android.util.Log.e("ReceiptAiService", "parse failed", e)
             when (e) {
                 is AppException -> throw e
-                is IOException -> throw AppException.NetworkException("Koneksi bermasalah. Cek internet.", e)
-                is IllegalStateException, is IllegalArgumentException -> throw AppException.DataException("Gagal memproses struk. Coba lagi.", e)
+                is IOException -> throw AppException.NetworkException(
+                    if (BuildConfig.DEBUG) e.message?.takeIf { it.isNotBlank() } ?: "Koneksi bermasalah. Cek internet."
+                    else GENERIC_OCR_ERROR,
+                    e,
+                )
+                is IllegalStateException, is IllegalArgumentException -> throw AppException.DataException(
+                    if (BuildConfig.DEBUG) e.message?.takeIf { it.isNotBlank() } ?: GENERIC_OCR_ERROR
+                    else GENERIC_OCR_ERROR,
+                    e,
+                )
                 else -> throw AppException.UnknownError(cause = e)
             }
         }
+    }
+
+    private fun proxyErrorMessage(statusCode: Int, body: String): String {
+        if (!BuildConfig.DEBUG) return GENERIC_OCR_ERROR
+        val serverMessage = runCatching { gson.fromJson(body, ProxyResponse::class.java) }
+            .getOrNull()
+            ?.let { response ->
+                response.error?.takeIf { it.isNotBlank() }
+                    ?: response.detail?.takeIf { it.isNotBlank() }
+            }
+        return serverMessage ?: "OCR server mengembalikan HTTP $statusCode."
     }
 
     private fun encodeImage(uri: Uri): String {

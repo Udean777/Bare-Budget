@@ -1,37 +1,14 @@
 package com.ssajudn.bareuang.domain.usecase
 
 import com.ssajudn.bareuang.domain.model.NetWorthDataPoint
-import com.ssajudn.bareuang.domain.repository.WalletRepository
-import com.ssajudn.bareuang.domain.error.AppException
+import com.ssajudn.bareuang.domain.repository.AnalyticsRepository
 import javax.inject.Inject
+import java.time.Clock
 
 class GetNetWorthAnalyticsUseCase @Inject constructor(
-    private val walletRepository: WalletRepository,
-    private val cashflowUseCase: GetCashflowAnalyticsUseCase
+    private val analyticsRepository: AnalyticsRepository,
+    private val clock: Clock,
 ) {
-    suspend operator fun invoke(): Result<List<NetWorthDataPoint>> {
-        return try {
-            val wallets = walletRepository.getWallets().getOrElse { return Result.failure(it) }
-            val currentNetWorth = wallets.sumOf { it.balance }
-            val cashflow = cashflowUseCase().getOrElse { return Result.failure(it) }
-
-            val points = ArrayList<NetWorthDataPoint>(cashflow.size)
-            for (i in cashflow.indices) {
-                points.add(NetWorthDataPoint("", "", 0L))
-            }
-            var runningNetWorth = currentNetWorth
-            for (i in cashflow.indices.reversed()) {
-                points[i] = NetWorthDataPoint(
-                    month = cashflow[i].month,
-                    label = cashflow[i].label,
-                    netWorth = runningNetWorth
-                )
-                val netChange = cashflow[i].income - cashflow[i].expense
-                runningNetWorth -= netChange
-            }
-            Result.success(points)
-        } catch (e: Exception) {
-            Result.failure(AppException.UnknownError(cause = e))
-        }
-    }
+    suspend operator fun invoke(): Result<List<NetWorthDataPoint>> =
+        analyticsRepository.getNetWorthAnalytics(clock)
 }

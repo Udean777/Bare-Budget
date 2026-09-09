@@ -5,8 +5,9 @@ import com.ssajudn.bareuang.data.local.room.LocalTransactionEntity
 import com.ssajudn.bareuang.domain.model.CreateTransactionRequest
 import com.ssajudn.bareuang.domain.model.Transaction
 import com.ssajudn.bareuang.domain.model.TransactionType
+import com.ssajudn.bareuang.domain.model.CategorySummary
+import com.ssajudn.bareuang.domain.model.DashboardTransactionData
 import com.ssajudn.bareuang.data.service.WalletBalanceService
-import com.ssajudn.bareuang.domain.repository.TransactionRepository
 import com.ssajudn.bareuang.data.error.ApiErrorParser
 import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
@@ -27,6 +28,34 @@ class TransactionLocalDataSource @Inject constructor(
     private val balanceService: WalletBalanceService,
     private val currencyPreferences: com.ssajudn.bareuang.data.local.CurrencyPreferences
 ) {
+
+    suspend fun getDashboardTransactions(monthYear: String, todayIso: String): Result<DashboardTransactionData> =
+        withContext(Dispatchers.IO) {
+            try {
+                val monthStart = "$monthYear-01"
+                val nextMonth = java.time.YearMonth.parse(monthYear).plusMonths(1).toString() + "-01"
+                val todayEnd = java.time.LocalDate.parse(todayIso).plusDays(1).toString()
+                val dao = db.transactionDao()
+                val categories = dao.getExpenseByCategory(monthStart, nextMonth).map {
+                    CategorySummary(
+                        category = com.ssajudn.bareuang.data.mapper.PersistenceMappers.safeCategory(it.category),
+                        total = it.total ?: 0L,
+                        count = it.count,
+                    )
+                }
+                Result.success(
+                    DashboardTransactionData(
+                        totalSpent = dao.getDiscretionaryExpenseTotal(monthStart, nextMonth),
+                        todaySpent = dao.getDiscretionaryExpenseTotalForDay(todayIso, todayEnd),
+                        topCategories = categories,
+                        recentTransactions = dao.getTransactionsByDateRange(monthStart, nextMonth, 5).map { it.toTransaction() },
+                        recurringTransactions = dao.getRecurringTemplates().map { it.toTransaction() },
+                    )
+                )
+            } catch (e: Exception) {
+                Result.failure(ApiErrorParser.fromThrowable(e))
+            }
+        }
 
     suspend fun getTransactions(category: String?, page: Int, limit: Int): Result<List<Transaction>> =
         withContext(Dispatchers.IO) {
@@ -92,7 +121,7 @@ class TransactionLocalDataSource @Inject constructor(
                 }
                 val isRecurring = request.recurringInterval != com.ssajudn.bareuang.domain.model.RecurringInterval.NONE
                 val nextDate = if (isRecurring) {
-                    com.ssajudn.bareuang.utils.DateUtils.calculateNextDueDate(dateStr, request.recurringInterval.name)
+                    com.ssajudn.bareuang.domain.utils.DateUtils.calculateNextDueDate(dateStr, request.recurringInterval.name)
                 } else null
 
                 val newTx = Transaction(
@@ -144,7 +173,7 @@ class TransactionLocalDataSource @Inject constructor(
                     }
                     val dateStr = req.date.ifBlank { SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US).format(Date()) }
                     val isRecurring = req.recurringInterval != com.ssajudn.bareuang.domain.model.RecurringInterval.NONE
-                    val nextDate = if (isRecurring) com.ssajudn.bareuang.utils.DateUtils.calculateNextDueDate(dateStr, req.recurringInterval.name) else null
+                    val nextDate = if (isRecurring) com.ssajudn.bareuang.domain.utils.DateUtils.calculateNextDueDate(dateStr, req.recurringInterval.name) else null
                     val newTx = Transaction(
                         id = UUID.randomUUID().toString(),
                         amount = req.amount,

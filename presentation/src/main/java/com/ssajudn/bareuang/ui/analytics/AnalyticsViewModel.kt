@@ -2,24 +2,16 @@ package com.ssajudn.bareuang.ui.analytics
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.ssajudn.bareuang.domain.model.CategorySummary
-import com.ssajudn.bareuang.domain.model.Transaction
-import com.ssajudn.bareuang.domain.repository.TransactionRepository
-import com.ssajudn.bareuang.domain.usecase.CalculateSavageStreakUseCase
-import com.ssajudn.bareuang.domain.usecase.GetCashflowAnalyticsUseCase
-import com.ssajudn.bareuang.domain.usecase.GetDashboardSummaryUseCase
-import com.ssajudn.bareuang.domain.usecase.GetNetWorthAnalyticsUseCase
-import com.ssajudn.bareuang.domain.error.AppException
+import com.ssajudn.bareuang.domain.model.TransactionCategory
+import com.ssajudn.bareuang.domain.usecase.GetAnalyticsSummaryUseCase
 import com.ssajudn.bareuang.ui.common.UiText
 import com.ssajudn.bareuang.presentation.R
-import com.ssajudn.bareuang.domain.error.userMessage
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import com.ssajudn.bareuang.domain.model.TransactionCategory
 import com.ssajudn.bareuang.domain.model.CashflowDataPoint
 import com.ssajudn.bareuang.domain.model.NetWorthDataPoint
 
@@ -52,16 +44,12 @@ sealed interface AnalyticsUiState {
         val selectedTab: AnalyticsTab = AnalyticsTab.CASHFLOW
     ) : AnalyticsUiState
 
-    data class Error(val message: String) : AnalyticsUiState
+    data class Error(val message: UiText) : AnalyticsUiState
 }
 
 @HiltViewModel
 class AnalyticsViewModel @Inject constructor(
-    private val getDashboardSummary: GetDashboardSummaryUseCase,
-    private val transactionRepository: TransactionRepository,
-    private val getCashflow: GetCashflowAnalyticsUseCase,
-    private val getNetWorth: GetNetWorthAnalyticsUseCase,
-    private val calculateSavageStreak: CalculateSavageStreakUseCase
+    private val getAnalyticsSummary: GetAnalyticsSummaryUseCase
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<AnalyticsUiState>(AnalyticsUiState.Loading)
@@ -82,6 +70,7 @@ class AnalyticsViewModel @Inject constructor(
     }
 
     fun loadAnalyticsData(isPullToRefresh: Boolean = false) {
+        if (isPullToRefresh && _isRefreshing.value) return
         viewModelScope.launch {
             if (isPullToRefresh) {
                 _isRefreshing.value = true
@@ -89,35 +78,29 @@ class AnalyticsViewModel @Inject constructor(
                 _uiState.value = AnalyticsUiState.Loading
             }
 
-            val summaryResult = getDashboardSummary()
-            val transactionsResult = transactionRepository.getAllTransactions()
-            val cashflowResult = getCashflow()
-            val netWorthResult = getNetWorth()
-
-            val failedResult = listOf(summaryResult, transactionsResult, cashflowResult, netWorthResult)
-                .firstOrNull { it.isFailure }
-            if (failedResult != null) {
+            val result = getAnalyticsSummary()
+            if (result.isFailure) {
                 _isRefreshing.value = false
                 if (_uiState.value !is AnalyticsUiState.Success) {
-                    val cause = failedResult.exceptionOrNull()
+                    val cause = result.exceptionOrNull()
                     android.util.Log.e("Analytics", "load failed", cause)
                     _uiState.value = AnalyticsUiState.Error(
-                        (cause as? AppException)?.userMessage() ?: "Gagal memuat data analytics"
+                        UiText.Res(R.string.analytics_error_message)
                     )
                 }
                 return@launch
             }
 
-            if (summaryResult.isSuccess) {
-                val summary = summaryResult.getOrNull()!!
-                val transactions = transactionsResult.getOrNull()!!
-                val cashflow = cashflowResult.getOrNull()!!
-                val netWorthTrend = netWorthResult.getOrNull()!!
+            if (result.isSuccess) {
+                val analytics = result.getOrNull()!!
+                val summary = analytics.dashboard
+                val cashflow = analytics.cashflowTrend
+                val netWorthTrend = analytics.netWorthTrend
 
                 val totalSpent = summary.totalSpent
-                val totalIncome = cashflow.lastOrNull()?.income ?: 0L
+                val totalIncome = analytics.totalIncome
                 val netWorth = summary.netWorth
-                val topCategoriesRaw = summary.topCategories ?: emptyList()
+                val topCategoriesRaw = analytics.categories
 
                 val breakdownItems = topCategoriesRaw.map { catSummary ->
                     val pct = if (totalSpent > 0) ((catSummary.total.toFloat() / totalSpent.toFloat()).coerceIn(0f, 1f)) else 0f
@@ -130,7 +113,6 @@ class AnalyticsViewModel @Inject constructor(
                 }.sortedByDescending { it.totalAmount }
 
                 val topCat = breakdownItems.firstOrNull()
-                val streak = calculateSavageStreak(transactions)
                 val prevTab = (_uiState.value as? AnalyticsUiState.Success)?.selectedTab ?: AnalyticsTab.CASHFLOW
 
                 _uiState.value = AnalyticsUiState.Success(
@@ -141,7 +123,7 @@ class AnalyticsViewModel @Inject constructor(
                     dailyAverage = summary.averageDailySpend,
                     topSpendingCategory = topCat,
                     categories = breakdownItems,
-                    savageStreakDays = streak,
+                    savageStreakDays = analytics.savageStreakDays,
                     cashflowTrend = cashflow,
                     netWorthTrend = netWorthTrend,
                     selectedTab = prevTab

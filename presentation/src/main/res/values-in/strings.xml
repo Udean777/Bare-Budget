@@ -8,6 +8,17 @@
     <string name="currency_settings">Mata Uang</string>
     <string name="currency_idr">Rupiah (IDR - Rp)</string>
     <string name="currency_usd">US Dollar (USD - $)</string>
+    <string name="category_food">Makanan &amp; Minuman</string>
+    <string name="category_transport">Transportasi</string>
+    <string name="category_bills">Tagihan &amp; Utilitas</string>
+    <string name="category_shopping">Belanja &amp; Kebutuhan</string>
+    <string name="category_entertainment">Hiburan &amp; Gim</string>
+    <string name="category_social">Sosial &amp; Nongkrong</string>
+    <string name="category_salary">Gaji &amp; Upah</string>
+    <string name="category_bonus">Bonus &amp; Penghargaan</string>
+    <string name="category_investment">Hasil Investasi</string>
+    <string name="category_transfer">Transfer Dompet</string>
+    <string name="category_other">Lainnya</string>
     <string name="onboarding_currency_title">Pilih Mata Uang</string>
     <string name="onboarding_currency_desc">Pilih mata uang utama untuk mencatat pengeluaran dan anggaranmu. Kamu bisa mengubahnya kapan saja di Pengaturan.</string>
     <!-- Translation -->
@@ -60,6 +71,11 @@
     <string name="runway_set">Atur Anggaran</string>
     <string name="runway_total_wealth">TOTAL KEKAYAAN</string>
     <string name="runway_view_detail">Lihat detail <xliff:g id="name">%1$s</xliff:g></string>
+    <string name="runway_status_budget_not_set">Anggaran bulanan belum diatur. Ketuk di sini untuk menetapkan target.</string>
+    <string name="runway_status_exhausted">KRITIS: Anggaran bulan ini sudah habis. Hentikan pengeluaran yang tidak penting.</string>
+    <string name="runway_status_no_spending">HEBAT: Belum ada pengeluaran bulan ini. Pertahankan!</string>
+    <string name="runway_status_warning">PERINGATAN: Dengan laju pengeluaran saat ini, uang habis pada hari ke-%1$d (tersisa %2$d hari)!</string>
+    <string name="runway_status_healthy">SEHAT: runway keuanganmu aman hingga akhir bulan.</string>
     <string name="tx_transfer_label">Transfer Antar Dompet</string>
     <!-- Analytics -->
     <string name="analytics_title">Analisis Finansial</string>
@@ -388,6 +404,25 @@
     <string name="import_error_save">Gagal mengimpor transaksi</string>
     <string name="ocr_error_save">Gagal menyimpan transaksi struk</string>
     <string name="ocr_error_file">Gagal membuka file gambar</string>
+    <string name="ocr_save_transaction">Simpan Transaksi • %1$s</string>
+    <string name="ocr_tip_lighting">• Foto struk dengan cahaya cukup dan tidak blur</string>
+    <string name="ocr_tip_total">• Pastikan baris TOTAL / JUMLAH terlihat</string>
+    <string name="ocr_tip_editable">• Hasil AI bisa diedit sebelum disimpan</string>
+    <string name="ocr_tip_internet">• Membutuhkan koneksi internet</string>
+    <string name="ocr_merchant_label">Merchant</string>
+    <string name="ocr_category_label">Kategori</string>
+    <string name="ocr_date_label">Tanggal</string>
+    <string name="ocr_change">Ubah</string>
+    <string name="ocr_daily_override_title">Target harian terlampaui</string>
+    <string name="ocr_save_anyway">Tetap simpan</string>
+    <string name="ocr_total">TOTAL</string>
+    <string name="ocr_offline_message">Tidak ada koneksi internet. Scan struk membutuhkan internet.</string>
+    <string name="ocr_amount_label">Total (Rp)</string>
+    <string name="ocr_receipt_original">— %1$s • struk asli —</string>
+    <string name="ocr_preview_caption">Preview struk • hasil AI dapat diedit di atas</string>
+    <string name="dashboard_daily_allowance">%1$d hari tersisa • %2$s/hari</string>
+    <string name="dashboard_load_error_message">Gagal memuat dashboard.</string>
+    <string name="analytics_error_message">Gagal memuat data analytics.</string>
     <string name="settings_error_backup">Gagal mengekspor cadangan</string>
     <string name="settings_error_restore">Gagal memulihkan cadangan</string>
     <string name="tx_error_invalid_amount">Tolong masukkan jumlah nominal yang valid</string>
@@ -406,6 +441,13 @@
     <string name="budget_daily_target_custom">Custom</string>
     <string name="budget_daily_target_hint">Target custom per hari</string>
     <string name="budget_daily_target_save">Simpan target harian</string>
+    <string name="budget_daily_target_saved">Target harian berhasil disimpan</string>
+    <string name="budget_daily_target_edit">Edit target harian</string>
+    <string name="budget_daily_mode_custom_confirm_title">Gunakan target harian custom?</string>
+    <string name="budget_daily_mode_custom_confirm_message">Nominal yang kamu tentukan akan menjadi panduan pacing harian, menggantikan perhitungan otomatis dari budget bulanan.</string>
+    <string name="budget_daily_mode_auto_confirm_title">Gunakan pacing otomatis?</string>
+    <string name="budget_daily_mode_auto_confirm_message">Target akan dihitung ulang berdasarkan sisa budget bulanan dan jumlah hari yang tersisa.</string>
+    <string name="budget_daily_mode_confirm">Lanjutkan</string>
     <string name="tx_category_overspent_warning">Jumlah ini melebihi sisa %1$s untuk budget kategori %2$s.</string>
     <string name="split_person_me">Saya</string>
     <string name="bills_provider_custom">Lainnya (Custom)</string>
@@ -422,6 +464,7 @@
     <string name="state_error_title">Terjadi kesalahan</string>
     <string name="state_retry">Coba lagi</string>
     <string name="fab_menu_scan">Scan Struk</string>
+    <string name="coming_soon">Segera hadir</string>
     <string name="import_title">Impor Transaksi</string>
     <string name="import_wallet_label">Dompet Tujuan</string>
     <string name="import_pick_file">Pilih File CSV</string>
@@ -442,8 +485,17 @@
     <string name="import_file_too_large">File terlalu besar, maksimal 5MB</string>
     <string name="import_chip_expense">Keluar</string>
     <string name="import_chip_income">Masuk</string>
+    <string name="import_supported_format">Format yang didukung</string>
+    <string name="import_format_bca">• E-statement BCA: Tanggal,Keterangan,Mutasi/Cabang</string>
+    <string name="import_format_generic">• Umum: tanggal, keterangan, jumlah (pemisah , atau ;)</string>
+    <string name="import_format_debit_credit">• Kolom debit/kredit terpisah juga didukung</string>
+    <string name="import_format_example">Contoh: 01/01/2026,Top Up GoPay,50000</string>
+    <string name="import_daily_override_message">Beberapa transaksi melebihi target pacing hari ini. Tetap impor?</string>
+    <string name="import_daily_override_confirm">Tetap impor</string>
+    <string name="tx_error_daily_exceeded_title">Target harian terlampaui</string>
     <string name="ocr_title">Scan Struk</string>
     <string name="ocr_wallet_label">Dompet</string>
+    <string name="ocr_coming_soon">Fitur scan struk akan segera hadir.</string>
     <string name="ocr_btn_camera">Kamera</string>
     <string name="ocr_btn_gallery">Galeri</string>
     <string name="ocr_processing">Memproses OCR…</string>
@@ -481,6 +533,10 @@
     <string name="dashboard_daily_title">Pacing Harian</string>
     <string name="dashboard_daily_auto_desc">Berdasarkan anggaran bulan ini</string>
     <string name="dashboard_daily_used">Terpakai %1$s / %2$s</string>
+    <string name="dashboard_daily_target">Target</string>
+    <string name="dashboard_daily_spent">Terpakai</string>
+    <string name="dashboard_daily_remaining_label">Sisa</string>
+    <string name="dashboard_daily_days_left">%1$d hari tersisa</string>
     <string name="dashboard_recurring_next">Berikutnya: %1$s</string>
     <string name="dashboard_recurring_schedule">Jadwal Berulang</string>
     <string name="day_fri">Jum</string>
@@ -529,4 +585,5 @@
     <string name="tx_recurring_on_day">Ulangi pada</string>
     <string name="tx_recurring_weekly">Mingguan</string>
     <string name="tx_recurring_yearly">Tahunan</string>
+    <string name="tx_recurring_once">Sekali saja</string>
 </resources>

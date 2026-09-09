@@ -13,7 +13,7 @@ import java.util.UUID
 
 import com.ssajudn.bareuang.domain.model.TransactionType
 import com.ssajudn.bareuang.domain.model.Wallet
-import com.ssajudn.bareuang.data.repository.DomainMappers
+import com.ssajudn.bareuang.data.mapper.PersistenceMappers
 
 @Entity(
     tableName = "local_transactions",
@@ -42,8 +42,8 @@ data class LocalTransactionEntity(
     val nextOccurrenceDate: String? = null
 ) {
     fun toTransaction(): Transaction {
-        val cat = DomainMappers.safeCategory(category)
-        val txType = DomainMappers.safeTransactionType(type)
+        val cat = PersistenceMappers.safeCategory(category)
+        val txType = PersistenceMappers.safeTransactionType(type)
         val interval = try {
             RecurringInterval.valueOf(recurringInterval)
         } catch (_: Exception) {
@@ -108,7 +108,7 @@ data class LocalDueBillEntity(
         val s = runCatching { DueBillStatus.valueOf(status) }
             .onFailure { android.util.Log.w("Entities", "Unknown DueBillStatus: $status: ${it.message}") }
             .getOrDefault(DueBillStatus.UNPAID)
-        val interval = DomainMappers.safeRecurringInterval(recurringInterval)
+        val interval = PersistenceMappers.safeRecurringInterval(recurringInterval)
         return DueBill(
             id = id,
             providerName = providerName,
@@ -228,7 +228,7 @@ data class LocalWalletEntity(
                 balance = wallet.balance,
                 colorHex = wallet.colorHex,
                 iconName = wallet.iconName,
-                createdAt = wallet.createdAt ?: com.ssajudn.bareuang.utils.DateUtils.getCurrentDateISO(),
+                createdAt = wallet.createdAt ?: com.ssajudn.bareuang.domain.utils.DateUtils.getCurrentDateISO(),
                 isSynced = isSynced
             )
         }

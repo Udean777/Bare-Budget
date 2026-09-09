@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.ssajudn.bareuang.domain.model.Transaction
 import com.ssajudn.bareuang.domain.error.AppException
-import com.ssajudn.bareuang.domain.error.userMessage
 import com.ssajudn.bareuang.domain.repository.TransactionRepository
 import com.ssajudn.bareuang.domain.repository.WalletRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -35,8 +34,9 @@ class TransactionDetailViewModel @Inject constructor(
     private val transactionRepository: TransactionRepository,
     private val walletRepository: WalletRepository
 ) : ViewModel() {
-    private val _operation = kotlinx.coroutines.flow.MutableStateFlow<OperationState>(OperationState.Idle)
-    val operation: kotlinx.coroutines.flow.StateFlow<OperationState> = _operation.asStateFlow()
+    private val _operation =
+        MutableStateFlow<OperationState>(OperationState.Idle)
+    val operation: StateFlow<OperationState> = _operation.asStateFlow()
     private val _effect = Channel<UiEffect>(Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
 

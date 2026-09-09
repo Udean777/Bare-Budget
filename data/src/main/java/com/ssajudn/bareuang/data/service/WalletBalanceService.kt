@@ -4,7 +4,7 @@ import com.ssajudn.bareuang.data.local.room.LocalTransactionEntity
 import com.ssajudn.bareuang.data.local.room.WalletDao
 import com.ssajudn.bareuang.domain.model.CreateTransactionRequest
 import com.ssajudn.bareuang.domain.model.TransactionType
-import com.ssajudn.bareuang.data.repository.DomainMappers
+import com.ssajudn.bareuang.data.mapper.PersistenceMappers
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,7 +32,7 @@ class WalletBalanceService @Inject constructor(
     }
 
     fun revert(tx: LocalTransactionEntity) {
-        val type = DomainMappers.safeTransactionType(tx.type)
+        val type = PersistenceMappers.safeTransactionType(tx.type)
         if (type == TransactionType.TRANSFER) {
             add(tx.walletId, tx.amount)
             add(tx.toWalletId, -tx.amount)

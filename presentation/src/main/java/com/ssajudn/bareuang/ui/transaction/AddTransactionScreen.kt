@@ -1,10 +1,38 @@
 package com.ssajudn.bareuang.ui.transaction
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Switch
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 
 import com.ssajudn.bareuang.ui.common.OperationState
 import com.ssajudn.bareuang.ui.common.UiEffect
 import com.ssajudn.bareuang.ui.common.asString
+import com.ssajudn.bareuang.ui.common.labelRes
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -12,10 +40,83 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.BrightnessAuto
+import androidx.compose.material.icons.filled.Business
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Category
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.CloudOff
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.DeleteOutline
+import androidx.compose.material.icons.filled.DirectionsCar
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.filled.Payments
+import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material.icons.filled.PieChart
+import androidx.compose.material.icons.filled.Redeem
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Repeat
+import androidx.compose.material.icons.filled.Restaurant
+import androidx.compose.material.icons.filled.Savings
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Share
+import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.ShowChart
+import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.SwapVert
+import androidx.compose.material.icons.filled.Today
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.filled.Update
+import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +140,8 @@ import com.ssajudn.bareuang.ui.theme.categoryColors
 import com.ssajudn.bareuang.ui.theme.crispBorder
 import com.ssajudn.bareuang.utils.CurrencyFormatter
 
-import com.ssajudn.bareuang.utils.DateUtils
+import com.ssajudn.bareuang.domain.utils.DateUtils
+import com.ssajudn.bareuang.ui.common.DateFormatter
 import com.ssajudn.bareuang.ui.components.AppButton
 import com.ssajudn.bareuang.ui.components.AppIconButton
 import com.ssajudn.bareuang.ui.components.AppTextButton
@@ -60,7 +162,12 @@ fun AddTransactionScreen(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is UiEffect.ShowSnackbar -> snackbarHostState.showSnackbar(effect.message)
-                is UiEffect.ShowSnackbarRes -> snackbarHostState.showSnackbar(effect.uiText.asString(context))
+                is UiEffect.ShowSnackbarRes -> snackbarHostState.showSnackbar(
+                    effect.uiText.asString(
+                        context
+                    )
+                )
+
                 is UiEffect.Navigate -> onNavigateToBudget()
                 is UiEffect.PopBackStack -> {}
             }
@@ -75,7 +182,8 @@ fun AddTransactionScreen(
         }
     }
 
-    Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) },
+    Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
@@ -88,7 +196,10 @@ fun AddTransactionScreen(
                 },
                 navigationIcon = {
                     AppIconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.common_back)
+                        )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -161,7 +272,10 @@ fun AddTransactionScreen(
                             modifier = Modifier.weight(1f)
                         )
                         AppTextButton(onClick = onNavigateToBudget) {
-                            Text(stringResource(R.string.tx_budget_set_action), fontWeight = FontWeight.Bold)
+                            Text(
+                                stringResource(R.string.tx_budget_set_action),
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
@@ -314,7 +428,10 @@ fun AddTransactionScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(stringResource(R.string.split_title), style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold))
+                            Text(
+                                stringResource(R.string.split_title),
+                                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold)
+                            )
                         }
                     }
                 }
@@ -335,7 +452,11 @@ fun AddTransactionScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         contentPadding = PaddingValues(vertical = 4.dp)
                     ) {
-                        val incomeCats = listOf(TransactionCategory.SALARY, TransactionCategory.BONUS, TransactionCategory.INVESTMENT)
+                        val incomeCats = listOf(
+                            TransactionCategory.SALARY,
+                            TransactionCategory.BONUS,
+                            TransactionCategory.INVESTMENT
+                        )
                         val filteredCats = TransactionCategory.entries.filter {
                             it != TransactionCategory.TRANSFER && (if (uiState.transactionType == TransactionType.INCOME) it in incomeCats else it !in incomeCats)
                         }
@@ -348,11 +469,16 @@ fun AddTransactionScreen(
                                 selected = isSelected,
                                 onClick = { viewModel.onCategoryChange(category) },
                                 label = {
-                                    val labelText = if (catBudget != null && catBudget.limitAmount > 0) {
-                                        "${category.displayName} (${CurrencyFormatter.formatCompact(catBudget.remainingAmount)})"
-                                    } else {
-                                        category.displayName
-                                    }
+                                    val labelText =
+                                        if (catBudget != null && catBudget.limitAmount > 0) {
+                                            "${stringResource(category.labelRes())} (${
+                                                CurrencyFormatter.formatCompact(
+                                                    catBudget.remainingAmount
+                                                )
+                                            })"
+                                        } else {
+                                            stringResource(category.labelRes())
+                                        }
                                     Text(
                                         text = labelText,
                                         style = MaterialTheme.typography.labelMedium.copy(
@@ -380,7 +506,8 @@ fun AddTransactionScreen(
             }
 
             // SOFT-WARN: category budget overspent hint (informational, never blocks)
-            val selectedCatBudget = uiState.categoryBudgets.find { it.category == uiState.selectedCategory }
+            val selectedCatBudget =
+                uiState.categoryBudgets.find { it.category == uiState.selectedCategory }
             if (uiState.transactionType == TransactionType.EXPENSE &&
                 selectedCatBudget != null && selectedCatBudget.limitAmount > 0 &&
                 selectedCatBudget.spentAmount + uiState.parsedAmount > selectedCatBudget.limitAmount
@@ -406,8 +533,12 @@ fun AddTransactionScreen(
                         Text(
                             text = stringResource(
                                 R.string.tx_category_overspent_warning,
-                                CurrencyFormatter.formatCompact((selectedCatBudget.limitAmount - selectedCatBudget.spentAmount).coerceAtLeast(0L)),
-                                selectedCatBudget.category.displayName
+                                CurrencyFormatter.formatCompact(
+                                    (selectedCatBudget.limitAmount - selectedCatBudget.spentAmount).coerceAtLeast(
+                                        0L
+                                    )
+                                ),
+                                stringResource(selectedCatBudget.category.labelRes())
                             ),
                             style = MaterialTheme.typography.bodySmall
                         )
@@ -457,12 +588,14 @@ fun AddTransactionScreen(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
-                    value = DateUtils.formatDisplayDate(uiState.date),
+                    value = DateFormatter.formatDisplayDate(uiState.date),
                     onValueChange = { },
                     readOnly = true,
                     singleLine = true,
                     shape = MaterialTheme.shapes.medium,
-                    modifier = Modifier.fillMaxWidth().clickable { showDatePicker = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showDatePicker = true },
                     enabled = false,
                     colors = OutlinedTextFieldDefaults.colors(
                         disabledTextColor = MaterialTheme.colorScheme.onSurface,
@@ -543,9 +676,15 @@ fun AddTransactionScreen(
                                 modifier = Modifier.fillMaxWidth()
                             ) {
                                 val intervals = listOf(
-                                    com.ssajudn.bareuang.domain.model.RecurringInterval.WEEKLY to stringResource(R.string.tx_recurring_weekly),
-                                    com.ssajudn.bareuang.domain.model.RecurringInterval.MONTHLY to stringResource(R.string.tx_recurring_monthly),
-                                    com.ssajudn.bareuang.domain.model.RecurringInterval.YEARLY to stringResource(R.string.tx_recurring_yearly)
+                                    com.ssajudn.bareuang.domain.model.RecurringInterval.WEEKLY to stringResource(
+                                        R.string.tx_recurring_weekly
+                                    ),
+                                    com.ssajudn.bareuang.domain.model.RecurringInterval.MONTHLY to stringResource(
+                                        R.string.tx_recurring_monthly
+                                    ),
+                                    com.ssajudn.bareuang.domain.model.RecurringInterval.YEARLY to stringResource(
+                                        R.string.tx_recurring_yearly
+                                    )
                                 )
                                 intervals.forEach { (interval, label) ->
                                     val isSelected = uiState.recurringInterval == interval
@@ -596,7 +735,10 @@ fun AddTransactionScreen(
                                             modifier = Modifier
                                                 .weight(1f)
                                                 .clickable {
-                                                    val nextDate = DateUtils.calculateNextWeeklyDay(uiState.date, dayIso)
+                                                    val nextDate = DateUtils.calculateNextWeeklyDay(
+                                                        uiState.date,
+                                                        dayIso
+                                                    )
                                                     viewModel.onDateChange(nextDate)
                                                 }
                                         ) {
@@ -619,7 +761,10 @@ fun AddTransactionScreen(
                                 Spacer(modifier = Modifier.height(8.dp))
                                 val dayOfMonth = DateUtils.getDayOfMonth(uiState.date)
                                 Text(
-                                    text = stringResource(R.string.tx_recurring_on_date, dayOfMonth),
+                                    text = stringResource(
+                                        R.string.tx_recurring_on_date,
+                                        dayOfMonth
+                                    ),
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.primary
                                 )
@@ -631,12 +776,23 @@ fun AddTransactionScreen(
 
             val errorText = uiState.validationError?.let {
                 when (it) {
-                    AddTransactionError.INSUFFICIENT_BALANCE -> stringResource(it.resId, CurrencyFormatter.formatRupiah(uiState.wallets.find { w -> w.id == uiState.selectedWalletId }?.balance ?: 0L))
+                    AddTransactionError.INSUFFICIENT_BALANCE -> stringResource(
+                        it.resId,
+                        CurrencyFormatter.formatRupiah(
+                            uiState.wallets.find { w -> w.id == uiState.selectedWalletId }?.balance
+                                ?: 0L
+                        )
+                    )
+
                     else -> stringResource(it.resId)
                 }
             } ?: uiState.errorMessage
             if (errorText != null) {
-                Text(text = errorText, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+                Text(
+                    text = errorText,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
 
             Spacer(modifier = Modifier.height(20.dp))
@@ -663,7 +819,11 @@ fun AddTransactionScreen(
         AlertDialog(
             onDismissRequest = { viewModel.dismissDailyOverride() },
             title = { Text(stringResource(R.string.tx_daily_override_title)) },
-            text = { Text(uiState.pendingDailyMessage ?: stringResource(R.string.tx_error_daily_exceeded)) },
+            text = {
+                Text(
+                    uiState.pendingDailyMessage ?: stringResource(R.string.tx_error_daily_exceeded)
+                )
+            },
             confirmButton = {
                 TextButton(onClick = { viewModel.confirmDailyOverride() }) {
                     Text(stringResource(R.string.tx_daily_override_confirm))

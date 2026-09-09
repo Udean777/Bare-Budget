@@ -49,7 +49,8 @@ fun BearProgressIndicator(
     trackColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
     trackHeight: Dp = 10.dp,
     bearSize: Dp = 22.dp,
-    showBearMascot: Boolean = true
+    showBearMascot: Boolean = true,
+    indicatorRes: Int = R.drawable.ic_bear_head,
 ) {
     val clampedProgress = progress.coerceIn(0f, 1f)
     val animatedProgress by animateFloatAsState(
@@ -99,7 +100,7 @@ fun BearProgressIndicator(
             )
 
             Image(
-                painter = painterResource(id = R.drawable.ic_bear_head),
+                painter = painterResource(id = indicatorRes),
                 contentDescription = null,
                 modifier = Modifier
                     .size(bearSize)

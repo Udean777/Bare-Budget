@@ -1,5 +1,6 @@
 package com.ssajudn.bareuang.ui.components
 
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -47,6 +48,7 @@ import androidx.compose.ui.geometry.center
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -133,7 +135,7 @@ fun FinancialRunwayCard(
         val sweep by aurora.animateFloat(
             initialValue = 0f,
             targetValue = 1f,
-            animationSpec = infiniteRepeatable(tween(7000, easing = androidx.compose.animation.core.LinearEasing)),
+            animationSpec = infiniteRepeatable(tween(7000, easing = LinearEasing)),
             label = "auroraSweep",
         )
         Box {
@@ -251,65 +253,6 @@ fun FinancialRunwayCard(
                     style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Black),
                     color = contentColor
                 )
-            }
-
-            if (totalBudget > 0 && dailyAllowance >= 0) {
-                Spacer(Modifier.height(12.dp))
-                val dailyProgress = if (dailyAllowance > 0) (todaySpent.toFloat() / dailyAllowance).coerceIn(0f, 1f) else 0f
-                val dailyExceeded = remainingToday < 0
-                Surface(
-                    shape = AppShapes.Squircle,
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    text = stringResource(R.string.dashboard_daily_title),
-                                    style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.8.sp, fontWeight = FontWeight.Bold),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                                Text(
-                                    text = stringResource(R.string.dashboard_daily_auto_desc),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.75f)
-                                )
-                            }
-                            Text(
-                                text = if (dailyExceeded) stringResource(R.string.tx_error_daily_exceeded)
-                                else stringResource(R.string.dashboard_daily_remaining, CurrencyFormatter.formatRupiah(remainingToday.coerceAtLeast(0L))),
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
-                                color = if (dailyExceeded) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                        Spacer(Modifier.height(6.dp))
-                        Text(
-                            text = stringResource(R.string.dashboard_daily_used, CurrencyFormatter.formatRupiah(todaySpent), CurrencyFormatter.formatRupiah(dailyAllowance)),
-                            style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Spacer(Modifier.height(6.dp))
-                        androidx.compose.material3.LinearProgressIndicator(
-                            progress = { dailyProgress },
-                            modifier = Modifier.fillMaxWidth().height(6.dp).clip(CircleShape),
-                            color = if (dailyExceeded) MaterialTheme.colorScheme.error else accentColor,
-                            trackColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                        if (remainingDays > 0) {
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                text = "Sisa $remainingDays hari • ${CurrencyFormatter.formatRupiah(dailyAllowance)}/hari",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                }
             }
 
             Spacer(Modifier.height(12.dp))

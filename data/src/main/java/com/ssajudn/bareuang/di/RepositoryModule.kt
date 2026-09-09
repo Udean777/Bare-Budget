@@ -18,10 +18,36 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
-import com.ssajudn.bareuang.data.local.*
-import com.ssajudn.bareuang.data.notification.*
-import com.ssajudn.bareuang.data.service.*
-import com.ssajudn.bareuang.domain.port.*
+import java.time.Clock
+import java.time.ZoneId
+import com.ssajudn.bareuang.data.local.BackupRestoreManager
+import com.ssajudn.bareuang.data.local.CurrencyPreferences
+import com.ssajudn.bareuang.data.local.DailyPacingPreferences
+import com.ssajudn.bareuang.data.local.ImportPreferences
+import com.ssajudn.bareuang.data.local.LocalDataResetter
+import com.ssajudn.bareuang.data.local.OcrConsentPreferences
+import com.ssajudn.bareuang.data.local.OnboardingStatePreferences
+import com.ssajudn.bareuang.data.local.ThemePreferences
+import com.ssajudn.bareuang.data.local.TourPreferences
+import com.ssajudn.bareuang.data.local.WidgetPreferences
+import com.ssajudn.bareuang.data.notification.BillReminderPrefs
+import com.ssajudn.bareuang.data.notification.BillReminderScheduler
+import com.ssajudn.bareuang.data.service.CsvMutasiParser
+import com.ssajudn.bareuang.data.service.ReceiptAiService
+import com.ssajudn.bareuang.domain.port.BackupRestorePort
+import com.ssajudn.bareuang.domain.port.BillReminderPreferencesPort
+import com.ssajudn.bareuang.domain.port.BillReminderSchedulerPort
+import com.ssajudn.bareuang.domain.port.CsvParserPort
+import com.ssajudn.bareuang.domain.port.CurrencyPreferencesPort
+import com.ssajudn.bareuang.domain.port.DailyPacingPreferencesPort
+import com.ssajudn.bareuang.domain.port.ImportPreferencesPort
+import com.ssajudn.bareuang.domain.port.LocalDataResetPort
+import com.ssajudn.bareuang.domain.port.OcrConsentPort
+import com.ssajudn.bareuang.domain.port.OnboardingStatePort
+import com.ssajudn.bareuang.domain.port.ReceiptAiPort
+import com.ssajudn.bareuang.domain.port.ThemePreferencesPort
+import com.ssajudn.bareuang.domain.port.TourPreferencesPort
+import com.ssajudn.bareuang.domain.port.WidgetPreferencesPort
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -30,7 +56,7 @@ abstract class RepositoryModule {
     companion object {
         @Provides
         @Singleton
-        fun provideClock(): java.time.Clock = java.time.Clock.systemDefaultZone()
+        fun provideClock(): Clock = Clock.system(ZoneId.of("Asia/Jakarta"))
     }
 
     @Binds

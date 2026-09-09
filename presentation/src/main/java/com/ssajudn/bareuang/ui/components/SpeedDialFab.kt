@@ -1,5 +1,7 @@
 package com.ssajudn.bareuang.ui.components
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -46,6 +48,7 @@ data class SpeedDialItem(
     val containerColor: Color? = null,
     val contentColor: Color? = null,
     val enabled: Boolean = true,
+    val disabledLabel: String? = null,
 )
 
 @Composable
@@ -83,7 +86,7 @@ fun AppSpeedDialFab(
                             slideInVertically(initialOffsetY = { it / 2 + (2 - index) * 12 }, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)),
                     exit = fadeOut(animationSpec = tween(durationMillis = 100)) + scaleOut(targetScale = 0.4f, animationSpec = tween(durationMillis = 100)) + slideOutVertically(targetOffsetY = { it / 3 }, animationSpec = tween(durationMillis = 100))
                 ) {
-                    val subInteraction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+                    val subInteraction = remember { MutableInteractionSource() }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.End,
@@ -99,7 +102,7 @@ fun AppSpeedDialFab(
                             modifier = Modifier.padding(end = 10.dp)
                         ) {
                             Text(
-                                item.label + if (!item.enabled) " • offline" else "",
+                                item.label + if (!item.enabled) " • ${item.disabledLabel ?: "offline"}" else "",
                                 style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold),
                                 color = if (item.enabled) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.45f),
                                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
@@ -121,7 +124,7 @@ fun AppSpeedDialFab(
         }
 
         // Main FAB
-        val mainInteraction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+        val mainInteraction = remember { MutableInteractionSource() }
         FloatingActionButton(
             onClick = { onExpandedChange(!isExpanded) },
             interactionSource = mainInteraction,

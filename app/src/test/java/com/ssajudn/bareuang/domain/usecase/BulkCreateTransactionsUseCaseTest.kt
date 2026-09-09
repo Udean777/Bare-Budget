@@ -17,6 +17,7 @@ import org.junit.Test
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.time.Clock
 
 class BulkCreateTransactionsUseCaseTest {
     @Test
@@ -35,7 +36,8 @@ class BulkCreateTransactionsUseCaseTest {
             transactions,
             wallets,
             HasMonthlyBudgetUseCase(budget),
-            daily
+            daily,
+            Clock.systemDefaultZone(),
         )
         val drafts = listOf(
             ImportDraft("1", 40_000L, TransactionType.EXPENSE, TransactionCategory.FOOD, "A", today, today),

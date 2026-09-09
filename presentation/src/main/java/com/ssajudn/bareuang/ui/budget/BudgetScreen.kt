@@ -1,4 +1,10 @@
 package com.ssajudn.bareuang.ui.budget
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 
 import com.ssajudn.bareuang.ui.theme.IncomeAccent
 import com.ssajudn.bareuang.ui.theme.ExpenseAccent
@@ -6,9 +12,28 @@ import com.ssajudn.bareuang.ui.theme.BudgetWarningAccent
 import com.ssajudn.bareuang.ui.common.OperationState
 import com.ssajudn.bareuang.ui.common.UiEffect
 import com.ssajudn.bareuang.ui.common.asString
-import androidx.compose.foundation.layout.*
+import com.ssajudn.bareuang.ui.common.labelRes
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -19,9 +44,34 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material.icons.filled.Today
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.*
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,7 +79,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -43,6 +92,10 @@ import com.ssajudn.bareuang.ui.components.AmountTextField
 
 import com.ssajudn.bareuang.ui.components.AppButton
 import com.ssajudn.bareuang.ui.components.AppIconButton
+import com.ssajudn.bareuang.ui.components.AppConfirmDialog
+import com.ssajudn.bareuang.ui.components.BearPeek
+import com.ssajudn.bareuang.domain.model.CategoryBudget
+import com.ssajudn.bareuang.domain.model.TransactionCategory
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -54,6 +107,7 @@ fun BudgetScreen(
     val context = LocalContext.current
     val operation by viewModel.operation.collectAsStateWithLifecycle()
     val isOperationLoading = operation is OperationState.Loading
+    var pendingDailyMode by remember { mutableStateOf<Boolean?>(null) }
     LaunchedEffect(Unit) {
         viewModel.effect.collect { effect ->
             when (effect) {
@@ -133,10 +187,16 @@ fun BudgetScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Column(
+        Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues)
+                .padding(paddingValues),
+            contentAlignment = Alignment.TopCenter
+        ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .widthIn(max = 720.dp)
                 .padding(horizontal = Spacing.ScreenHorizontal)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp)
@@ -205,7 +265,7 @@ fun BudgetScreen(
 
             // Amount Input — bear peek when amount entered
             Box(modifier = Modifier.fillMaxWidth()) {
-                com.ssajudn.bareuang.ui.components.BearPeek(
+                BearPeek(
                     visible = uiState.parsedAmount > 0,
                     modifier = Modifier.align(Alignment.TopEnd).offset(y = (-10).dp, x = 4.dp),
                     size = 38.dp
@@ -237,7 +297,7 @@ fun BudgetScreen(
                         enabled = !uiState.isLocked,
                         placeholder = {
                             Text(
-                                stringResource(com.ssajudn.bareuang.presentation.R.string.common_rp_zero),
+                                stringResource(R.string.common_rp_zero),
                                 style = MaterialTheme.typography.displayMedium.copy(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 32.sp
@@ -290,6 +350,15 @@ fun BudgetScreen(
 
             // CATEGORY BUDGETS SECTION — only shown after a budget has been saved
             if (uiState.currentLimit > 0) {
+                ElevatedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .crispBorder(shape = AppShapes.Squircle, color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.28f)),
+                    shape = AppShapes.Squircle,
+                    colors = CardDefaults.elevatedCardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
+                ) {
+                Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 // Read-only daily pacing info: shows where the per-day number comes from.
                 val daysInMonth = java.time.YearMonth.now().lengthOfMonth()
                 val dailyAllowance = uiState.currentLimit / daysInMonth
@@ -326,35 +395,44 @@ fun BudgetScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(
                         selected = !uiState.isCustomDailyTarget,
-                        onClick = { viewModel.setAutomaticDailyTarget() },
+                        onClick = { if (uiState.isCustomDailyTarget) pendingDailyMode = false },
                         label = { Text(stringResource(R.string.budget_daily_target_auto)) }
                     )
                     FilterChip(
                         selected = uiState.isCustomDailyTarget,
-                        onClick = { viewModel.selectCustomDailyTarget() },
+                        onClick = { if (!uiState.isCustomDailyTarget) pendingDailyMode = true },
                         label = { Text(stringResource(R.string.budget_daily_target_custom)) }
                     )
                 }
                 if (uiState.isCustomDailyTarget) {
-                    OutlinedTextField(
+                    AmountTextField(
                         value = uiState.dailyTargetInput,
                         onValueChange = viewModel::onDailyTargetChange,
-                        label = { Text(stringResource(R.string.budget_daily_target_hint)) },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
+                        label = stringResource(R.string.budget_daily_target_hint),
+                        enabled = !uiState.isDailyTargetSaved,
                         modifier = Modifier.fillMaxWidth()
                     )
                     TextButton(
-                        onClick = { viewModel.saveCustomDailyTarget() },
-                        enabled = uiState.dailyTargetInput.toLongOrNull()?.let { it > 0L } == true
+                        onClick = {
+                            if (uiState.isDailyTargetSaved) viewModel.editCustomDailyTarget()
+                            else viewModel.saveCustomDailyTarget()
+                        },
+                        enabled = uiState.isDailyTargetSaved || uiState.dailyTargetInput.toLongOrNull()?.let { it > 0L } == true
                     ) {
-                        Text(stringResource(R.string.budget_daily_target_save))
+                        Text(
+                            stringResource(
+                                if (uiState.isDailyTargetSaved) R.string.budget_daily_target_edit
+                                else R.string.budget_daily_target_save
+                            )
+                        )
                     }
+                }
+                }
                 }
 
                 var showCategoryDialog by remember { mutableStateOf(false) }
-                var editingCategoryBudget by remember { mutableStateOf<com.ssajudn.bareuang.domain.model.CategoryBudget?>(null) }
-                var categoryToDelete by remember { mutableStateOf<com.ssajudn.bareuang.domain.model.CategoryBudget?>(null) }
+                var editingCategoryBudget by remember { mutableStateOf<CategoryBudget?>(null) }
+                var categoryToDelete by remember { mutableStateOf<CategoryBudget?>(null) }
 
                 HorizontalDivider(
                     modifier = Modifier.padding(vertical = 4.dp),
@@ -487,9 +565,9 @@ fun BudgetScreen(
 
                 // Category Delete Confirmation Dialog
                 if (categoryToDelete != null) {
-                    com.ssajudn.bareuang.ui.components.AppConfirmDialog(
+                AppConfirmDialog(
                         title = stringResource(R.string.budget_category_delete),
-                        message = stringResource(R.string.budget_category_delete_confirm, categoryToDelete!!.category.displayName),
+                        message = stringResource(R.string.budget_category_delete_confirm, stringResource(categoryToDelete!!.category.labelRes())),
                         confirmButtonText = stringResource(R.string.common_delete),
                         dismissButtonText = stringResource(R.string.common_cancel),
                         onConfirm = {
@@ -501,192 +579,29 @@ fun BudgetScreen(
                 }
             }
 
-            if (uiState.errorMessage != null) {
-                Text(
-                    text = uiState.errorMessage!!,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+        }
         }
     }
-}
 
-@Composable
-private fun CategoryBudgetCard(
-    categoryBudget: com.ssajudn.bareuang.domain.model.CategoryBudget,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit
-) {
-    val category = categoryBudget.category
-    val catColors = com.ssajudn.bareuang.ui.theme.categoryColors
-    val progress = categoryBudget.progressPercentage
-    val progressColor = when {
-        categoryBudget.isOverspent -> MaterialTheme.colorScheme.error
-        categoryBudget.isWarning -> BudgetWarningAccent
-        else -> MaterialTheme.colorScheme.primary
-    }
-
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth(),
-        shape = AppShapes.Squircle,
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
-        ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = 1.dp)
-    ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = catColors.container(category),
-                        modifier = Modifier.size(36.dp)
-                    ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(
-                                imageVector = com.ssajudn.bareuang.ui.components.getCategoryIcon(category),
-                                contentDescription = null,
-                                tint = catColors.onContainer(category),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Column {
-                        Text(
-                            text = category.displayName,
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                        Text(
-                            text = "${CurrencyFormatter.formatCompact(categoryBudget.spentAmount)} / ${CurrencyFormatter.formatCompact(categoryBudget.limitAmount)}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
-
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        text = "${(progress * 100).toInt()}%",
-                        style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                        color = progressColor,
-                        modifier = Modifier.padding(end = 4.dp)
-                    )
-                    AppIconButton(onClick = onEdit, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(16.dp))
-                    }
-                    AppIconButton(onClick = onDelete, modifier = Modifier.size(32.dp)) {
-                        Icon(Icons.Default.DeleteOutline, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(16.dp))
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            LinearProgressIndicator(
-                progress = { progress },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(6.dp),
-                color = progressColor,
-                trackColor = MaterialTheme.colorScheme.surfaceContainerHighest,
-                strokeCap = androidx.compose.ui.graphics.StrokeCap.Round
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun SetCategoryBudgetDialog(
-    initialBudget: com.ssajudn.bareuang.domain.model.CategoryBudget?,
-    existingCategories: Set<com.ssajudn.bareuang.domain.model.TransactionCategory>,
-    onDismiss: () -> Unit,
-    onConfirm: (com.ssajudn.bareuang.domain.model.TransactionCategory, Long) -> Unit
-) {
-    val expenseCategories = com.ssajudn.bareuang.domain.model.TransactionCategory.entries.filter {
-        it != com.ssajudn.bareuang.domain.model.TransactionCategory.TRANSFER &&
-        it != com.ssajudn.bareuang.domain.model.TransactionCategory.SALARY &&
-        it != com.ssajudn.bareuang.domain.model.TransactionCategory.BONUS &&
-        it != com.ssajudn.bareuang.domain.model.TransactionCategory.INVESTMENT
-    }
-
-    val availableCategories = if (initialBudget != null) {
-        listOf(initialBudget.category)
-    } else {
-        expenseCategories.filter { it !in existingCategories }.ifEmpty { expenseCategories }
-    }
-
-    var selectedCategory by remember { mutableStateOf(initialBudget?.category ?: availableCategories.firstOrNull() ?: expenseCategories.first()) }
-    var rawAmount by remember { mutableStateOf(initialBudget?.limitAmount?.toString() ?: "") }
-    var parsedAmount by remember { mutableStateOf(initialBudget?.limitAmount ?: 0L) }
-    var dropdownExpanded by remember { mutableStateOf(false) }
-
-    com.ssajudn.bareuang.ui.components.AppFormDialog(
-        title = if (initialBudget != null) stringResource(R.string.budget_category_edit) else stringResource(R.string.budget_category_add),
-        icon = Icons.Default.Category,
-        iconTint = MaterialTheme.colorScheme.primary,
-        confirmButtonText = stringResource(R.string.common_save),
-        isConfirmEnabled = parsedAmount > 0,
-        onDismissRequest = onDismiss,
-        onConfirm = { onConfirm(selectedCategory, parsedAmount) }
-    ) {
-        if (initialBudget == null) {
-            ExposedDropdownMenuBox(
-                expanded = dropdownExpanded,
-                onExpandedChange = { dropdownExpanded = !dropdownExpanded },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                OutlinedTextField(
-                    value = selectedCategory.displayName,
-                    onValueChange = {},
-                    readOnly = true,
-                    label = { Text(stringResource(R.string.budget_category_select)) },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = dropdownExpanded) },
-                    modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-                )
-                ExposedDropdownMenu(
-                    expanded = dropdownExpanded,
-                    onDismissRequest = { dropdownExpanded = false }
-                ) {
-                    availableCategories.forEach { cat ->
-                        DropdownMenuItem(
-                            text = { Text(cat.displayName) },
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = com.ssajudn.bareuang.ui.components.getCategoryIcon(cat),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            },
-                            onClick = {
-                                selectedCategory = cat
-                                dropdownExpanded = false
-                            }
-                        )
-                    }
-                }
-            }
-        }
-
-        AmountTextField(
-            value = rawAmount,
-            onValueChange = { input ->
-                rawAmount = input
-                parsedAmount = input.toLongOrNull() ?: 0L
+    pendingDailyMode?.let { useCustom ->
+        AppConfirmDialog(
+            onDismissRequest = { pendingDailyMode = null },
+            onConfirm = {
+                if (useCustom) viewModel.selectCustomDailyTarget() else viewModel.setAutomaticDailyTarget()
+                pendingDailyMode = null
             },
-            label = stringResource(R.string.budget_category_limit),
-            modifier = Modifier.fillMaxWidth()
+            title = stringResource(
+                if (useCustom) R.string.budget_daily_mode_custom_confirm_title
+                else R.string.budget_daily_mode_auto_confirm_title
+            ),
+            message = stringResource(
+                if (useCustom) R.string.budget_daily_mode_custom_confirm_message
+                else R.string.budget_daily_mode_auto_confirm_message
+            ),
+            confirmButtonText = stringResource(R.string.budget_daily_mode_confirm),
+            dismissButtonText = stringResource(R.string.common_cancel),
+            icon = Icons.Default.Today,
+            isDestructive = false,
         )
     }
 }

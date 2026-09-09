@@ -31,6 +31,7 @@ sealed interface AllTransactionsUiState {
         val filteredExpenseTotal: Long,
         val filteredIncomeTotal: Long,
     ) : AllTransactionsUiState
+
     data class Error(val message: String) : AllTransactionsUiState
 }
 
@@ -76,12 +77,13 @@ class AllTransactionsViewModel @Inject constructor(
         if (query.isNotBlank()) {
             filtered = filtered.filter { tx ->
                 (tx.merchant?.contains(query, ignoreCase = true) == true) ||
-                    (tx.notes?.contains(query, ignoreCase = true) == true) ||
-                    tx.category.displayName.contains(query, ignoreCase = true)
+                        (tx.notes?.contains(query, ignoreCase = true) == true) ||
+                        tx.category.name.contains(query, ignoreCase = true)
             }
         }
 
-        val expenseTotal = filtered.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
+        val expenseTotal =
+            filtered.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount }
         val incomeTotal = filtered.filter { it.type == TransactionType.INCOME }.sumOf { it.amount }
 
         AllTransactionsUiState.Success(
@@ -94,10 +96,20 @@ class AllTransactionsViewModel @Inject constructor(
             filteredExpenseTotal = expenseTotal,
             filteredIncomeTotal = incomeTotal,
         ) as AllTransactionsUiState
-    }.catch { e -> android.util.Log.e("AllTx", "observe failed", e); emit(AllTransactionsUiState.Error("")) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), AllTransactionsUiState.Loading)
+    }.catch { e ->
+        android.util.Log.e(
+            "AllTx",
+            "observe failed",
+            e
+        ); emit(AllTransactionsUiState.Error(""))
+    }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            AllTransactionsUiState.Loading
+        )
 
-    fun loadTransactions(isPullToRefresh: Boolean = false) {
+    fun loadTransactions() {
         viewModelScope.launch {
             _isRefreshing.value = true
             repository.getTransactions(limit = 100)

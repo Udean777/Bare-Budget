@@ -2,10 +2,7 @@ package com.ssajudn.bareuang.domain.usecase
 
 import com.ssajudn.bareuang.domain.model.Transaction
 import com.ssajudn.bareuang.domain.model.RecurringInterval
-import java.text.SimpleDateFormat
-import java.util.Calendar
-import java.util.Date
-import java.util.Locale
+import java.time.LocalDate
 import java.util.UUID
 import javax.inject.Inject
 
@@ -73,16 +70,14 @@ class ProcessRecurringTransactionsUseCase @Inject constructor() {
 
     private fun calculateNextOccurrence(currentDateStr: String, interval: RecurringInterval): String {
         return try {
-            val sdf = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-            val date = sdf.parse(currentDateStr.substring(0, minOf(10, currentDateStr.length))) ?: Date()
-            val cal = Calendar.getInstance().apply { time = date }
-            when (interval) {
-                RecurringInterval.WEEKLY -> cal.add(Calendar.WEEK_OF_YEAR, 1)
-                RecurringInterval.MONTHLY -> cal.add(Calendar.MONTH, 1)
-                RecurringInterval.YEARLY -> cal.add(Calendar.YEAR, 1)
-                RecurringInterval.NONE -> {}
+            val date = LocalDate.parse(currentDateStr.take(10))
+            val next = when (interval) {
+                RecurringInterval.WEEKLY -> date.plusWeeks(1)
+                RecurringInterval.MONTHLY -> date.plusMonths(1)
+                RecurringInterval.YEARLY -> date.plusYears(1)
+                RecurringInterval.NONE -> date
             }
-            sdf.format(cal.time)
+            next.toString()
         } catch (_: Exception) {
             currentDateStr
         }

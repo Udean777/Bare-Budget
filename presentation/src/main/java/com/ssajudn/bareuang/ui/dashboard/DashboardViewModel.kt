@@ -6,8 +6,8 @@ import com.ssajudn.bareuang.domain.port.ThemePreferencesPort
 import com.ssajudn.bareuang.domain.model.AppThemeDarkMode
 import com.ssajudn.bareuang.domain.model.DashboardSummary
 import com.ssajudn.bareuang.domain.usecase.GetDashboardSummaryUseCase
-import com.ssajudn.bareuang.domain.error.AppException
-import com.ssajudn.bareuang.domain.error.userMessage
+import com.ssajudn.bareuang.ui.common.UiText
+import com.ssajudn.bareuang.presentation.R
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +18,7 @@ import javax.inject.Inject
 sealed interface DashboardUiState {
     object Loading : DashboardUiState
     data class Success(val summary: DashboardSummary) : DashboardUiState
-    data class Error(val message: String) : DashboardUiState
+    data class Error(val message: UiText) : DashboardUiState
 }
 
 @HiltViewModel
@@ -58,8 +58,7 @@ class DashboardViewModel @Inject constructor(
                     android.util.Log.e("Dashboard", "load failed", error)
                     _isRefreshing.value = false
                     if (_uiState.value !is DashboardUiState.Success) {
-                        val msg = (error as? AppException)?.userMessage() ?: error.localizedMessage ?: error.message ?: ""
-                        _uiState.value = DashboardUiState.Error(msg)
+                        _uiState.value = DashboardUiState.Error(UiText.Res(R.string.dashboard_load_error_message))
                     }
                 }
         }

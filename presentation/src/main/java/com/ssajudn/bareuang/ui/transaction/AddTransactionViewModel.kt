@@ -7,13 +7,14 @@ import com.ssajudn.bareuang.domain.model.TransactionCategory
 import com.ssajudn.bareuang.domain.model.TransactionType
 import com.ssajudn.bareuang.domain.model.Wallet
 import com.ssajudn.bareuang.domain.repository.BudgetRepository
-import com.ssajudn.bareuang.domain.repository.TransactionRepository
 import com.ssajudn.bareuang.domain.repository.WalletRepository
 import com.ssajudn.bareuang.domain.usecase.CheckDailyBudgetUseCase
 import com.ssajudn.bareuang.domain.usecase.HasMonthlyBudgetUseCase
-import com.ssajudn.bareuang.utils.DateUtils
+import com.ssajudn.bareuang.domain.usecase.CreateTransactionUseCase
+import com.ssajudn.bareuang.domain.usecase.ValidateTransactionUseCase
+import com.ssajudn.bareuang.domain.usecase.TransactionValidationError
+import com.ssajudn.bareuang.domain.utils.DateUtils
 import com.ssajudn.bareuang.domain.error.AppException
-import com.ssajudn.bareuang.domain.error.userMessage
 import com.ssajudn.bareuang.utils.CurrencyFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -52,20 +53,18 @@ data class AddTransactionUiState(
     val pendingDailyOverride: Boolean = false,
     val pendingDailyMessage: String? = null
 )
-private fun errorUiText(error: AddTransactionError, arg: String? = null): UiText = when (error) {
-    AddTransactionError.INSUFFICIENT_BALANCE -> UiText.Res(error.resId, listOf(arg ?: ""))
-    else -> UiText.Res(error.resId)
-}
 
 @HiltViewModel
 class AddTransactionViewModel @Inject constructor(
     private val walletRepository: WalletRepository,
-    private val transactionRepository: TransactionRepository,
     private val budgetRepository: BudgetRepository,
     private val hasMonthlyBudget: HasMonthlyBudgetUseCase,
-    private val checkDailyBudget: CheckDailyBudgetUseCase
+    private val checkDailyBudget: CheckDailyBudgetUseCase,
+    private val createTransaction: CreateTransactionUseCase,
+    private val validateTransaction: ValidateTransactionUseCase
 ) : ViewModel() {
-    private val _operation = kotlinx.coroutines.flow.MutableStateFlow<OperationState>(OperationState.Idle)
+    private val _operation =
+        kotlinx.coroutines.flow.MutableStateFlow<OperationState>(OperationState.Idle)
     val operation: kotlinx.coroutines.flow.StateFlow<OperationState> = _operation.asStateFlow()
     private val _effect = Channel<UiEffect>(Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
@@ -109,9 +108,13 @@ class AddTransactionViewModel @Inject constructor(
             walletRepository.observeWallets().collect { wallets ->
                 if (wallets.isNotEmpty()) {
                     val currentSelected = _uiState.value.selectedWalletId
-                    val defaultWallet = if (wallets.any { it.id == currentSelected }) currentSelected else wallets.firstOrNull()?.id
+                    val defaultWallet =
+                        if (wallets.any { it.id == currentSelected }) currentSelected else wallets.firstOrNull()?.id
                     val currentSelectedTo = _uiState.value.selectedToWalletId
-                    val defaultToWallet = if (wallets.any { it.id == currentSelectedTo }) currentSelectedTo else (wallets.getOrNull(1)?.id ?: defaultWallet)
+                    val defaultToWallet =
+                        if (wallets.any { it.id == currentSelectedTo }) currentSelectedTo else (wallets.getOrNull(
+                            1
+                        )?.id ?: defaultWallet)
                     _uiState.value = _uiState.value.copy(
                         wallets = wallets,
                         selectedWalletId = defaultWallet,
@@ -134,7 +137,8 @@ class AddTransactionViewModel @Inject constructor(
         // When switching to transfer, ensure destination is not identical to source if multiple wallets exist
         if (type == TransactionType.TRANSFER && currentState.selectedWalletId != null) {
             if (targetWalletId == null || targetWalletId == currentState.selectedWalletId) {
-                val alternate = currentState.wallets.firstOrNull { it.id != currentState.selectedWalletId }?.id
+                val alternate =
+                    currentState.wallets.firstOrNull { it.id != currentState.selectedWalletId }?.id
                 if (alternate != null) {
                     targetWalletId = alternate
                 }
@@ -155,11 +159,12 @@ class AddTransactionViewModel @Inject constructor(
         // Smart switch: if selected source matches destination in transfer mode, switch destination
         if (currentState.transactionType == TransactionType.TRANSFER && walletId == currentState.selectedToWalletId) {
             val previousSource = currentState.selectedWalletId
-            val alternateWalletId = if (previousSource != null && previousSource != walletId && currentState.wallets.any { it.id == previousSource }) {
-                previousSource
-            } else {
-                currentState.wallets.firstOrNull { it.id != walletId }?.id
-            }
+            val alternateWalletId =
+                if (previousSource != null && previousSource != walletId && currentState.wallets.any { it.id == previousSource }) {
+                    previousSource
+                } else {
+                    currentState.wallets.firstOrNull { it.id != walletId }?.id
+                }
             if (alternateWalletId != null) {
                 newToWalletId = alternateWalletId
             }
@@ -178,11 +183,12 @@ class AddTransactionViewModel @Inject constructor(
         // Smart switch: if selected destination matches source in transfer mode, switch source
         if (walletId == currentState.selectedWalletId) {
             val previousDestination = currentState.selectedToWalletId
-            val alternateWalletId = if (previousDestination != null && previousDestination != walletId && currentState.wallets.any { it.id == previousDestination }) {
-                previousDestination
-            } else {
-                currentState.wallets.firstOrNull { it.id != walletId }?.id
-            }
+            val alternateWalletId =
+                if (previousDestination != null && previousDestination != walletId && currentState.wallets.any { it.id == previousDestination }) {
+                    previousDestination
+                } else {
+                    currentState.wallets.firstOrNull { it.id != walletId }?.id
+                }
             if (alternateWalletId != null) {
                 newSourceWalletId = alternateWalletId
             }
@@ -241,59 +247,52 @@ class AddTransactionViewModel @Inject constructor(
 
     fun saveTransaction() {
         val state = _uiState.value
-        if (state.parsedAmount <= 0) {
-            val e = AddTransactionError.INVALID_AMOUNT
-            _uiState.value = state.copy(errorMessage = null, validationError = e)
+        if (state.isLoading || _operation.value is OperationState.Loading) return
+        val validation = validateTransaction(
+            type = state.transactionType,
+            amount = state.parsedAmount,
+            sourceWalletId = state.selectedWalletId,
+            targetWalletId = state.selectedToWalletId,
+            wallets = state.wallets
+        )
+        if (validation != null) {
+            val error = validation.toUiError()
+            val sourceBalance =
+                state.wallets.firstOrNull { it.id == state.selectedWalletId }?.balance
+            val ui = error.toUiText(
+                if (error == AddTransactionError.INSUFFICIENT_BALANCE) sourceBalance?.let(
+                    CurrencyFormatter::formatRupiah
+                ) else null
+            )
+            _uiState.value = state.copy(errorMessage = null, validationError = error)
+            _operation.value = OperationState.Error("", ui)
+            _effect.trySend(UiEffect.ShowSnackbarRes(ui))
             return
-        }
-        if (state.selectedWalletId == null) {
-            val e = AddTransactionError.WALLET_REQUIRED
-            _uiState.value = state.copy(errorMessage = null, validationError = e)
-            return
-        }
-
-        if (state.transactionType == TransactionType.TRANSFER) {
-            if (state.selectedToWalletId == null) {
-                val e = AddTransactionError.TO_WALLET_REQUIRED
-                _uiState.value = state.copy(errorMessage = null, validationError = e)
-                return
-            }
-            if (state.selectedWalletId == state.selectedToWalletId) {
-                val e = AddTransactionError.SAME_WALLET
-                _uiState.value = state.copy(errorMessage = null, validationError = e)
-                return
-            }
-        }
-
-        if (state.transactionType == TransactionType.EXPENSE || state.transactionType == TransactionType.TRANSFER) {
-            val sourceWallet = state.wallets.find { it.id == state.selectedWalletId }
-            if (sourceWallet != null && sourceWallet.balance < state.parsedAmount) {
-                val e = AddTransactionError.INSUFFICIENT_BALANCE
-                val formatted = CurrencyFormatter.formatRupiah(sourceWallet.balance)
-                val ui = errorUiText(e, formatted)
-                _uiState.value = state.copy(errorMessage = null, validationError = e)
-                _operation.value = OperationState.Error("", ui)
-                viewModelScope.launch { _effect.send(UiEffect.ShowSnackbarRes(ui)) }
-                return
-            }
         }
 
         viewModelScope.launch {
-            _uiState.value = state.copy(isLoading = true, errorMessage = null, validationError = null)
+            _uiState.value =
+                state.copy(isLoading = true, errorMessage = null, validationError = null)
             _operation.value = OperationState.Loading
 
             if (state.transactionType != TransactionType.TRANSFER && !hasMonthlyBudget()) {
                 val e = AddTransactionError.BUDGET_REQUIRED
-                val ui = errorUiText(e)
-                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = null, validationError = e)
+                val ui = e.toUiText()
+                _uiState.value =
+                    _uiState.value.copy(isLoading = false, errorMessage = null, validationError = e)
                 _operation.value = OperationState.Error("", ui)
-                _effect.send(UiEffect.ShowSnackbarRes(ui))
-                _effect.send(UiEffect.Navigate(com.ssajudn.bareuang.ui.navigation.Screen.Budget.route))
+                _effect.trySend(UiEffect.ShowSnackbarRes(ui))
+                _effect.trySend(UiEffect.Navigate(com.ssajudn.bareuang.ui.navigation.Screen.Budget.route))
                 return@launch
             }
 
             if (state.transactionType == TransactionType.EXPENSE) {
-                val dailyCheck = checkDailyBudget(state.parsedAmount, state.date, CurrencyFormatter.getActiveCurrency(), state.selectedCategory)
+                val dailyCheck = checkDailyBudget(
+                    state.parsedAmount,
+                    state.date,
+                    CurrencyFormatter.getActiveCurrency(),
+                    state.selectedCategory
+                )
                 if (dailyCheck.isFailure) {
                     val msg = dailyCheck.exceptionOrNull()?.message ?: ""
                     // Soft nudge: prompt the user for confirmation instead of blocking outright.
@@ -313,7 +312,9 @@ class AddTransactionViewModel @Inject constructor(
 
     /** Proceed after the user accepts a daily-budget override prompt. */
     fun confirmDailyOverride() {
-        _uiState.value = _uiState.value.copy(pendingDailyOverride = false, pendingDailyMessage = null)
+        if (_uiState.value.isLoading) return
+        _uiState.value =
+            _uiState.value.copy(pendingDailyOverride = false, pendingDailyMessage = null)
         viewModelScope.launch { performCreate() }
     }
 
@@ -338,9 +339,9 @@ class AddTransactionViewModel @Inject constructor(
         val targetWalletName = state.wallets.find { it.id == state.selectedToWalletId }?.name ?: ""
 
         val defaultMerchant = if (state.transactionType == TransactionType.TRANSFER) {
-            if (sourceWalletName.isNotBlank() && targetWalletName.isNotBlank()) "$sourceWalletName \u2192 $targetWalletName" else state.selectedCategory.displayName
+            if (sourceWalletName.isNotBlank() && targetWalletName.isNotBlank()) "$sourceWalletName \u2192 $targetWalletName" else state.selectedCategory.name
         } else {
-            state.selectedCategory.displayName
+            state.selectedCategory.name
         }
 
         val request = CreateTransactionRequest(
@@ -355,17 +356,22 @@ class AddTransactionViewModel @Inject constructor(
             recurringInterval = if (state.isRecurring) state.recurringInterval else com.ssajudn.bareuang.domain.model.RecurringInterval.NONE
         )
 
-        transactionRepository.createTransaction(request)
+        createTransaction(request)
             .onSuccess {
                 _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
                 _operation.value = OperationState.Success()
             }
             .onFailure { error ->
                 android.util.Log.e("AddTx", "save failed", error)
-                val ui = (error as? AppException)?.toUiText() ?: UiText.Res(com.ssajudn.bareuang.presentation.R.string.error_generic)
-                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = error.message ?: "", validationError = AddTransactionError.SAVE_FAILED)
+                val ui = (error as? AppException)?.toUiText()
+                    ?: UiText.Res(com.ssajudn.bareuang.presentation.R.string.error_generic)
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    errorMessage = error.message ?: "",
+                    validationError = AddTransactionError.SAVE_FAILED
+                )
                 _operation.value = OperationState.Error(error.message ?: "", ui)
-                viewModelScope.launch { _effect.send(UiEffect.ShowSnackbarRes(ui)) }
+                _effect.trySend(UiEffect.ShowSnackbarRes(ui))
             }
     }
 }

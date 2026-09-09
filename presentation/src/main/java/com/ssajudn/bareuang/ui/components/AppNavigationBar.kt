@@ -1,5 +1,6 @@
 package com.ssajudn.bareuang.ui.components
- 
+
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -177,7 +178,7 @@ fun AppNavigationBar(
 }
 
 @Composable
-private fun androidx.compose.foundation.layout.RowScope.NavPill(
+private fun RowScope.NavPill(
     item: NavigationBarItemData,
     selected: Boolean,
     navInteractionSource: MutableInteractionSource,
@@ -252,5 +253,3 @@ private fun androidx.compose.foundation.layout.RowScope.NavPill(
                         }
                     }
                 }
-
-

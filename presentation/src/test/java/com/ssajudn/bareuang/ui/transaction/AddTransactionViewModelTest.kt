@@ -54,7 +54,11 @@ class AddTransactionViewModelTest {
         val hasMonthlyBudget = com.ssajudn.bareuang.domain.usecase.HasMonthlyBudgetUseCase(budgetRepository)
         // Daily-budget gate defaults to allowed; individual tests override as needed.
         coEvery { checkDailyBudget(any(), any(), any(), any()) } returns Result.success(Unit)
-        return AddTransactionViewModel(walletRepository, transactionRepository, budgetRepository, hasMonthlyBudget, checkDailyBudget)
+        return AddTransactionViewModel(
+            walletRepository, budgetRepository, hasMonthlyBudget, checkDailyBudget,
+            com.ssajudn.bareuang.domain.usecase.CreateTransactionUseCase(transactionRepository),
+            com.ssajudn.bareuang.domain.usecase.ValidateTransactionUseCase()
+        )
     }
 
     private fun walletsFixture(): List<Wallet> = listOf(
@@ -329,9 +333,9 @@ class AddTransactionViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, captured.size)
-        // Default merchant for EXPENSE is the category's displayName ("Food & Beverage")
+        // Default merchant for EXPENSE is the semantic category name.
         assertEquals(
-            TransactionCategory.FOOD.displayName,
+            TransactionCategory.FOOD.name,
             captured.first().merchant
         )
     }

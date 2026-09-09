@@ -28,6 +28,7 @@ class BudgetViewModelTest {
 
     private val dailyPacing = object : DailyPacingPreferencesPort {
         override val customTarget = dailyTarget
+        override val lastCustomTarget = dailyTarget
         override fun setCustomTarget(amount: Long?) { dailyTarget.value = amount }
         override fun reset() { dailyTarget.value = null }
     }

@@ -48,7 +48,7 @@ class BillReminderWorker @AssistedInject constructor(
         Log.d(TAG, "Unpaid bills: ${bills.size} -> ${bills.map { "${it.providerName} due=${it.dueDate}" }}")
 
         val reminders = buildReminders(bills) { bill ->
-            runCatching { com.ssajudn.bareuang.utils.DateUtils.getDaysUntilDue(bill.dueDate) }
+            runCatching { com.ssajudn.bareuang.domain.utils.DateUtils.getDaysUntilDue(bill.dueDate) }
                 .getOrDefault(Long.MAX_VALUE)
         }
         Log.d(TAG, "Reminders in window: ${reminders.map { "${it.providerName} daysLeft=${it.daysLeft} urgency=${it.urgency}" }}")

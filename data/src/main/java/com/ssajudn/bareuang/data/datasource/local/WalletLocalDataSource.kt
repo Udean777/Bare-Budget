@@ -4,8 +4,7 @@ import com.ssajudn.bareuang.data.local.room.AppDatabase
 import com.ssajudn.bareuang.data.local.room.LocalWalletEntity
 import com.ssajudn.bareuang.domain.model.CreateWalletRequest
 import com.ssajudn.bareuang.domain.model.Wallet
-import com.ssajudn.bareuang.data.repository.DomainMappers
-import com.ssajudn.bareuang.domain.repository.WalletRepository
+import com.ssajudn.bareuang.data.mapper.PersistenceMappers
 import com.ssajudn.bareuang.data.error.ApiErrorParser
 import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
@@ -25,10 +24,10 @@ class WalletLocalDataSource @Inject constructor(private val db: AppDatabase) {
             if (local.isEmpty()) {
                 val defaultWallet = Wallet(
                     id = UUID.randomUUID().toString(),
-                    name = DomainMappers.DEFAULT_WALLET_NAME,
+                    name = PersistenceMappers.DEFAULT_WALLET_NAME,
                     balance = 0L,
-                    colorHex = DomainMappers.DEFAULT_WALLET_COLOR,
-                    iconName = DomainMappers.DEFAULT_ICON
+                    colorHex = PersistenceMappers.DEFAULT_WALLET_COLOR,
+                    iconName = PersistenceMappers.DEFAULT_ICON
                 )
                 db.walletDao().insertWallet(
                     LocalWalletEntity.fromWallet(

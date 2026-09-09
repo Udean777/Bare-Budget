@@ -1,5 +1,7 @@
 package com.ssajudn.bareuang.utils
 
+import com.ssajudn.bareuang.domain.utils.DateUtils
+import com.ssajudn.bareuang.ui.common.DateFormatter
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
@@ -31,7 +33,7 @@ class DateUtilsTest {
 
     @Test
     fun `formatDisplayDate formats ISO date string to dd MMM yyyy`() {
-        val out = DateUtils.formatDisplayDate("2026-08-19")
+        val out = DateFormatter.formatDisplayDate("2026-08-19", java.util.Locale("id", "ID"))
         // Indonesian month abbreviation "Agu" for August.
         assertTrue("Expected 'Agu' for August, got: $out", out.contains("Agu"))
         assertTrue("Expected day '19', got: $out", out.startsWith("19"))
@@ -40,7 +42,7 @@ class DateUtilsTest {
 
     @Test
     fun `formatDisplayDate formats ISO timestamp to dd MMM yyyy`() {
-        val out = DateUtils.formatDisplayDate("2026-08-19T14:30:00Z")
+        val out = DateFormatter.formatDisplayDate("2026-08-19T14:30:00Z", java.util.Locale("id", "ID"))
         assertTrue("Expected 'Agu' for August, got: $out", out.contains("Agu"))
         assertTrue("Expected day '19', got: $out", out.startsWith("19"))
     }
@@ -48,7 +50,7 @@ class DateUtilsTest {
     @Test
     fun `formatDisplayDate returns raw input when unparseable`() {
         val raw = "not-a-date"
-        assertEquals(raw, DateUtils.formatDisplayDate(raw))
+        assertEquals(raw, DateFormatter.formatDisplayDate(raw, java.util.Locale("id", "ID")))
     }
 
     @Test

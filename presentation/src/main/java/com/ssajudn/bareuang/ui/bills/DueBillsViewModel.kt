@@ -9,7 +9,7 @@ import com.ssajudn.bareuang.domain.model.DueBillStatus
 import com.ssajudn.bareuang.domain.model.UpdateDueBillRequest
 import com.ssajudn.bareuang.domain.repository.DueBillRepository
 import com.ssajudn.bareuang.domain.repository.WalletRepository
-import com.ssajudn.bareuang.utils.DateUtils
+import com.ssajudn.bareuang.domain.utils.DateUtils
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted

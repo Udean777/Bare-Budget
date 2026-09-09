@@ -8,6 +8,17 @@
     <string name="currency_settings">Currency</string>
     <string name="currency_idr">Rupiah (IDR - Rp)</string>
     <string name="currency_usd">US Dollar (USD - $)</string>
+    <string name="category_food">Food &amp; Beverage</string>
+    <string name="category_transport">Transportation</string>
+    <string name="category_bills">Bills &amp; Utilities</string>
+    <string name="category_shopping">Shopping &amp; Groceries</string>
+    <string name="category_entertainment">Entertainment &amp; Gaming</string>
+    <string name="category_social">Social &amp; Gatherings</string>
+    <string name="category_salary">Salary &amp; Wage</string>
+    <string name="category_bonus">Bonus &amp; Reward</string>
+    <string name="category_investment">Investment Returns</string>
+    <string name="category_transfer">Wallet Transfer</string>
+    <string name="category_other">Other</string>
     <string name="onboarding_currency_title">Choose Currency</string>
     <string name="onboarding_currency_desc">Pick your preferred currency for logging expenses and tracking budgets. You can change this anytime in Settings.</string>
     <!-- Translation -->
@@ -60,6 +71,11 @@
     <string name="runway_set">Set Budget</string>
     <string name="runway_total_wealth">TOTAL WEALTH</string>
     <string name="runway_view_detail">View detail <xliff:g id="name">%1$s</xliff:g></string>
+    <string name="runway_status_budget_not_set">Monthly budget not set yet. Tap here to set your target budget.</string>
+    <string name="runway_status_exhausted">CRITICAL: You have exhausted your budget for this month! Stop all non-essential spending.</string>
+    <string name="runway_status_no_spending">GREAT: No expenses recorded yet this month. Keep it up!</string>
+    <string name="runway_status_warning">WARNING: At your current burn rate, your money runs out on day %1$d (%2$d days left)!</string>
+    <string name="runway_status_healthy">HEALTHY: Your financial runway is safe until the end of the month.</string>
     <string name="tx_transfer_label">Wallet Transfer</string>
     <!-- Analytics -->
     <string name="analytics_title">Financial Analytics</string>
@@ -284,6 +300,7 @@
     <string name="fab_menu_bill">Due Bill</string>
     <string name="fab_menu_goal">Savings Goal</string>
     <string name="fab_menu_scan">Scan Receipt</string>
+    <string name="coming_soon">Coming soon</string>
     <!-- Import & OCR -->
     <string name="import_title">Import Transactions</string>
     <string name="import_wallet_label">Target Wallet</string>
@@ -305,8 +322,17 @@
     <string name="import_file_too_large">File too large, max 5MB</string>
     <string name="import_chip_expense">Expense</string>
     <string name="import_chip_income">Income</string>
+    <string name="import_supported_format">Supported formats</string>
+    <string name="import_format_bca">• BCA e-statement: Date,Description,Amount/Branch</string>
+    <string name="import_format_generic">• Generic: date, description, amount (delimiter , or ;)</string>
+    <string name="import_format_debit_credit">• Separate debit/credit columns are supported</string>
+    <string name="import_format_example">Example: 01/01/2026,Top Up GoPay,50000</string>
+    <string name="import_daily_override_message">Some transactions exceed today’s pacing target. Import anyway?</string>
+    <string name="import_daily_override_confirm">Import anyway</string>
+    <string name="tx_error_daily_exceeded_title">Daily target exceeded</string>
     <string name="ocr_title">Scan Receipt</string>
     <string name="ocr_wallet_label">Wallet</string>
+    <string name="ocr_coming_soon">Receipt scanning is coming soon.</string>
     <string name="ocr_btn_camera">Camera</string>
     <string name="ocr_btn_gallery">Gallery</string>
     <string name="ocr_processing">Processing OCR…</string>
@@ -368,6 +394,7 @@
     <string name="tx_recurring_weekly">Weekly</string>
     <string name="tx_recurring_monthly">Monthly</string>
     <string name="tx_recurring_yearly">Yearly</string>
+    <string name="tx_recurring_once">One-time</string>
     <string name="tx_recurring_on_day">Repeat on</string>
     <string name="tx_recurring_on_date">Every date %1$d</string>
     <string name="day_mon">Mon</string>
@@ -465,12 +492,23 @@
     <string name="budget_daily_target_custom">Custom</string>
     <string name="budget_daily_target_hint">Custom target per day</string>
     <string name="budget_daily_target_save">Save daily target</string>
+    <string name="budget_daily_target_saved">Daily target saved</string>
+    <string name="budget_daily_target_edit">Edit daily target</string>
+    <string name="budget_daily_mode_custom_confirm_title">Use a custom daily target?</string>
+    <string name="budget_daily_mode_custom_confirm_message">Your chosen amount will guide today’s pacing instead of the automatic monthly calculation.</string>
+    <string name="budget_daily_mode_auto_confirm_title">Switch to automatic pacing?</string>
+    <string name="budget_daily_mode_auto_confirm_message">The target will be recalculated from your remaining monthly budget and days left.</string>
+    <string name="budget_daily_mode_confirm">Continue</string>
     <string name="tx_category_overspent_warning">This amount exceeds the %1$s left in the %2$s budget.</string>
     <!-- Daily budget -->
     <string name="dashboard_daily_title">Daily Pacing</string>
     <string name="dashboard_daily_auto_desc">Based on this month\'s budget</string>
     <string name="dashboard_daily_remaining">Remaining today: %1$s</string>
     <string name="dashboard_daily_used">Used %1$s / %2$s</string>
+    <string name="dashboard_daily_target">Target</string>
+    <string name="dashboard_daily_spent">Spent</string>
+    <string name="dashboard_daily_remaining_label">Remaining</string>
+    <string name="dashboard_daily_days_left">%1$d days left</string>
     <string name="bills_error_insufficient">Insufficient balance to pay this bill</string>
     <!-- Settings backup/restore -->
     <string name="settings_backup_success_msg">Backup successfully exported to file! Keep this file to restore anytime.</string>
@@ -514,6 +552,25 @@
     <!-- OCR granular -->
     <string name="ocr_error_save">Failed to save receipt transaction</string>
     <string name="ocr_error_file">Failed to open image file</string>
+    <string name="ocr_save_transaction">Save Transaction • %1$s</string>
+    <string name="ocr_tip_lighting">• Take a well-lit, non-blurry photo</string>
+    <string name="ocr_tip_total">• Make sure TOTAL / AMOUNT is visible</string>
+    <string name="ocr_tip_editable">• AI results can be edited before saving</string>
+    <string name="ocr_tip_internet">• Internet connection required</string>
+    <string name="ocr_merchant_label">Merchant</string>
+    <string name="ocr_category_label">Category</string>
+    <string name="ocr_date_label">Date</string>
+    <string name="ocr_change">Change</string>
+    <string name="ocr_daily_override_title">Daily target exceeded</string>
+    <string name="ocr_save_anyway">Save anyway</string>
+    <string name="ocr_total">TOTAL</string>
+    <string name="ocr_offline_message">No internet connection. Receipt scanning requires internet.</string>
+    <string name="ocr_amount_label">Total (Rp)</string>
+    <string name="ocr_receipt_original">— %1$s • original receipt —</string>
+    <string name="ocr_preview_caption">Receipt preview • AI results can be edited above</string>
+    <string name="dashboard_daily_allowance">%1$d days left • %2$s/day</string>
+    <string name="dashboard_load_error_message">Unable to load dashboard data.</string>
+    <string name="analytics_error_message">Unable to load analytics data.</string>
     <!-- Settings granular -->
     <string name="settings_error_backup">Failed to export backup</string>
     <string name="settings_error_restore">Failed to restore backup</string>

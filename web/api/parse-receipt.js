@@ -1,7 +1,8 @@
 /** Vercel proxy for optional receipt OCR. Fails closed without persistent quota storage. */
 import crypto from "node:crypto";
 
-const GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent";
+const GEMINI_MODEL = process.env.GEMINI_MODEL?.trim();
+const GEMINI_API_URL = process.env.GEMINI_API_URL?.trim().replace(/\/+$/, "");
 const MAX_BODY_BYTES = 3 * 1024 * 1024;
 const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 const MAX_TOTAL = 1_000_000_000_000;
@@ -13,7 +14,7 @@ const IP_LIMIT = Number(process.env.RATE_LIMIT_IP_RPD || 60);
 const GLOBAL_LIMIT = Number(process.env.GLOBAL_LIMIT_RPD || 5000);
 const ALLOWED_MIMES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const CATEGORIES = new Set(["FOOD", "SHOPPING", "TRANSPORT", "BILLS", "ENTERTAINMENT", "HEALTH", "EDUCATION", "SOCIAL", "OTHER"]);
-const ALLOWED_ORIGINS = new Set((process.env.ALLOWED_ORIGINS || "https://bareuang.app").split(",").map((x) => x.trim()).filter(Boolean));
+const ALLOWED_ORIGINS = new Set((process.env.ALLOWED_ORIGINS || "https://bareuang.vercel.app").split(",").map((x) => x.trim()).filter(Boolean));
 
 function id() { return crypto.randomUUID(); }
 function errorResponse(res, status, message, requestId) {
@@ -113,7 +114,7 @@ export default async function handler(req, res) {
   if (!validInstallation(installation)) return errorResponse(res, 401, "Client identity required", requestId);
   const length = Number(req.headers["content-length"]);
   if (!Number.isSafeInteger(length) || length <= 0 || length > MAX_BODY_BYTES) return errorResponse(res, 413, "Request body too large", requestId);
-  if (!process.env.GEMINI_API_KEY) return errorResponse(res, 503, "OCR service unavailable", requestId);
+  if (!process.env.GEMINI_API_KEY || !GEMINI_MODEL || !GEMINI_API_URL) return errorResponse(res, 503, "OCR service unavailable", requestId);
   let body = req.body;
   if (typeof body === "string") { try { body = JSON.parse(body); } catch { return errorResponse(res, 400, "Invalid JSON", requestId); } }
   const image = parseImage(body?.image_base64);
@@ -127,13 +128,31 @@ export default async function handler(req, res) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 25_000);
   try {
-    const response = await fetch(`${GEMINI_URL}?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`, {
+    const response = await fetch(`${GEMINI_API_URL}/models/${encodeURIComponent(GEMINI_MODEL)}:generateContent?key=${encodeURIComponent(process.env.GEMINI_API_KEY)}`, {
       method: "POST", headers: { "Content-Type": "application/json" }, signal: controller.signal,
-      body: JSON.stringify({ systemInstruction: { parts: [{ text: prompt }] }, contents: [{ role: "user", parts: [{ text: "Parse struk ini ke JSON." }, { inlineData: { mimeType: image.mime, data: image.encoded } }] }], generationConfig: { responseMimeType: "application/json", thinkingConfig: { thinkingBudget: 0 }, maxOutputTokens: 1024 } }),
+      body: JSON.stringify({
+        systemInstruction: { parts: [{ text: prompt }] },
+        contents: [{ role: "user", parts: [{ text: "Parse struk ini ke JSON." }, { inlineData: { mimeType: image.mime, data: image.encoded } }] }],
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: "OBJECT",
+            properties: {
+              merchant: { type: "STRING" }, date: { type: "STRING" }, total: { type: "INTEGER" },
+              category: { type: "STRING" }, items: { type: "ARRAY", items: { type: "STRING" } }, raw_text: { type: "STRING" },
+            },
+            required: ["merchant", "date", "total", "category", "items", "raw_text"],
+          },
+          maxOutputTokens: 4096,
+        },
+      }),
     });
     if (!response.ok) return errorResponse(res, 502, "OCR provider unavailable", requestId);
     let parsed;
-    try { parsed = JSON.parse((await response.json())?.candidates?.[0]?.content?.parts?.[0]?.text); } catch { return errorResponse(res, 502, "OCR returned invalid data", requestId); }
+    try {
+      const text = (await response.json())?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || "";
+      parsed = JSON.parse(text.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, ""));
+    } catch { return errorResponse(res, 502, "OCR returned invalid data", requestId); }
     const result = sanitize(parsed);
     if (!result) return errorResponse(res, 502, "OCR returned invalid data", requestId);
     console.info(JSON.stringify({ event: "ocr_success", request_id: requestId, latency_ms: Date.now() - started }));

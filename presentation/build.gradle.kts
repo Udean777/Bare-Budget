@@ -10,6 +10,7 @@ android {
     compileSdk = 36
     defaultConfig {
         minSdk = 26
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "VERSION_NAME", "\"1.0\"")
     }
     compileOptions {
@@ -35,7 +36,6 @@ kotlin {
 
 dependencies {
     api(project(":domain"))
-    implementation(project(":data"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)
@@ -52,15 +52,14 @@ dependencies {
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.navigation.compose)
-    implementation(libs.androidx.palette.ktx)
-
-    // User Onboarding Tour & Preferences & Translation
-    implementation(libs.compose.showcase)
-    implementation(libs.androidx.datastore.preferences)
+    // Application locale preferences
     implementation(libs.androidx.appcompat)
-    implementation(libs.kotlinx.coroutines.play.services)
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)
     testImplementation(libs.mockk)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.test.runner)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

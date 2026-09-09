@@ -78,6 +78,8 @@ private class FakeTxDao2 : TransactionDao {
     override fun observeAllTransactions(): Flow<List<LocalTransactionEntity>> = flowOf(txs.toList())
     override fun getTransactionsByCategory(category: String): List<LocalTransactionEntity> = txs.filter { it.category == category }
     override fun getTransactionsByCategoryPaged(category: String, limit: Int, offset: Int): List<LocalTransactionEntity> = txs.filter { it.category == category }.drop(offset).take(limit)
+    override fun getTransactionsByDateRange(fromDate: String, toDate: String, limit: Int): List<LocalTransactionEntity> =
+        txs.filter { it.date >= fromDate && it.date < toDate }.sortedByDescending { it.date }.take(limit)
     override fun getTransactionById(id: String): LocalTransactionEntity? = txs.find { it.id == id }
     override fun insertTransaction(transaction: LocalTransactionEntity) { txs.add(transaction) }
     override fun insertTransactions(transactions: List<LocalTransactionEntity>) { txs.addAll(transactions) }
@@ -86,6 +88,8 @@ private class FakeTxDao2 : TransactionDao {
     override fun getCashflowByMonth(fromDate: String, toDate: String): List<MonthlyCashflowProjection> = emptyList()
     override fun getExpenseByCategory(fromDate: String, toDate: String): List<CategoryAggregateProjection> = emptyList()
     override fun getExpenseTotal(fromDate: String, toDate: String): Long = 0L
+    override fun getDiscretionaryExpenseTotal(fromDate: String, toDate: String): Long = 0L
+    override fun getDiscretionaryExpenseTotalForDay(fromDate: String, toDate: String): Long = 0L
     override fun getIncomeTotal(fromDate: String, toDate: String): Long = 0L
     override fun updateNextOccurrence(id: String, nextDate: String) {
         val index = txs.indexOfFirst { it.id == id }

@@ -2,7 +2,7 @@ package com.ssajudn.bareuang.ui.dashboard
 
 import app.cash.turbine.test
 import com.ssajudn.bareuang.domain.model.DashboardSummary
-import com.ssajudn.bareuang.data.local.ThemePreferences
+import com.ssajudn.bareuang.domain.port.ThemePreferencesPort
 import com.ssajudn.bareuang.domain.usecase.GetDashboardSummaryUseCase
 import com.ssajudn.bareuang.testutil.MainDispatcherRule
 import io.mockk.coEvery
@@ -20,7 +20,7 @@ class DashboardViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val getSummary: GetDashboardSummaryUseCase = mockk()
-    private val themePrefs: ThemePreferences = mockk(relaxed = true)
+    private val themePrefs: ThemePreferencesPort = mockk(relaxed = true)
 
     private fun summaryFixture() = DashboardSummary(
         monthlyBudget = 500_000L,
@@ -30,7 +30,6 @@ class DashboardViewModelTest {
         daysInMonth = 30,
         averageDailySpend = 10_000L,
         estimatedDeathDay = 25,
-        runwayMessage = "HEALTHY",
         topCategories = emptyList(),
         unpaidDueBillsSum = 0L,
         netWorth = 1_000_000L,
@@ -56,7 +55,7 @@ class DashboardViewModelTest {
         advanceUntilIdle()
 
         assertTrue(vm.uiState.value is DashboardUiState.Error)
-        assertEquals("Network down", (vm.uiState.value as DashboardUiState.Error).message)
+        assertTrue((vm.uiState.value as DashboardUiState.Error).message is com.ssajudn.bareuang.ui.common.UiText.Res)
     }
 
     @Test

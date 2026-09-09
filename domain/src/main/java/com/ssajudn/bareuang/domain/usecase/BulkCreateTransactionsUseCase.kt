@@ -9,16 +9,16 @@ import com.ssajudn.bareuang.domain.repository.WalletRepository
 import com.ssajudn.bareuang.domain.utils.DomainCurrencyFormatter
 import com.ssajudn.bareuang.domain.model.TransactionCategory
 import com.ssajudn.bareuang.domain.model.TransactionType
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.time.Clock
+import java.time.LocalDate
 import javax.inject.Inject
 
 class BulkCreateTransactionsUseCase @Inject constructor(
     private val transactionRepository: TransactionRepository,
     private val walletRepository: WalletRepository,
     private val hasMonthlyBudget: HasMonthlyBudgetUseCase,
-    private val checkDailyBudget: CheckDailyBudgetUseCase
+    private val checkDailyBudget: CheckDailyBudgetUseCase,
+    private val clock: Clock,
 ) {
     suspend operator fun invoke(
         drafts: List<ImportDraft>,
@@ -38,7 +38,7 @@ class BulkCreateTransactionsUseCase @Inject constructor(
         // Daily gate — check the complete today's batch once so each item cannot
         // reuse the same remaining allowance independently.
         if (!force) {
-            val todayIso = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
+            val todayIso = LocalDate.now(clock).toString()
             val todayExpense = try {
                 selected.filter {
                     it.type == TransactionType.EXPENSE &&

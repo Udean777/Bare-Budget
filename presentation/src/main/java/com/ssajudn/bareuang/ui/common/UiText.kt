@@ -33,5 +33,5 @@ fun com.ssajudn.bareuang.domain.error.AppException.toUiText(): UiText = when(thi
     is com.ssajudn.bareuang.domain.error.AppException.DataException -> UiText.Res(com.ssajudn.bareuang.presentation.R.string.error_generic)
     is com.ssajudn.bareuang.domain.error.AppException.SyncException -> UiText.Res(com.ssajudn.bareuang.presentation.R.string.error_generic)
     is com.ssajudn.bareuang.domain.error.AppException.UnknownError -> UiText.Res(com.ssajudn.bareuang.presentation.R.string.error_generic)
-    is com.ssajudn.bareuang.domain.error.AppException.DailyBudgetExceededException -> UiText.Dyn(message ?: "Jatah harian terlampaui")
+    is com.ssajudn.bareuang.domain.error.AppException.DailyBudgetExceededException -> UiText.Res(com.ssajudn.bareuang.presentation.R.string.tx_error_daily_exceeded)
 }

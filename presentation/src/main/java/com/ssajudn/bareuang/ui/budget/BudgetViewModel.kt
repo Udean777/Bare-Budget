@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.ssajudn.bareuang.domain.repository.BudgetRepository
 import com.ssajudn.bareuang.domain.port.DailyPacingPreferencesPort
 import com.ssajudn.bareuang.domain.error.AppException
-import com.ssajudn.bareuang.domain.error.userMessage
 import com.ssajudn.bareuang.presentation.R
 import com.ssajudn.bareuang.ui.common.UiText
 import com.ssajudn.bareuang.ui.common.toUiText
@@ -31,11 +30,11 @@ data class BudgetUiState(
     val parsedAmount: Long = 0L,
     val isLoading: Boolean = false,
     val isSuccess: Boolean = false,
-    val errorMessage: String? = null,
     val error: UiText? = null,
     val categoryBudgets: List<com.ssajudn.bareuang.domain.model.CategoryBudget> = emptyList(),
     val isCustomDailyTarget: Boolean = false,
-    val dailyTargetInput: String = ""
+    val dailyTargetInput: String = "",
+    val isDailyTargetSaved: Boolean = false
 ) {
     val isLocked: Boolean get() = currentLimit > 0
     val totalAllocatedCategory: Long get() = categoryBudgets.sumOf { it.limitAmount }
@@ -66,22 +65,40 @@ class BudgetViewModel @Inject constructor(
             dailyPacingPreferences.customTarget.collect { target ->
                 _uiState.value = _uiState.value.copy(
                     isCustomDailyTarget = target != null,
-                    dailyTargetInput = target?.toString() ?: ""
+                    dailyTargetInput = target?.toString() ?: dailyPacingPreferences.lastCustomTarget.value?.toString().orEmpty(),
+                    isDailyTargetSaved = target != null
                 )
             }
         }
     }
 
     fun onDailyTargetChange(input: String) {
-        _uiState.value = _uiState.value.copy(dailyTargetInput = input.filter { it.isDigit() }.take(12))
+        _uiState.value = _uiState.value.copy(
+            dailyTargetInput = input.filter { it.isDigit() }.take(12),
+            isDailyTargetSaved = false,
+        )
     }
 
     fun setAutomaticDailyTarget() {
+        _uiState.value = _uiState.value.copy(
+            isCustomDailyTarget = false,
+            isDailyTargetSaved = false,
+        )
         dailyPacingPreferences.setCustomTarget(null)
     }
 
     fun selectCustomDailyTarget() {
-        _uiState.value = _uiState.value.copy(isCustomDailyTarget = true)
+        val saved = dailyPacingPreferences.lastCustomTarget.value
+        if (saved != null) dailyPacingPreferences.setCustomTarget(saved)
+        _uiState.value = _uiState.value.copy(
+            isCustomDailyTarget = true,
+            dailyTargetInput = saved?.toString().orEmpty(),
+            isDailyTargetSaved = saved != null,
+        )
+    }
+
+    fun editCustomDailyTarget() {
+        _uiState.value = _uiState.value.copy(isDailyTargetSaved = false)
     }
 
     fun saveCustomDailyTarget() {
@@ -91,6 +108,10 @@ class BudgetViewModel @Inject constructor(
             return
         }
         dailyPacingPreferences.setCustomTarget(amount)
+        _uiState.value = _uiState.value.copy(isDailyTargetSaved = true)
+        viewModelScope.launch {
+            _effect.send(UiEffect.ShowSnackbarRes(UiText.Res(R.string.budget_daily_target_saved)))
+        }
     }
 
     private fun loadCurrentBudget() {
@@ -130,32 +151,33 @@ class BudgetViewModel @Inject constructor(
 
     fun saveBudget() {
         val state = _uiState.value
+        if (state.isLoading || _operation.value is OperationState.Loading) return
         if (state.isLocked) {
             val ui = UiText.Res(BudgetError.LOCKED.resId)
-            _uiState.value = state.copy(errorMessage = null, error = ui)
+            _uiState.value = state.copy(error = ui)
             return
         }
         if (state.parsedAmount <= 0) {
             val ui = UiText.Res(BudgetError.INVALID_AMOUNT.resId)
-            _uiState.value = state.copy(errorMessage = null, error = ui)
+            _uiState.value = state.copy(error = ui)
             return
         }
 
         viewModelScope.launch {
-            _uiState.value = state.copy(isLoading = true, errorMessage = null, error = null)
+            _uiState.value = state.copy(isLoading = true, error = null)
             _operation.value = OperationState.Loading
             repository.setBudget(state.parsedAmount)
                 .onSuccess {
                     _uiState.value = _uiState.value.copy(isLoading = false, isSuccess = true)
                     _operation.value = OperationState.Success()
-                    viewModelScope.launch { _effect.send(UiEffect.PopBackStack) }
+                    _effect.trySend(UiEffect.PopBackStack)
                 }
                 .onFailure { error ->
                     android.util.Log.e("Budget", "setBudget failed", error)
                     val ui = (error as? AppException)?.toUiText() ?: UiText.Res(BudgetError.SET_FAILED.resId)
-                    _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = "", error = ui)
+                    _uiState.value = _uiState.value.copy(isLoading = false, error = ui)
                     _operation.value = OperationState.Error("", ui)
-                    viewModelScope.launch { _effect.send(UiEffect.ShowSnackbarRes(ui)) }
+                    _effect.trySend(UiEffect.ShowSnackbarRes(ui))
                 }
         }
     }

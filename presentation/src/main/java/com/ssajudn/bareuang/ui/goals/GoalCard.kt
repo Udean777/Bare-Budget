@@ -1,15 +1,37 @@
 package com.ssajudn.bareuang.ui.goals
+import androidx.compose.material3.Badge
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.*
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -28,7 +50,9 @@ import com.ssajudn.bareuang.ui.components.BearProgressIndicator
 import com.ssajudn.bareuang.ui.theme.AppShapes
 import com.ssajudn.bareuang.ui.theme.crispBorder
 import com.ssajudn.bareuang.utils.CurrencyFormatter
-import com.ssajudn.bareuang.utils.DateUtils
+import com.ssajudn.bareuang.domain.utils.DateUtils
+import com.ssajudn.bareuang.ui.common.DateFormatter
+import java.time.LocalDate
 
 val presetGoalColors = listOf(
     "#4E73DF", "#2ECC71", "#E74C3C", "#F39C12", "#9B59B6", "#1ABC9C"
@@ -42,7 +66,7 @@ fun GoalCard(
     val isCompleted = goal.currentAmount >= goal.targetAmount
     val progressPercentInt = (goal.progressPercentage * 100).toInt()
 
-    val daysLeft = goal.daysLeftUntilTarget()
+    val daysLeft = goal.daysLeftUntilTarget(LocalDate.now())
     val isNearDeadline = daysLeft != null && daysLeft in 0..30 && goal.progressPercentage < 0.8f
 
     val (badgeBgColor, badgeTextColor, badgeLabel) = when {
@@ -51,7 +75,7 @@ fun GoalCard(
         else -> Triple(MaterialTheme.colorScheme.secondaryContainer, MaterialTheme.colorScheme.onSecondaryContainer, stringResource(R.string.goals_badge_on_track))
     }
 
-    val animatedProgress by androidx.compose.animation.core.animateFloatAsState(
+    val animatedProgress by animateFloatAsState(
         targetValue = goal.progressPercentage,
         animationSpec = spring(
             dampingRatio = androidx.compose.animation.core.Spring.DampingRatioLowBouncy,
@@ -153,7 +177,7 @@ fun GoalCard(
                     )
                     goal.targetDate?.let { targetDate ->
                         Text(
-                            text = stringResource(R.string.goals_until, DateUtils.formatDisplayDate(targetDate)),
+                            text = stringResource(R.string.goals_until, DateFormatter.formatDisplayDate(targetDate)),
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f)
                         )
@@ -199,7 +223,7 @@ fun GoalCard(
             }
 
             // Smart Calculator Banner
-            goal.suggestedSavingsPace()?.takeIf { !isCompleted }?.let { pace ->
+            goal.suggestedSavingsPace(LocalDate.now())?.takeIf { !isCompleted }?.let { pace ->
                 Surface(
                     shape = MaterialTheme.shapes.small,
                     color = MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.6f)

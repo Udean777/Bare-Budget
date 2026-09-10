@@ -12,6 +12,7 @@ import com.ssajudn.bareuang.domain.port.DailyPacingPreferencesPort
 import java.time.Clock
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 /**
@@ -75,6 +76,8 @@ class CheckDailyBudgetUseCase @Inject constructor(
             Result.success(Unit)
         } catch (e: ArithmeticException) {
             Result.failure(AppException.DataException("Nominal transaksi terlalu besar untuk dihitung", e))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             if (e is AppException) Result.failure(e) else Result.failure(AppException.UnknownError(cause = e))
         }

@@ -27,11 +27,14 @@ class ProcessRecurringTransactionsUseCase @Inject constructor() {
 
         for (template in templates) {
             if (!template.isRecurringParent || template.recurringInterval == RecurringInterval.NONE) continue
-            var nextDateStr = template.nextOccurrenceDate ?: continue
+            var nextDate = template.nextOccurrenceDate
+                ?.take(10)
+                ?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
+                ?: continue
 
             var iterations = 0
             // Prevent infinite loop if dates are far behind
-            while (nextDateStr <= todayIso && iterations < 30) {
+            while (nextDate.toString() <= todayIso && iterations < 30) {
                 iterations++
                 val newTx = Transaction(
                     id = UUID.randomUUID().toString(),
@@ -39,7 +42,7 @@ class ProcessRecurringTransactionsUseCase @Inject constructor() {
                     type = template.type,
                     category = template.category,
                     merchant = template.merchant,
-                    date = nextDateStr,
+                    date = nextDate.toString(),
                     notes = template.notes,
                     receiptUrl = template.receiptUrl,
                     walletId = template.walletId,
@@ -52,14 +55,14 @@ class ProcessRecurringTransactionsUseCase @Inject constructor() {
                 newTransactions.add(newTx)
 
                 // Advance date
-                nextDateStr = calculateNextOccurrence(nextDateStr, template.recurringInterval)
+                nextDate = calculateNextOccurrence(nextDate, template.recurringInterval)
             }
 
             if (iterations > 0 && template.id != null) {
                 updatedTemplates.add(
                     TemplateUpdate(
                         templateId = template.id,
-                        nextOccurrenceDate = nextDateStr
+                        nextOccurrenceDate = nextDate.toString()
                     )
                 )
             }
@@ -68,18 +71,12 @@ class ProcessRecurringTransactionsUseCase @Inject constructor() {
         return RolloverResult(newTransactions, updatedTemplates)
     }
 
-    private fun calculateNextOccurrence(currentDateStr: String, interval: RecurringInterval): String {
-        return try {
-            val date = LocalDate.parse(currentDateStr.take(10))
-            val next = when (interval) {
-                RecurringInterval.WEEKLY -> date.plusWeeks(1)
-                RecurringInterval.MONTHLY -> date.plusMonths(1)
-                RecurringInterval.YEARLY -> date.plusYears(1)
-                RecurringInterval.NONE -> date
-            }
-            next.toString()
-        } catch (_: Exception) {
-            currentDateStr
+    private fun calculateNextOccurrence(currentDate: LocalDate, interval: RecurringInterval): LocalDate {
+        return when (interval) {
+            RecurringInterval.WEEKLY -> currentDate.plusWeeks(1)
+            RecurringInterval.MONTHLY -> currentDate.plusMonths(1)
+            RecurringInterval.YEARLY -> currentDate.plusYears(1)
+            RecurringInterval.NONE -> currentDate
         }
     }
 }

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.library")
     alias(libs.plugins.ksp)
@@ -6,7 +8,7 @@ plugins {
 
 android {
     namespace = "com.ssajudn.bareuang.data"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -22,8 +24,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     ksp {
         arg("room.schemaLocation", "$projectDir/schemas")
@@ -35,10 +37,13 @@ android {
     }
 }
 
-kotlin { jvmToolchain(21) }
+kotlin {
+    compilerOptions { jvmTarget.set(JvmTarget.JVM_21) }
+    jvmToolchain(21)
+}
 
 dependencies {
-    api(project(":domain"))
+    implementation(project(":domain"))
     implementation(libs.androidx.core.ktx)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.hilt.android)

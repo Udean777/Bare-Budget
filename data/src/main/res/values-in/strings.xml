@@ -2,11 +2,21 @@
 <resources>
     <string name="bill_reminder_channel_name">Pengingat tagihan</string>
     <string name="bill_reminder_channel_desc">Pengingat untuk tagihan yang mendekati atau lewat jatuh tempo</string>
-    <string name="bill_reminder_title_overdue">⏰ Waduh, %1$d tagihan lewat jatuh tempo!</string>
-    <string name="bill_reminder_title_upcoming">🔔 Ayo siap-siap, %1$d tagihan segera jatuh tempo</string>
-    <string name="bill_reminder_more">…dan %1$d lainnya</string>
+    <plurals name="bill_reminder_title_overdue">
+        <item quantity="other">⏰ Waduh, %1$d tagihan lewat jatuh tempo!</item>
+    </plurals>
+    <plurals name="bill_reminder_title_upcoming">
+        <item quantity="other">🔔 Ayo siap-siap, %1$d tagihan segera jatuh tempo</item>
+    </plurals>
+    <plurals name="bill_reminder_more">
+        <item quantity="other">…dan %1$d lainnya</item>
+    </plurals>
     <string name="bill_reminder_due_today">jatuh tempo hari ini</string>
     <string name="bill_reminder_due_tomorrow">jatuh tempo besok</string>
-    <string name="bill_reminder_due_in">jatuh tempo %1$d hari lagi</string>
-    <string name="bill_reminder_overdue_by">terlambat %1$d hari</string>
+    <plurals name="bill_reminder_due_in">
+        <item quantity="other">jatuh tempo %1$d hari lagi</item>
+    </plurals>
+    <plurals name="bill_reminder_overdue_by">
+        <item quantity="other">terlambat %1$d hari</item>
+    </plurals>
 </resources>

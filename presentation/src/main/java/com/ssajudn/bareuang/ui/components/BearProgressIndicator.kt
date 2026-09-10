@@ -50,7 +50,7 @@ fun BearProgressIndicator(
     trackHeight: Dp = 10.dp,
     bearSize: Dp = 22.dp,
     showBearMascot: Boolean = true,
-    indicatorRes: Int = R.drawable.ic_bear_head,
+    indicatorRes: Int = R.drawable.ic_app_logo,
 ) {
     val clampedProgress = progress.coerceIn(0f, 1f)
     val animatedProgress by animateFloatAsState(

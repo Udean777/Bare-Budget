@@ -4,6 +4,7 @@ import com.ssajudn.bareuang.domain.model.CreateDueBillRequest
 import com.ssajudn.bareuang.domain.model.CreateTransactionRequest
 import com.ssajudn.bareuang.domain.model.CreateWalletRequest
 import com.ssajudn.bareuang.domain.model.DashboardSummary
+import com.ssajudn.bareuang.domain.model.DashboardTransactionData
 import com.ssajudn.bareuang.domain.model.DueBill
 import com.ssajudn.bareuang.domain.model.DueBillStatus
 import com.ssajudn.bareuang.domain.model.RecurringInterval
@@ -39,6 +40,16 @@ private class FakeBudgetRepo(var budget: Long = 0L) : BudgetRepository {
 
 private class FakeTxRepo(var txs: List<Transaction> = emptyList()) : TransactionRepository {
     var requestedLimit: Int = 0
+    override suspend fun getDashboardTransactions(monthYear: String, todayIso: String) =
+        Result.success(
+            DashboardTransactionData(
+                totalSpent = txs.filter { it.type == TransactionType.EXPENSE }.sumOf { it.amount },
+                todaySpent = txs.filter { it.type == TransactionType.EXPENSE && it.date.startsWith(todayIso) }.sumOf { it.amount },
+                topCategories = emptyList(),
+                recentTransactions = txs.take(5),
+                recurringTransactions = txs.filter { it.isRecurringParent },
+            )
+        )
     override suspend fun getTransactions(category: String?, page: Int, limit: Int): Result<List<Transaction>> {
         requestedLimit = limit
         return Result.success(txs)
@@ -163,6 +174,6 @@ class GetDashboardSummaryUseCaseTest {
         assertEquals(daysInMonth, summary.daysInMonth)
         assertEquals(1_000_000L, summary.netWorth)
         assertEquals(200_000L, summary.unpaidDueBillsSum)
-        assertEquals(Int.MAX_VALUE, txRepo.requestedLimit)
+        assertEquals(0, txRepo.requestedLimit)
     }
 }

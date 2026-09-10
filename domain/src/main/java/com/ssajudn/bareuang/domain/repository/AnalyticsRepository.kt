@@ -6,8 +6,6 @@ import java.time.Clock
 
 interface AnalyticsRepository {
     suspend fun getAnalytics(clock: Clock = Clock.systemUTC()): Result<AnalyticsData>
-    suspend fun getCashflowAnalytics(clock: Clock = Clock.systemUTC()): Result<List<CashflowDataPoint>>
-    suspend fun getNetWorthAnalytics(clock: Clock = Clock.systemUTC()): Result<List<NetWorthDataPoint>>
 }
 
 data class AnalyticsData(

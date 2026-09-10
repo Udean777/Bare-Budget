@@ -1,4 +1,5 @@
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
@@ -18,7 +19,7 @@ rootProject.file("keystore.properties").takeIf { it.exists() }?.inputStream()?.u
 android {
     namespace = "com.ssajudn.bareuang"
     compileSdk {
-        version = release(36)
+        version = release(37)
     }
 
     signingConfigs {
@@ -40,7 +41,7 @@ android {
     defaultConfig {
         applicationId = "com.ssajudn.bareuang"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
         versionCode = System.getenv("VERSION_CODE")?.toIntOrNull() ?: 1
         versionName = "1.0"
 
@@ -64,8 +65,8 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures {
         compose = true
@@ -83,6 +84,7 @@ android {
 // still annotated as experimental in material3 1.4.0.
 kotlin {
     compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
         optIn.addAll(
             "androidx.compose.material3.ExperimentalMaterial3Api",
             "androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",

@@ -1,6 +1,7 @@
 package com.ssajudn.bareuang.data.notification
 
 import android.content.Context
+import androidx.core.content.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -26,7 +27,7 @@ class BillReminderPrefs @Inject constructor(
         while (current.size > MAX_ENTRIES) {
             current.remove(current.first())
         }
-        prefs.edit().putStringSet(KEY_SHOWN, current).apply()
+        prefs.edit { putStringSet(KEY_SHOWN, current) }
     }
 
     companion object {
@@ -40,7 +41,7 @@ class BillReminderPrefs @Inject constructor(
 
         fun markPermissionAsked(context: Context) {
             context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-                .edit().putBoolean(KEY_PERM_ASKED, true).apply()
+                .edit { putBoolean(KEY_PERM_ASKED, true) }
         }
 
         fun isPermissionAsked(context: Context): Boolean =
@@ -49,7 +50,7 @@ class BillReminderPrefs @Inject constructor(
 
         fun setRemindersEnabled(context: Context, enabled: Boolean) {
             context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
-                .edit().putBoolean(KEY_ENABLED, enabled).apply()
+                .edit { putBoolean(KEY_ENABLED, enabled) }
         }
     }
 
@@ -62,6 +63,6 @@ class BillReminderPrefs @Inject constructor(
     override fun reminderMinute(): Int = prefs.getInt(KEY_MINUTE, 0)
 
     override fun setReminderTime(hour: Int, minute: Int) {
-        prefs.edit().putInt(KEY_HOUR, hour).putInt(KEY_MINUTE, minute).apply()
+        prefs.edit { putInt(KEY_HOUR, hour); putInt(KEY_MINUTE, minute) }
     }
 }

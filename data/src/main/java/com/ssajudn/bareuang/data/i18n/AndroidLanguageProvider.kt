@@ -12,7 +12,7 @@ import javax.inject.Singleton
 
 @Singleton
 class AndroidLanguageProvider @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) {
     fun getLanguage(): String = getLanguage(context)
 

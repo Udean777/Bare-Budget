@@ -14,6 +14,7 @@ import com.ssajudn.bareuang.domain.utils.DateUtils
 import com.ssajudn.bareuang.data.error.ApiErrorParser
 import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -30,6 +31,8 @@ class GoalLocalDataSource @Inject constructor(
     suspend fun getGoals(): Result<List<Goal>> = withContext(Dispatchers.IO) {
         try {
             Result.success(db.goalDao().getAllGoals().map { it.toGoal() })
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }
@@ -50,6 +53,8 @@ class GoalLocalDataSource @Inject constructor(
             )
             db.goalDao().insertGoal(LocalGoalEntity.fromGoal(localGoal, isSynced = false))
             Result.success(localGoal)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             return@withContext Result.failure(ApiErrorParser.fromThrowable(e))
         }
@@ -93,6 +98,8 @@ class GoalLocalDataSource @Inject constructor(
                 }
                 db.runInTransaction { block() }
                 Result.success(true)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Result.failure(ApiErrorParser.fromThrowable(e))
             }
@@ -113,6 +120,8 @@ class GoalLocalDataSource @Inject constructor(
                     isSynced = false
                 )
                 Result.success(true)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Result.failure(ApiErrorParser.fromThrowable(e))
             }
@@ -122,6 +131,8 @@ class GoalLocalDataSource @Inject constructor(
         try {
             db.goalDao().deleteGoal(id)
             Result.success(true)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }

@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     id("com.android.library")
     alias(libs.plugins.kotlin.compose)
@@ -7,15 +9,15 @@ plugins {
 
 android {
     namespace = "com.ssajudn.bareuang.presentation"
-    compileSdk = 36
+    compileSdk = 37
     defaultConfig {
         minSdk = 26
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         buildConfigField("String", "VERSION_NAME", "\"1.0\"")
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
     buildFeatures { compose = true; buildConfig = true }
     testOptions {
@@ -26,6 +28,7 @@ android {
 
 kotlin {
     compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_21)
         optIn.addAll(
             "androidx.compose.material3.ExperimentalMaterial3Api",
             "androidx.compose.material3.ExperimentalMaterial3ExpressiveApi",
@@ -35,7 +38,7 @@ kotlin {
 }
 
 dependencies {
-    api(project(":domain"))
+    implementation(project(":domain"))
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.compose.material3)

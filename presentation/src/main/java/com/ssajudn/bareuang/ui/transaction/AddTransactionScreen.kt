@@ -125,7 +125,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.ssajudn.bareuang.domain.model.TransactionCategory
 import com.ssajudn.bareuang.domain.model.TransactionType
 import com.ssajudn.bareuang.ui.components.AppDatePickerDialog
@@ -253,86 +253,19 @@ fun AddTransactionScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // 0. BUDGET GATE BANNER
-            if (uiState.isBudgetMissing && uiState.transactionType != TransactionType.TRANSFER) {
-                Surface(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.medium,
-                    color = MaterialTheme.colorScheme.errorContainer,
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
-                ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = stringResource(R.string.tx_budget_not_set),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.weight(1f)
-                        )
-                        AppTextButton(onClick = onNavigateToBudget) {
-                            Text(
-                                stringResource(R.string.tx_budget_set_action),
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                    }
-                }
-            }
-
-            // 0. TRANSACTION TYPE (Expense / Income / Transfer)
-            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                val types = listOf(
-                    Triple(TransactionType.EXPENSE, stringResource(R.string.tx_expense), 0),
-                    Triple(TransactionType.INCOME, stringResource(R.string.tx_income), 1),
-                    Triple(TransactionType.TRANSFER, stringResource(R.string.tx_transfer), 2)
-                )
-                types.forEach { (type, label, index) ->
-                    SegmentedButton(
-                        selected = uiState.transactionType == type,
-                        onClick = { viewModel.onTransactionTypeChange(type) },
-                        shape = SegmentedButtonDefaults.itemShape(index = index, count = 3)
-                    ) {
-                        Text(label)
-                    }
-                }
-            }
-
-            // 0.5. WALLET SELECTION (Single for Income/Expense, Dual for Transfer)
-            if (uiState.transactionType == TransactionType.TRANSFER) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    // Source Wallet (Dari)
-                    WalletDropdown(
-                        wallets = uiState.wallets,
-                        selectedWalletId = uiState.selectedWalletId,
-                        label = stringResource(R.string.tx_from_wallet),
-                        emptyText = stringResource(R.string.common_add),
-                        modifier = Modifier.weight(1f),
-                        onSelected = { viewModel.onWalletChange(it.id!!) }
-                    )
-
-                    // Destination Wallet (Ke)
-                    WalletDropdown(
-                        wallets = uiState.wallets,
-                        selectedWalletId = uiState.selectedToWalletId,
-                        label = stringResource(R.string.tx_to_wallet),
-                        emptyText = stringResource(R.string.common_add),
-                        modifier = Modifier.weight(1f),
-                        onSelected = { viewModel.onToWalletChange(it.id!!) }
-                    )
-                }
-            } else {
-                WalletDropdown(
-                    wallets = uiState.wallets,
-                    selectedWalletId = uiState.selectedWalletId,
-                    label = stringResource(R.string.tx_wallet_label),
-                    onSelected = { viewModel.onWalletChange(it.id!!) }
-                )
-            }
+            AddTransactionBudgetBanner(
+                visible = uiState.isBudgetMissing && uiState.transactionType != TransactionType.TRANSFER,
+                onNavigateToBudget = onNavigateToBudget
+            )
+            AddTransactionTypeSelector(
+                selectedType = uiState.transactionType,
+                onTypeSelected = viewModel::onTransactionTypeChange
+            )
+            AddTransactionWalletSelector(
+                state = uiState,
+                onWalletSelected = viewModel::onWalletChange,
+                onDestinationWalletSelected = viewModel::onToWalletChange
+            )
 
             // 1. AMOUNT INPUT (Prominent M3 Display Card with Quick Presets)
             ElevatedCard(

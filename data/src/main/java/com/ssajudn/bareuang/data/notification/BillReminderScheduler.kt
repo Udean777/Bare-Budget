@@ -17,7 +17,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class BillReminderScheduler @Inject constructor(
-    @ApplicationContext private val context: Context
+    @param:ApplicationContext private val context: Context
 ) : com.ssajudn.bareuang.domain.port.BillReminderSchedulerPort {
 
     override fun scheduleDailyAt(hour: Int, minute: Int) {

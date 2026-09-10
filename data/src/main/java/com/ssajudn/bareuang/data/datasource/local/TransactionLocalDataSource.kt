@@ -11,6 +11,7 @@ import com.ssajudn.bareuang.data.service.WalletBalanceService
 import com.ssajudn.bareuang.data.error.ApiErrorParser
 import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -52,6 +53,8 @@ class TransactionLocalDataSource @Inject constructor(
                         recurringTransactions = dao.getRecurringTemplates().map { it.toTransaction() },
                     )
                 )
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Result.failure(ApiErrorParser.fromThrowable(e))
             }
@@ -77,6 +80,8 @@ class TransactionLocalDataSource @Inject constructor(
     suspend fun getAllTransactions(): Result<List<Transaction>> = withContext(Dispatchers.IO) {
         try {
             Result.success(db.transactionDao().getAllTransactions().map { it.toTransaction() })
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }
@@ -148,6 +153,8 @@ class TransactionLocalDataSource @Inject constructor(
                     db.transactionDao().insertTransaction(LocalTransactionEntity.fromTransaction(newTx, isSynced = false))
                 }
                 Result.success(newTx)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Result.failure(ApiErrorParser.fromThrowable(e))
             }
@@ -196,6 +203,8 @@ class TransactionLocalDataSource @Inject constructor(
                 }
             }
             Result.success(inserted)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }
@@ -209,6 +218,8 @@ class TransactionLocalDataSource @Inject constructor(
                 db.transactionDao().deleteTransaction(id)
             }
             Result.success(true)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }

@@ -1,5 +1,4 @@
 package com.ssajudn.bareuang.ui.settings
-import androidx.compose.material.icons.filled.Settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -18,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import com.ssajudn.bareuang.presentation.R
@@ -104,7 +104,7 @@ class SettingsViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = false)
             if (result.isSuccess) {
                 val count = result.getOrNull() ?: 0
-                val ui = UiText.Res(R.string.settings_restore_success_msg, listOf(count))
+                val ui = UiText.PluralRes(R.plurals.settings_restore_success_msg, count, listOf(count))
                 _uiState.value = _uiState.value.copy(successMessage = null, successText = ui)
                 _operation.value = OperationState.Success()
                 _effect.send(UiEffect.ShowSnackbarRes(UiText.Res(R.string.settings_restore_success_snack)))
@@ -125,6 +125,8 @@ class SettingsViewModel @Inject constructor(
             _operation.value = OperationState.Loading
             try {
                 dataResetter.wipe()
+            } catch (e: CancellationException) {
+                throw e
             } catch (_: Exception) {
             }
             onboardingState.resetOnboarding()

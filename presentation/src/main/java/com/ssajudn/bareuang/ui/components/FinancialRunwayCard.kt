@@ -26,7 +26,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -268,7 +268,7 @@ fun FinancialRunwayCard(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        imageVector = if (isDanger) Icons.Default.Warning else Icons.Default.TrendingUp,
+                        imageVector = if (isDanger) Icons.Default.Warning else Icons.AutoMirrored.Filled.TrendingUp,
                         contentDescription = null,
                         tint = accentColor,
                         modifier = Modifier.size(18.dp)

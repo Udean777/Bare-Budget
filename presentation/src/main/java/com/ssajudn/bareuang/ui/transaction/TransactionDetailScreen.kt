@@ -64,7 +64,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.ssajudn.bareuang.domain.model.TransactionType
 import com.ssajudn.bareuang.ui.components.getCategoryIcon
 import com.ssajudn.bareuang.ui.components.AppConfirmDialog

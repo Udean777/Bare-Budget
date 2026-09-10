@@ -6,6 +6,7 @@ import com.ssajudn.bareuang.domain.model.TransactionType
 import com.ssajudn.bareuang.data.mapper.PersistenceMappers
 import com.ssajudn.bareuang.data.error.ApiErrorParser
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -33,6 +34,8 @@ class BudgetLocalDataSource @Inject constructor(private val db: AppDatabase) {
                 }
                 db.budgetDao().insertBudget(LocalBudgetEntity(monthYear = my, monthlyLimit = monthlyLimit, isSynced = false))
                 Result.success(true)
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 if (e is com.ssajudn.bareuang.domain.error.AppException) Result.failure(e)
                 else Result.failure(ApiErrorParser.fromThrowable(e))
@@ -46,6 +49,8 @@ class BudgetLocalDataSource @Inject constructor(private val db: AppDatabase) {
             } else monthYear
             val budget = db.budgetDao().getBudget(my)
             Result.success(budget?.monthlyLimit ?: 0L)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }
@@ -98,6 +103,8 @@ class BudgetLocalDataSource @Inject constructor(private val db: AppDatabase) {
                 )
             )
             Result.success(true)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }

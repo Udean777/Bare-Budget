@@ -5,6 +5,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.util.Base64
+import androidx.core.content.edit
+import androidx.core.graphics.scale
+import androidx.core.net.toUri
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
 import com.ssajudn.bareuang.data.BuildConfig
@@ -40,7 +43,7 @@ private const val GENERIC_OCR_ERROR = "Scan struk gagal. Silakan coba lagi."
 
 @Singleton
 class ReceiptAiService @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
 ) : com.ssajudn.bareuang.domain.port.ReceiptAiPort {
     private val gson = Gson()
     private val client = OkHttpClient.Builder()
@@ -52,14 +55,14 @@ class ReceiptAiService @Inject constructor(
     private val installationId: String by lazy {
         val prefs = context.getSharedPreferences("bareuang_client_identity", Context.MODE_PRIVATE)
         prefs.getString("installation_id", null) ?: UUID.randomUUID().toString().also {
-            prefs.edit().putString("installation_id", it).apply()
+            prefs.edit { putString("installation_id", it) }
         }
     }
 
     suspend fun parseReceiptImage(uri: Uri): Result<AiParsedReceipt> = parseReceiptImage(uri.toString())
 
     override suspend fun parseReceiptImage(uri: String): Result<AiParsedReceipt> = withContext(Dispatchers.IO) {
-        val parsedUri = Uri.parse(uri)
+        val parsedUri = uri.toUri()
         runCatching {
             val base64 = encodeImage(parsedUri)
             val reqJson = gson.toJson(mapOf("image_base64" to base64))
@@ -157,7 +160,7 @@ class ReceiptAiService @Inject constructor(
         if (scale < 1f) {
             val nw = (bmp.width * scale).toInt()
             val nh = (bmp.height * scale).toInt()
-            val scaled = Bitmap.createScaledBitmap(bmp, nw, nh, true)
+            val scaled = bmp.scale(nw, nh, true)
             if (scaled !== bmp) bmp.recycle()
             bmp = scaled
         }

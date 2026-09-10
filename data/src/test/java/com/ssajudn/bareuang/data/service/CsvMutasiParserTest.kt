@@ -7,11 +7,19 @@ class CsvMutasiParserTest {
     private val parser = CsvMutasiParser()
 
     @Test fun `generic comma`() {
-        val csv = "Tanggal,Keterangan,Jumlah\n01/01/2026,Top Up GoPay,50000"
+        val csv = "foo,bar,baz\n01/01/2026,Top Up GoPay,50000"
         val res = parser.parse(csv)
         assertEquals(1, res.size)
         assertEquals(50000L, res[0].amount)
         assertEquals("2026-01-01", res[0].date)
+        assertEquals(com.ssajudn.bareuang.domain.model.TransactionType.INCOME, res[0].type)
+    }
+
+    @Test fun `generic negative amount is expense`() {
+        val csv = "foo,bar,baz\n01/01/2026,Belanja,-50000"
+        val result = parser.parse(csv).single()
+        assertEquals(50000L, result.amount)
+        assertEquals(com.ssajudn.bareuang.domain.model.TransactionType.EXPENSE, result.type)
     }
 
     @Test fun `BCA semicolon debit kredit`() {

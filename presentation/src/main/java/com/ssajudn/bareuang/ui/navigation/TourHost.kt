@@ -13,7 +13,7 @@ import com.ssajudn.bareuang.ui.tour.TourOverlay
 import com.ssajudn.bareuang.ui.tour.TourRegistry
 import com.ssajudn.bareuang.ui.tour.TourScript
 import com.ssajudn.bareuang.ui.tour.TourViewModel
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.compose.runtime.CompositionLocalProvider
 import kotlinx.coroutines.delay
 

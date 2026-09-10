@@ -1,4 +1,5 @@
 package com.ssajudn.bareuang.ui.goals
+import androidx.core.graphics.toColorInt
 import androidx.compose.material3.Badge
 
 import androidx.compose.animation.core.animateFloatAsState
@@ -296,4 +297,4 @@ fun GoalColorRow(
 }
 
 internal fun String.toComposeColorOr(fallback: Color): Color =
-    try { Color(android.graphics.Color.parseColor(this)) } catch (_: Exception) { fallback }
+    try { Color(toColorInt()) } catch (_: Exception) { fallback }

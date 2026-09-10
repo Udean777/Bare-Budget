@@ -21,6 +21,7 @@ import com.ssajudn.bareuang.ui.common.toUiText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -140,8 +141,10 @@ class ImportMutasiViewModel @Inject constructor(
                 _operation.value = OperationState.Idle
                 if (result.skippedRows > 0) android.util.Log.w("Import", "skipped ${result.skippedRows} rows")
                 if (result.duplicateCount > 0) {
-                    _effect.send(UiEffect.ShowSnackbarRes(UiText.Res(com.ssajudn.bareuang.presentation.R.string.import_duplicate_snack, listOf(result.duplicateCount))))
+                    _effect.send(UiEffect.ShowSnackbarRes(UiText.PluralRes(com.ssajudn.bareuang.presentation.R.plurals.import_duplicate_snack, result.duplicateCount, listOf(result.duplicateCount))))
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 android.util.Log.e("Import", "onFilePicked failed", e)
                 val ui = UiText.Res(com.ssajudn.bareuang.presentation.R.string.import_error_read)

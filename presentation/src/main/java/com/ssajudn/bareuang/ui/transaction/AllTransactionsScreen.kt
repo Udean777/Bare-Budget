@@ -1,4 +1,5 @@
 package com.ssajudn.bareuang.ui.transaction
+import androidx.core.graphics.toColorInt
 import androidx.compose.material3.Badge
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -70,7 +71,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.ssajudn.bareuang.ui.theme.IncomeAccent
 import com.ssajudn.bareuang.ui.theme.ExpenseAccent
 import com.ssajudn.bareuang.domain.model.TransactionCategory
@@ -452,11 +453,7 @@ fun AllTransactionsScreen(
                                                 items(state.wallets) { wallet ->
                                                     val isSelected = wallet.id == draftWalletId
                                                     val parsedColor = try {
-                                                        Color(
-                                                            android.graphics.Color.parseColor(
-                                                                wallet.colorHex
-                                                            )
-                                                        )
+                                                        Color(wallet.colorHex.toColorInt())
                                                     } catch (e: Exception) {
                                                         MaterialTheme.colorScheme.primary
                                                     }

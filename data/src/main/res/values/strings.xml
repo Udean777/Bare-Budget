@@ -2,11 +2,26 @@
 <resources>
     <string name="bill_reminder_channel_name">Bill reminders</string>
     <string name="bill_reminder_channel_desc">Reminders for upcoming and overdue bills</string>
-    <string name="bill_reminder_title_overdue">⏰ Yikes, %1$d bill(s) past due!</string>
-    <string name="bill_reminder_title_upcoming">🔔 Heads up! %1$d bill(s) due soon</string>
-    <string name="bill_reminder_more">…and %1$d more</string>
+    <plurals name="bill_reminder_title_overdue">
+        <item quantity="one">⏰ Yikes, %1$d bill past due!</item>
+        <item quantity="other">⏰ Yikes, %1$d bills past due!</item>
+    </plurals>
+    <plurals name="bill_reminder_title_upcoming">
+        <item quantity="one">🔔 Heads up! %1$d bill due soon</item>
+        <item quantity="other">🔔 Heads up! %1$d bills due soon</item>
+    </plurals>
+    <plurals name="bill_reminder_more">
+        <item quantity="one">…and %1$d more</item>
+        <item quantity="other">…and %1$d more</item>
+    </plurals>
     <string name="bill_reminder_due_today">due today</string>
     <string name="bill_reminder_due_tomorrow">due tomorrow</string>
-    <string name="bill_reminder_due_in">due in %1$d day(s)</string>
-    <string name="bill_reminder_overdue_by">%1$d day(s) overdue</string>
+    <plurals name="bill_reminder_due_in">
+        <item quantity="one">due in %1$d day</item>
+        <item quantity="other">due in %1$d days</item>
+    </plurals>
+    <plurals name="bill_reminder_overdue_by">
+        <item quantity="one">%1$d day overdue</item>
+        <item quantity="other">%1$d days overdue</item>
+    </plurals>
 </resources>

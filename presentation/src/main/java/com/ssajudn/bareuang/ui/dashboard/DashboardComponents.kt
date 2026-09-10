@@ -1,4 +1,5 @@
 package com.ssajudn.bareuang.ui.dashboard
+import androidx.compose.ui.res.pluralStringResource
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -101,7 +102,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.ssajudn.bareuang.domain.model.DashboardSummary
 import com.ssajudn.bareuang.domain.model.RunwayStatus
 import com.ssajudn.bareuang.ui.components.ErrorState
@@ -134,7 +135,7 @@ fun RunwayStatus.toUiMessage(): String = when (this) {
     RunwayStatus.BudgetNotSet -> stringResource(R.string.runway_status_budget_not_set)
     RunwayStatus.Exhausted -> stringResource(R.string.runway_status_exhausted)
     RunwayStatus.NoSpending -> stringResource(R.string.runway_status_no_spending)
-    is RunwayStatus.Warning -> stringResource(R.string.runway_status_warning, deathDay, daysRemaining)
+    is RunwayStatus.Warning -> pluralStringResource(R.plurals.runway_status_warning, daysRemaining, deathDay, daysRemaining)
     RunwayStatus.Healthy -> stringResource(R.string.runway_status_healthy)
 }
 

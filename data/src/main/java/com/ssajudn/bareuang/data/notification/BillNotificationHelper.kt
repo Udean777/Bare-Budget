@@ -23,7 +23,7 @@ import javax.inject.Singleton
  */
 @Singleton
 class BillNotificationHelper @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val currencyPreferences: com.ssajudn.bareuang.data.local.CurrencyPreferences
 ) {
 
@@ -50,8 +50,8 @@ class BillNotificationHelper @Inject constructor(
 
         val overdueCount = reminders.count { it.urgency == BillReminderUrgency.OVERDUE }
         val title = when {
-            overdueCount > 0 -> context.getString(R.string.bill_reminder_title_overdue, overdueCount)
-            else -> context.getString(R.string.bill_reminder_title_upcoming, reminders.size)
+            overdueCount > 0 -> context.resources.getQuantityString(R.plurals.bill_reminder_title_overdue, overdueCount, overdueCount)
+            else -> context.resources.getQuantityString(R.plurals.bill_reminder_title_upcoming, reminders.size, reminders.size)
         }
 
         val preview = reminders.take(MAX_LINES).joinToString("\n") { reminder ->
@@ -59,7 +59,7 @@ class BillNotificationHelper @Inject constructor(
         }
         val extra = reminders.size - MAX_LINES
         val body = if (extra > 0) {
-            "$preview\n" + context.getString(R.string.bill_reminder_more, extra)
+            "$preview\n" + context.resources.getQuantityString(R.plurals.bill_reminder_more, extra, extra)
         } else {
             preview
         }
@@ -94,10 +94,10 @@ class BillNotificationHelper @Inject constructor(
         DomainCurrencyFormatter.format(amount, currencyPreferences.getCurrency())
 
     private fun dueLabel(reminder: BillReminder): String = when (reminder.urgency) {
-        BillReminderUrgency.OVERDUE -> context.getString(R.string.bill_reminder_overdue_by, -reminder.daysLeft)
+        BillReminderUrgency.OVERDUE -> context.resources.getQuantityString(R.plurals.bill_reminder_overdue_by, (-reminder.daysLeft).toInt(), -reminder.daysLeft)
         BillReminderUrgency.TODAY -> context.getString(R.string.bill_reminder_due_today)
         BillReminderUrgency.TOMORROW -> context.getString(R.string.bill_reminder_due_tomorrow)
-        BillReminderUrgency.SOON -> context.getString(R.string.bill_reminder_due_in, reminder.daysLeft)
+        BillReminderUrgency.SOON -> context.resources.getQuantityString(R.plurals.bill_reminder_due_in, reminder.daysLeft.toInt(), reminder.daysLeft)
     }
 
     companion object {

@@ -74,7 +74,7 @@
     <string name="runway_status_budget_not_set">Anggaran bulanan belum diatur. Ketuk di sini untuk menetapkan target.</string>
     <string name="runway_status_exhausted">KRITIS: Anggaran bulan ini sudah habis. Hentikan pengeluaran yang tidak penting.</string>
     <string name="runway_status_no_spending">HEBAT: Belum ada pengeluaran bulan ini. Pertahankan!</string>
-    <string name="runway_status_warning">PERINGATAN: Dengan laju pengeluaran saat ini, uang habis pada hari ke-%1$d (tersisa %2$d hari)!</string>
+    <plurals name="runway_status_warning"><item quantity="other">PERINGATAN: Dengan laju pengeluaran saat ini, uang habis pada hari ke-%1$d (tersisa %2$d hari)!</item></plurals>
     <string name="runway_status_healthy">SEHAT: runway keuanganmu aman hingga akhir bulan.</string>
     <string name="tx_transfer_label">Transfer Antar Dompet</string>
     <!-- Analytics -->
@@ -90,7 +90,7 @@
     <string name="analytics_cashflow_trend">Tren Arus Kas (6 Bln Terakhir)</string>
     <string name="analytics_networth_current">Total Kekayaan Saat Ini</string>
     <string name="analytics_networth_growth">Pertumbuhan Kekayaan Bersih</string>
-    <string name="analytics_savage_streak"><xliff:g id="days">%1$d</xliff:g> Hari Savage Streak!</string>
+    <plurals name="analytics_savage_streak"><item quantity="other"><xliff:g id="days">%1$d</xliff:g> Hari Savage Streak!</item></plurals>
     <string name="analytics_savage_desc">Pengeluaran disiplin &amp; terkontrol.</string>
     <string name="analytics_top_spending">Pengeluaran Terbesar</string>
     <string name="analytics_no_expense">Belum ada pengeluaran bulan ini.</string>
@@ -222,9 +222,9 @@
     <string name="bills_delete_message">Yakin ingin menghapus tagihan \'<xliff:g id="name">%1$s</xliff:g>\' sebesar <xliff:g id="amount">%2$s</xliff:g>?</string>
     <string name="bills_delete_confirm">Hapus</string>
     <string name="bills_badge_paid">Lunas</string>
-    <string name="bills_badge_overdue">Lewat <xliff:g id="days">%1$d</xliff:g> Hari</string>
+    <plurals name="bills_badge_overdue"><item quantity="other">Lewat <xliff:g id="days">%1$d</xliff:g> Hari</item></plurals>
     <string name="bills_badge_today">Jatuh Tempo Hari Ini</string>
-    <string name="bills_badge_remaining">Sisa <xliff:g id="days">%1$d</xliff:g> Hari</string>
+    <plurals name="bills_badge_remaining"><item quantity="other">Sisa <xliff:g id="days">%1$d</xliff:g> Hari</item></plurals>
     <string name="bills_badge_paid_desc">Sudah dibayar</string>
     <string name="bills_badge_unpaid_desc">Tandai sudah dibayar</string>
     <string name="bills_form_edit">Edit Tagihan</string>
@@ -420,7 +420,7 @@
     <string name="ocr_amount_label">Total (Rp)</string>
     <string name="ocr_receipt_original">— %1$s • struk asli —</string>
     <string name="ocr_preview_caption">Preview struk • hasil AI dapat diedit di atas</string>
-    <string name="dashboard_daily_allowance">%1$d hari tersisa • %2$s/hari</string>
+    <plurals name="dashboard_daily_allowance"><item quantity="other">%1$d hari tersisa • %2$s/hari</item></plurals>
     <string name="dashboard_load_error_message">Gagal memuat dashboard.</string>
     <string name="analytics_error_message">Gagal memuat data analytics.</string>
     <string name="settings_error_backup">Gagal mengekspor cadangan</string>
@@ -470,15 +470,15 @@
     <string name="import_pick_file">Pilih File CSV</string>
     <string name="import_change_file">Ganti file (<xliff:g id="name">%1$s</xliff:g>)</string>
     <string name="import_parsing">Memparsing CSV…</string>
-    <string name="import_rows_found"><xliff:g id="count">%1$d</xliff:g> baris ditemukan</string>
+    <plurals name="import_rows_found"><item quantity="other"><xliff:g id="count">%1$d</xliff:g> baris ditemukan</item></plurals>
     <string name="import_select_all">Pilih semua</string>
     <string name="import_deselect_all">Batal pilih</string>
     <string name="import_duplicate_skip">Duplikat — auto skip</string>
-    <string name="import_selected_count"><xliff:g id="count">%1$d</xliff:g> dipilih</string>
+    <plurals name="import_selected_count"><item quantity="other"><xliff:g id="count">%1$d</xliff:g> dipilih</item></plurals>
     <string name="import_btn">Impor</string>
     <string name="import_empty_csv">CSV kosong atau format tidak dikenali</string>
-    <string name="import_duplicate_snack"><xliff:g id="count">%1$d</xliff:g> duplikat terdeteksi (auto-skip)</string>
-    <string name="import_skipped_banner"><xliff:g id="count">%1$d</xliff:g> baris dilewati (format salah)</string>
+    <plurals name="import_duplicate_snack"><item quantity="other"><xliff:g id="count">%1$d</xliff:g> duplikat terdeteksi (auto-skip)</item></plurals>
+    <plurals name="import_skipped_banner"><item quantity="other"><xliff:g id="count">%1$d</xliff:g> baris dilewati (format salah)</item></plurals>
     <string name="import_wallet_empty_title">Belum ada dompet</string>
     <string name="import_wallet_empty_desc">Buat dompet dulu untuk impor</string>
     <string name="import_wallet_create">Buat Dompet</string>
@@ -536,7 +536,7 @@
     <string name="dashboard_daily_target">Target</string>
     <string name="dashboard_daily_spent">Terpakai</string>
     <string name="dashboard_daily_remaining_label">Sisa</string>
-    <string name="dashboard_daily_days_left">%1$d hari tersisa</string>
+    <plurals name="dashboard_daily_days_left"><item quantity="other">%1$d hari tersisa</item></plurals>
     <string name="dashboard_recurring_next">Berikutnya: %1$s</string>
     <string name="dashboard_recurring_schedule">Jadwal Berulang</string>
     <string name="day_fri">Jum</string>
@@ -559,7 +559,7 @@
     <string name="settings_backup_success_msg">Cadangan berhasil diekspor! Simpan file ini untuk dipulihkan kapan saja.</string>
     <string name="settings_backup_success_snack">Cadangan diekspor</string>
     <string name="settings_restore_failed">Gagal memulihkan cadangan. Periksa format file: %1$s</string>
-    <string name="settings_restore_success_msg">Berhasil memulihkan %1$d item dari file cadangan!</string>
+    <plurals name="settings_restore_success_msg"><item quantity="other">Berhasil memulihkan %1$d item dari file cadangan!</item></plurals>
     <string name="settings_restore_success_snack">Pemulihan berhasil</string>
     <string name="settings_widget_hide_balance">Sembunyikan saldo di widget</string>
     <string name="settings_widget_hide_balance_desc">Tampilkan titik sebagai pengganti nominal</string>

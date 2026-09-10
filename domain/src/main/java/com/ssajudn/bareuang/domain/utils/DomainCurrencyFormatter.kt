@@ -5,7 +5,7 @@ import java.text.NumberFormat
 import java.util.Locale
 
 object DomainCurrencyFormatter {
-    private val idLocale = Locale("id", "ID")
+    private val idLocale = Locale.forLanguageTag("id-ID")
     private val usLocale = Locale.US
 
     private val rupiahFormat = NumberFormat.getCurrencyInstance(idLocale).apply {

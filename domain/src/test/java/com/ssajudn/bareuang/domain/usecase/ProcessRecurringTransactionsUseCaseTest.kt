@@ -76,4 +76,23 @@ class ProcessRecurringTransactionsUseCaseTest {
         assertEquals("2026-08-17", result.newTransactions.first().date)
         assertEquals("2026-08-24", result.updatedTemplates.first().nextOccurrenceDate)
     }
+
+    @Test
+    fun `ignores template with invalid next occurrence date`() {
+        val invalidTemplate = Transaction(
+            id = "template-invalid",
+            amount = 100_000L,
+            type = TransactionType.EXPENSE,
+            category = TransactionCategory.BILLS,
+            date = "2026-08-01",
+            isRecurringParent = true,
+            recurringInterval = RecurringInterval.MONTHLY,
+            nextOccurrenceDate = "not-a-date",
+        )
+
+        val result = useCase(listOf(invalidTemplate), "2026-08-31")
+
+        assertTrue(result.newTransactions.isEmpty())
+        assertTrue(result.updatedTemplates.isEmpty())
+    }
 }

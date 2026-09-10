@@ -51,9 +51,9 @@ data class Material3SettingsItem(
 
 @Composable
 fun Material3SettingsGroup(
+    modifier: Modifier = Modifier,
     title: String? = null,
     items: List<Material3SettingsItem>,
-    modifier: Modifier = Modifier
 ) {
     Column(
         modifier = modifier.fillMaxWidth()

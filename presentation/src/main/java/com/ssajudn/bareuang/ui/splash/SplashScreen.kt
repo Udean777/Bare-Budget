@@ -55,7 +55,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.ssajudn.bareuang.presentation.R
 import com.ssajudn.bareuang.ui.theme.AppShapes
 import com.ssajudn.bareuang.ui.theme.Spacing
@@ -123,7 +123,7 @@ fun SplashScreen(
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
                 .padding(horizontal = Spacing.ScreenHorizontal)
-                .offset(y = logoOffsetY.value.dp)
+                .offset { androidx.compose.ui.unit.IntOffset(0, logoOffsetY.value.dp.roundToPx()) }
         ) {
             // Logo hero — floating white pebble card with soft amber shadow
             Surface(

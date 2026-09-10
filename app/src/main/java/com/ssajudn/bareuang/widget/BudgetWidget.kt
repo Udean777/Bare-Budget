@@ -243,7 +243,7 @@ private fun RunwayStatus.widgetMessage(context: Context): String = when (this) {
     RunwayStatus.BudgetNotSet -> context.getString(com.ssajudn.bareuang.presentation.R.string.runway_status_budget_not_set)
     RunwayStatus.Exhausted -> context.getString(com.ssajudn.bareuang.presentation.R.string.runway_status_exhausted)
     RunwayStatus.NoSpending -> context.getString(com.ssajudn.bareuang.presentation.R.string.runway_status_no_spending)
-    is RunwayStatus.Warning -> context.getString(com.ssajudn.bareuang.presentation.R.string.runway_status_warning, deathDay, daysRemaining)
+    is RunwayStatus.Warning -> context.resources.getQuantityString(com.ssajudn.bareuang.presentation.R.plurals.runway_status_warning, daysRemaining, deathDay, daysRemaining)
     RunwayStatus.Healthy -> context.getString(com.ssajudn.bareuang.presentation.R.string.runway_status_healthy)
 }
 

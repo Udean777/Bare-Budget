@@ -51,11 +51,11 @@ fun BearPeek(
 
     Box(modifier = modifier.graphicsLayer { this.alpha = alpha }) {
         Image(
-            painter = painterResource(id = R.drawable.ic_bear_head),
+            painter = painterResource(id = R.drawable.ic_app_logo),
             contentDescription = null,
             modifier = Modifier
                 .size(size)
-                .offset(y = offsetY)
+                .offset { androidx.compose.ui.unit.IntOffset(0, offsetY.roundToPx()) }
                 .clip(MaterialTheme.shapes.medium)
                 .graphicsLayer { rotationZ = if (visible && wiggle) infiniteWiggle else 0f }
         )

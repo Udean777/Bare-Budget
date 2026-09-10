@@ -23,6 +23,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:localeConfig="@xml/locales_config"
+        tools:targetApi="33"
         android:theme="@style/Theme.Bareuang">
         <activity
             android:name=".MainActivity"
@@ -54,7 +55,8 @@
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
             android:exported="false"
-            android:grantUriPermissions="true">
+            android:grantUriPermissions="true"
+            tools:ignore="ExportedContentProvider">
             <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/file_paths" />
         </provider>
 
@@ -63,7 +65,8 @@
         <provider
             android:name="androidx.startup.InitializationProvider"
             android:authorities="${applicationId}.androidx-startup"
-            tools:node="merge">
+            tools:node="merge"
+            tools:ignore="ExportedContentProvider">
             <meta-data
                 android:name="androidx.work.WorkManagerInitializer"
                 tools:node="remove" />

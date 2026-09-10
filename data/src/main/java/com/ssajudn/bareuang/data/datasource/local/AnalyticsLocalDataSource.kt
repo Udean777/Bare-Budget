@@ -6,6 +6,7 @@ import com.ssajudn.bareuang.domain.model.NetWorthDataPoint
 import com.ssajudn.bareuang.domain.repository.AnalyticsData
 import com.ssajudn.bareuang.data.error.ApiErrorParser
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import java.time.Clock
 import java.time.LocalDate
@@ -43,6 +44,8 @@ class AnalyticsLocalDataSource @Inject constructor(
                 )
             }
             Result.success(AnalyticsData(cashflow = cashflow, netWorth = points))
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }
@@ -55,7 +58,7 @@ class AnalyticsLocalDataSource @Inject constructor(
             val fromMonth = currentMonth.minusMonths(5)
             val fromDate = fromMonth.toString() + "-01"
             val toDate = currentMonth.plusMonths(1).toString() + "-01"
-            val labelFormat = DateTimeFormatter.ofPattern("MMM", Locale("id", "ID"))
+            val labelFormat = DateTimeFormatter.ofPattern("MMM", Locale.forLanguageTag("id-ID"))
             val rows = db.transactionDao().getCashflowByMonth(fromDate, toDate).associateBy { it.month }
 
             for (i in 5 downTo 0) {
@@ -75,11 +78,11 @@ class AnalyticsLocalDataSource @Inject constructor(
             }
 
             Result.success(points)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }
     }
 
-    suspend fun getNetWorthAnalytics(referenceClock: Clock = clock): Result<List<NetWorthDataPoint>> =
-        getAnalytics(referenceClock).map { it.netWorth }
 }

@@ -1,6 +1,7 @@
 package com.ssajudn.bareuang.domain.usecase
 
 import com.ssajudn.bareuang.domain.model.CreateTransactionRequest
+import com.ssajudn.bareuang.domain.model.DashboardTransactionData
 import com.ssajudn.bareuang.domain.model.Transaction
 import com.ssajudn.bareuang.domain.repository.TransactionRepository
 import kotlinx.coroutines.flow.Flow
@@ -15,6 +16,16 @@ class CreateTransactionUseCaseTest {
         val expected = Transaction(id = "tx-1", amount = 25_000L, category = com.ssajudn.bareuang.domain.model.TransactionCategory.FOOD, date = "2026-09-03")
         var received: CreateTransactionRequest? = null
         val repository = object : TransactionRepository {
+            override suspend fun getDashboardTransactions(monthYear: String, todayIso: String) =
+                Result.success(
+                    DashboardTransactionData(
+                        totalSpent = 0L,
+                        todaySpent = 0L,
+                        topCategories = emptyList(),
+                        recentTransactions = emptyList(),
+                        recurringTransactions = emptyList(),
+                    )
+                )
             override suspend fun createTransaction(request: CreateTransactionRequest): Result<Transaction> {
                 received = request
                 return Result.success(expected)

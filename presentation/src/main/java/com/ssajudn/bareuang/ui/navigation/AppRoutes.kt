@@ -1,6 +1,4 @@
 package com.ssajudn.bareuang.ui.navigation
-import androidx.compose.material.icons.filled.Settings
-
 sealed class Screen(val route: String) {
     data object Splash : Screen("splash")
     data object Onboarding : Screen("onboarding")

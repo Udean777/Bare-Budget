@@ -19,6 +19,7 @@ import com.ssajudn.bareuang.domain.utils.DateUtils
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import java.util.concurrent.TimeUnit
+import kotlinx.coroutines.CancellationException
 
 @HiltWorker
 class RecurringTransactionWorker @AssistedInject constructor(
@@ -63,6 +64,8 @@ class RecurringTransactionWorker @AssistedInject constructor(
             }
 
             Result.success()
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
             Result.retry()
         }

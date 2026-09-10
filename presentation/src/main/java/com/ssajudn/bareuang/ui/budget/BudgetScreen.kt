@@ -81,7 +81,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.ssajudn.bareuang.presentation.R
 import com.ssajudn.bareuang.ui.theme.AppShapes
 import com.ssajudn.bareuang.ui.theme.Spacing
@@ -92,6 +92,7 @@ import com.ssajudn.bareuang.ui.components.AmountTextField
 
 import com.ssajudn.bareuang.ui.components.AppButton
 import com.ssajudn.bareuang.ui.components.AppIconButton
+import com.ssajudn.bareuang.ui.components.FeatureTopAppBar
 import com.ssajudn.bareuang.ui.components.AppConfirmDialog
 import com.ssajudn.bareuang.ui.components.BearPeek
 import com.ssajudn.bareuang.domain.model.CategoryBudget
@@ -128,23 +129,9 @@ fun BudgetScreen(
 
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.budget_title),
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                },
-                navigationIcon = {
-                    AppIconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+            FeatureTopAppBar(
+                titleRes = R.string.budget_title,
+                onNavigateBack = onNavigateBack
             )
         },
         bottomBar = {
@@ -201,153 +188,10 @@ fun BudgetScreen(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            // Explanatory Card (M3 ElevatedCard)
-            ElevatedCard(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .tourAnchor("budget_explainer")
-                    .crispBorder(
-                        shape = MaterialTheme.shapes.extraLarge,
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.35f)
-                    ),
-                shape = MaterialTheme.shapes.extraLarge,
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                ),
-                elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-            ) {
-                Column(modifier = Modifier.padding(20.dp)) {
-                    Text(
-                        text = stringResource(R.string.budget_runway_banner_title),
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontWeight = FontWeight.Bold,
-                            letterSpacing = 1.sp
-                        ),
-                        color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.85f)
-                    )
-                    Spacer(modifier = Modifier.height(6.dp))
-                    Text(
-                        text = stringResource(R.string.budget_runway_banner_desc),
-                        style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 20.sp),
-                        color = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
-                }
-            }
-
-            if (uiState.isLocked) {
-                ElevatedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .crispBorder(
-                            shape = AppShapes.Squircle,
-                            color = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.35f)
-                        ),
-                    shape = AppShapes.Squircle,
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                    )
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = stringResource(R.string.budget_locked_title),
-                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                            color = MaterialTheme.colorScheme.onTertiaryContainer
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = stringResource(R.string.budget_locked_desc, CurrencyFormatter.formatRupiah(uiState.currentLimit)),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.85f)
-                        )
-                    }
-                }
-            }
-
-            // Amount Input — bear peek when amount entered
-            Box(modifier = Modifier.fillMaxWidth()) {
-                BearPeek(
-                    visible = uiState.parsedAmount > 0,
-                    modifier = Modifier.align(Alignment.TopEnd).offset(y = (-10).dp, x = 4.dp),
-                    size = 38.dp
-                )
-                ElevatedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = if (uiState.parsedAmount > 0) 12.dp else 0.dp)
-                        .tourAnchor("budget_input_amount"),
-                    shape = MaterialTheme.shapes.extraLarge,
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest
-                    ),
-                    elevation = CardDefaults.elevatedCardElevation(defaultElevation = 2.dp)
-                ) {
-                Column(
-                    modifier = Modifier.padding(22.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = stringResource(R.string.budget_input_label),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    AmountTextField(
-                        value = uiState.rawAmount,
-                        onValueChange = { if (!uiState.isLocked) viewModel.onAmountChange(it) },
-                        enabled = !uiState.isLocked,
-                        placeholder = {
-                            Text(
-                                stringResource(R.string.common_rp_zero),
-                                style = MaterialTheme.typography.displayMedium.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 32.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.35f)
-                            )
-                        },
-                        textStyle = MaterialTheme.typography.displayMedium.copy(
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 32.sp
-                        ),
-                        colors = OutlinedTextFieldDefaults.colors(
-                            focusedBorderColor = Color.Transparent,
-                            unfocusedBorderColor = Color.Transparent
-                        ),
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-                }
-            }
-
-            // Quick Selection Presets
-            Text(
-                text = stringResource(R.string.budget_presets_label),
-                style = MaterialTheme.typography.titleMedium.copy(
-                    fontWeight = FontWeight.Bold
-                ),
-                color = MaterialTheme.colorScheme.onSurface
+            BudgetOverviewSection(
+                uiState = uiState,
+                viewModel = viewModel
             )
-
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                listOf(2_000_000L, 3_500_000L, 5_000_000L).forEach { preset ->
-                    SuggestionChip(
-                        onClick = { if (!uiState.isLocked) viewModel.onAmountChange(preset.toString()) },
-                        enabled = !uiState.isLocked,
-                        label = {
-                            Text(
-                                CurrencyFormatter.formatCompact(preset),
-                                fontWeight = FontWeight.Medium
-                            )
-                        },
-                        modifier = Modifier.weight(1f),
-                        shape = MaterialTheme.shapes.medium
-                    )
-                }
-            }
-
             // CATEGORY BUDGETS SECTION — only shown after a budget has been saved
             if (uiState.currentLimit > 0) {
                 ElevatedCard(

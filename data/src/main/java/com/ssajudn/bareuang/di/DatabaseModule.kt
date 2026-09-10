@@ -43,7 +43,7 @@ object DatabaseModule {
             )
         // Never allow a release upgrade to silently delete financial data.
         // Destructive fallback is limited to debug builds for local development.
-        if (BuildConfig.DEBUG) builder.fallbackToDestructiveMigration()
+        if (BuildConfig.DEBUG) builder.fallbackToDestructiveMigration(dropAllTables = true)
         return builder.build()
     }
 

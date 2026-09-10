@@ -1,4 +1,5 @@
 package com.ssajudn.bareuang.ui.bills
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.material3.Badge
 import androidx.compose.material3.FilledIconToggleButton
 
@@ -75,7 +76,7 @@ fun DueBillItem(
         isOverdue -> Triple(
             MaterialTheme.colorScheme.errorContainer,
             MaterialTheme.colorScheme.onErrorContainer,
-            stringResource(R.string.bills_badge_overdue, (-daysLeft!!).toInt())
+            pluralStringResource(R.plurals.bills_badge_overdue, (-daysLeft!!).toInt(), (-daysLeft!!).toInt())
         )
         daysLeft == 0L -> Triple(
             MaterialTheme.colorScheme.tertiaryContainer,
@@ -91,7 +92,7 @@ fun DueBillItem(
         else -> Triple(
             MaterialTheme.colorScheme.secondaryContainer,
             MaterialTheme.colorScheme.onSecondaryContainer,
-            stringResource(R.string.bills_badge_remaining, daysLeft.toInt())
+            pluralStringResource(R.plurals.bills_badge_remaining, daysLeft.toInt(), daysLeft.toInt())
         )
     }
 

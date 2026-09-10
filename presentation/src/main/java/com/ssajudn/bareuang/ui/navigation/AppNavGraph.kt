@@ -1,6 +1,4 @@
 package com.ssajudn.bareuang.ui.navigation
-import androidx.compose.material.icons.filled.Settings
-
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut

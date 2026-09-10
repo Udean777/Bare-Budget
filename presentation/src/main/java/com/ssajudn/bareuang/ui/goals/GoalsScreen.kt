@@ -116,7 +116,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.ssajudn.bareuang.domain.model.Goal
 import com.ssajudn.bareuang.ui.components.ErrorState
 import com.ssajudn.bareuang.ui.components.AppConfirmDialog
@@ -141,6 +141,7 @@ import com.ssajudn.bareuang.ui.components.AppDatePickerDialog
 import com.ssajudn.bareuang.ui.components.pressScale
 import com.ssajudn.bareuang.ui.components.AppButton
 import com.ssajudn.bareuang.ui.components.AppIconButton
+import com.ssajudn.bareuang.ui.components.FeatureTopAppBar
 import com.ssajudn.bareuang.ui.components.AppOutlinedButton
 import com.ssajudn.bareuang.domain.model.Wallet
 
@@ -203,180 +204,27 @@ fun GoalsScreen(
 
     Scaffold(snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.goals_title),
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                },
-                navigationIcon = {
-                    if (onNavigateBack != null) {
-                        AppIconButton(onClick = onNavigateBack) {
-                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+            FeatureTopAppBar(
+                titleRes = R.string.goals_title,
+                onNavigateBack = onNavigateBack
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 6.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                // 1. Single-Line Search Bar
-                OutlinedTextField(
-                    value = searchQuery,
-                    onValueChange = { viewModel.onSearchQueryChange(it) },
-                    placeholder = {
-                        Text(
-                            stringResource(R.string.goals_search_hint),
-                            maxLines = 1,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = stringResource(R.string.common_search),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    },
-                    trailingIcon = {
-                        if (searchQuery.isNotBlank()) {
-                            IconButton(onClick = { viewModel.onSearchQueryChange("") }) {
-                                Icon(Icons.Default.Close, contentDescription = stringResource(R.string.common_close))
-                            }
-                        }
-                    },
-                    singleLine = true,
-                    maxLines = 1,
-                    shape = AppShapes.Squircle,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .crispBorder(
-                            shape = AppShapes.Squircle,
-                            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.35f)
-                        ),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.surface,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.surface
-                    )
-                )
-
-                // 2. FILTER TABS (Semua / Aktif / Tercapai)
-                SingleChoiceSegmentedButtonRow(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    GoalFilter.entries.forEachIndexed { index, filter ->
-                        SegmentedButton(
-                            selected = selectedFilter == filter,
-                            onClick = { viewModel.onFilterChange(filter) },
-                            shape = SegmentedButtonDefaults.itemShape(index = index, count = GoalFilter.entries.size)
-                        ) {
-                            Text(stringResource(filter.labelRes), style = MaterialTheme.typography.labelSmall.copy(fontWeight = if (selectedFilter == filter) FontWeight.Bold else FontWeight.Medium))
-                        }
-                    }
-                }
+        GoalsContent(
+            paddingValues = paddingValues,
+            uiState = uiState,
+            searchQuery = searchQuery,
+            selectedFilter = selectedFilter,
+            isRefreshing = isRefreshing,
+            viewModel = viewModel,
+            onActionSheetGoal = { actionSheetGoal = it },
+            onAddGoal = {
+                editingGoal = null
+                showAddDialog = true
             }
-
-            PullToRefreshBox(
-                isRefreshing = isRefreshing,
-                onRefresh = { viewModel.loadGoals(isPullToRefresh = true) },
-                modifier = Modifier.fillMaxSize()
-            ) {
-                when (val state = uiState) {
-                    is GoalsUiState.Loading -> {
-                        CircularProgressIndicator(
-                            modifier = Modifier.align(Alignment.Center),
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-
-                    is GoalsUiState.Error -> {
-                        ErrorState(
-                            title = stringResource(R.string.goals_load_error),
-                            message = state.message,
-                            retryLabel = stringResource(R.string.common_retry),
-                            modifier = Modifier.align(Alignment.Center),
-                            onRetry = { viewModel.loadGoals() }
-                        )
-                    }
-
-                    is GoalsUiState.Success -> {
-                        val filteredGoals = state.goals
-
-                        if (filteredGoals.isEmpty()) {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(32.dp),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Icon(
-                                        imageVector = Icons.Default.Payments,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(56.dp)
-                                    )
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    Text(
-                                        text = stringResource(R.string.goals_empty_title),
-                                        style = MaterialTheme.typography.titleLarge.copy(
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    )
-                                    Spacer(modifier = Modifier.height(6.dp))
-                                    Text(
-                                        text = stringResource(R.string.goals_empty_desc),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    AppButton(onClick = {
-                                        editingGoal = null
-                                        showAddDialog = true
-                                    }) {
-                                        Text(stringResource(R.string.goals_create_first))
-                                    }
-                                }
-                            }
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 20.dp),
-                                verticalArrangement = Arrangement.spacedBy(14.dp),
-                                contentPadding = PaddingValues(top = Spacing.MediumSmall, bottom = Spacing.FabClearance)
-                            ) {
-                                items(filteredGoals) { goal ->
-                                    GoalCard(
-                                        goal = goal,
-                                        onClick = { actionSheetGoal = goal }
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        )
     }
-
     // 2. QUICK ACTION BOTTOM SHEET
     if (actionSheetGoal != null) {
         val targetGoal = actionSheetGoal!!

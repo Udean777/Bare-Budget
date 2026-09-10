@@ -2,6 +2,7 @@ package com.ssajudn.bareuang.data.local
 
 import android.content.Context
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.room.withTransaction
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -16,6 +17,7 @@ import com.ssajudn.bareuang.data.local.room.LocalWalletEntity
 import com.ssajudn.bareuang.domain.error.AppException
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withContext
 import java.io.OutputStreamWriter
 import java.nio.charset.StandardCharsets
@@ -50,7 +52,7 @@ private data class BareuangBackupEnvelope(
 
 @Singleton
 class BackupRestoreManager @Inject constructor(
-    @ApplicationContext private val context: Context,
+    @param:ApplicationContext private val context: Context,
     private val db: AppDatabase
 ) : com.ssajudn.bareuang.domain.port.BackupRestorePort {
     private val gson: Gson = GsonBuilder().setPrettyPrinting().create()
@@ -59,7 +61,7 @@ class BackupRestoreManager @Inject constructor(
         .digest(payload.toByteArray(StandardCharsets.UTF_8))
         .joinToString("") { "%02x".format(it) }
 
-    override suspend fun createBackupJson(): String = withContext(Dispatchers.IO) {
+    private suspend fun createBackupJson(): String = withContext(Dispatchers.IO) {
         val payload = BareuangBackupData(
             transactions = db.transactionDao().getAllTransactions(),
             dueBills = db.dueBillDao().getAllDueBills(),
@@ -79,13 +81,15 @@ class BackupRestoreManager @Inject constructor(
                 OutputStreamWriter(stream, StandardCharsets.UTF_8).use { it.write(json) }
             } ?: return@withContext Result.failure(AppException.DataException("Cannot open file for writing"))
             Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             android.util.Log.e("Backup", "export failed", e)
             Result.failure(if (e is AppException) e else AppException.DataException(cause = e))
         }
     }
 
-    override suspend fun exportBackup(uri: String): Result<Unit> = exportBackupToUri(Uri.parse(uri))
+    override suspend fun exportBackup(uri: String): Result<Unit> = exportBackupToUri(uri.toUri())
 
     private fun validateDate(value: String?): Boolean =
         value == null || Regex("^\\d{4}-\\d{2}-\\d{2}([ T].*)?$").matches(value)
@@ -165,11 +169,13 @@ class BackupRestoreManager @Inject constructor(
                 restored += safe.goals.size
             }
             Result.success(restored)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             android.util.Log.e("Backup", "import failed", e)
             Result.failure(if (e is AppException) e else AppException.DataException("Backup tidak valid", e))
         }
     }
 
-    override suspend fun importBackup(uri: String): Result<Int> = importBackupFromUri(Uri.parse(uri))
+    override suspend fun importBackup(uri: String): Result<Int> = importBackupFromUri(uri.toUri())
 }

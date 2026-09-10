@@ -1,4 +1,5 @@
 package com.ssajudn.bareuang.ui.imports
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Checkbox
@@ -70,7 +71,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ssajudn.bareuang.domain.model.TransactionCategory
 import com.ssajudn.bareuang.domain.model.TransactionType
@@ -123,7 +124,7 @@ fun ImportMutasiScreen(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column {
-                            Text(stringResource(R.string.import_selected_count, selectedCount), style = MaterialTheme.typography.titleSmall)
+                            Text(pluralStringResource(R.plurals.import_selected_count, selectedCount, selectedCount), style = MaterialTheme.typography.titleSmall)
                             Text(CurrencyFormatter.formatRupiah(totalAmount), style = MaterialTheme.typography.bodySmall)
                         }
                         Button(
@@ -178,7 +179,7 @@ fun ImportMutasiScreen(
             }
             if (uiState.skippedRows > 0) {
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer)) {
-                    Text(stringResource(R.string.import_skipped_banner, uiState.skippedRows), modifier = Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall)
+                    Text(pluralStringResource(R.plurals.import_skipped_banner, uiState.skippedRows, uiState.skippedRows), modifier = Modifier.padding(12.dp), style = MaterialTheme.typography.bodySmall)
                 }
             }
 
@@ -203,7 +204,7 @@ fun ImportMutasiScreen(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(stringResource(R.string.import_rows_found, uiState.drafts.size), style = MaterialTheme.typography.titleSmall)
+                    Text(pluralStringResource(R.plurals.import_rows_found, uiState.drafts.size, uiState.drafts.size), style = MaterialTheme.typography.titleSmall)
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         TextButton(onClick = { viewModel.selectAll(true) }) { Text(stringResource(R.string.import_select_all)) }
                         TextButton(onClick = { viewModel.selectAll(false) }) { Text(stringResource(R.string.import_deselect_all)) }

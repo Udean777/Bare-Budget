@@ -114,15 +114,17 @@ class CsvMutasiParser @Inject constructor() : com.ssajudn.bareuang.domain.port.C
             var foundMerchant = ""
             for (c in cols) {
                 if (foundDate == null) parseDateOrNull(c)?.let { foundDate = it }
-                if (foundAmount == null) parseAmountOrNull(c)?.let { if (it > 0) foundAmount = it }
+                if (foundAmount == null && parseDateOrNull(c) == null) {
+                    parseAmountOrNull(c)?.let { if (it > 0) foundAmount = it }
+                }
             }
             if (foundDate == null || foundAmount == null) return null
             foundMerchant = cols.firstOrNull { it.length >= 3 && it.any { ch -> ch.isLetter() } && parseDateOrNull(it) == null && parseAmountOrNull(it) == null }?.trim() ?: cols.firstOrNull().orEmpty()
             category = guessCategory(foundMerchant)
             // check sign
-            val rawAmountCol = cols.firstOrNull { parseAmountOrNull(it) != null } ?: ""
+            val rawAmountCol = cols.firstOrNull { parseDateOrNull(it) == null && parseAmountOrNull(it) != null } ?: ""
             val isNegative = rawAmountCol.trim().startsWith("-")
-            type = if (isNegative) TransactionType.EXPENSE else TransactionType.EXPENSE
+            type = if (isNegative) TransactionType.EXPENSE else TransactionType.INCOME
             return ImportDraft(UUID.randomUUID().toString(), kotlin.math.abs(foundAmount!!), type, category, foundMerchant.ifBlank { "Import" }, foundDate!!, rawLine)
         }
     }
@@ -195,7 +197,7 @@ class CsvMutasiParser @Inject constructor() : com.ssajudn.bareuang.domain.port.C
             } catch (_: Exception) { }
             // try Indonesian month names
             try {
-                val fmtId = DateTimeFormatter.ofPattern(pat, java.util.Locale("id", "ID"))
+                val fmtId = DateTimeFormatter.ofPattern(pat, java.util.Locale.forLanguageTag("id-ID"))
                 val d = LocalDate.parse(s, fmtId)
                 return d.toString()
             } catch (_: Exception) { }

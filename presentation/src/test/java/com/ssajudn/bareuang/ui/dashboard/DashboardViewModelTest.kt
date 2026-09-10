@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+
 package com.ssajudn.bareuang.ui.dashboard
 
 import app.cash.turbine.test

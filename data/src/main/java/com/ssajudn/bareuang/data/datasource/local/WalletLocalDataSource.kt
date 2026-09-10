@@ -8,6 +8,7 @@ import com.ssajudn.bareuang.data.mapper.PersistenceMappers
 import com.ssajudn.bareuang.data.error.ApiErrorParser
 import androidx.room.withTransaction
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -51,6 +52,8 @@ class WalletLocalDataSource @Inject constructor(private val db: AppDatabase) {
                 }
                 Result.success(uniqueWallets)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }
@@ -69,6 +72,8 @@ class WalletLocalDataSource @Inject constructor(private val db: AppDatabase) {
             )
             db.walletDao().insertWallet(LocalWalletEntity.fromWallet(wallet, isSynced = false))
             Result.success(wallet)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }
@@ -83,6 +88,8 @@ class WalletLocalDataSource @Inject constructor(private val db: AppDatabase) {
                 existing.copy(name = wallet.name.trim(), colorHex = wallet.colorHex, isSynced = false)
             )
             Result.success(Unit)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }
@@ -92,6 +99,8 @@ class WalletLocalDataSource @Inject constructor(private val db: AppDatabase) {
         try {
             db.walletDao().deleteWallet(id)
             Result.success(true)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Result.failure(ApiErrorParser.fromThrowable(e))
         }

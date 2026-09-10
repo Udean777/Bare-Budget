@@ -1,4 +1,5 @@
 package com.ssajudn.bareuang.ui.components
+import androidx.compose.ui.res.pluralStringResource
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Animatable
@@ -119,7 +120,7 @@ fun DailyPacingCard(
             )
             if (remainingDays > 0) {
                 Spacer(Modifier.height(6.dp))
-                Text(stringResource(R.string.dashboard_daily_allowance, remainingDays, CurrencyFormatter.formatRupiah(dailyAllowance)), style = MaterialTheme.typography.labelSmall, color = cardContent.copy(alpha = 0.75f))
+                Text(pluralStringResource(R.plurals.dashboard_daily_allowance, remainingDays, remainingDays, CurrencyFormatter.formatRupiah(dailyAllowance)), style = MaterialTheme.typography.labelSmall, color = cardContent.copy(alpha = 0.75f))
             }
             if (dailyExceeded) {
                 Spacer(Modifier.height(6.dp))

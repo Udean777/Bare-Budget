@@ -2,6 +2,7 @@ package com.ssajudn.bareuang.data.local
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,14 +21,11 @@ class ImportPreferences @Inject constructor(
 
     override fun increment(count: Int) {
         val newVal = _importCount.value + count
-        prefs.edit().putInt(KEY_COUNT, newVal).putLong(KEY_LAST_AT, System.currentTimeMillis()).apply()
+        prefs.edit { putInt(KEY_COUNT, newVal) }
         _importCount.value = newVal
     }
 
-    override fun lastImportAt(): Long = prefs.getLong(KEY_LAST_AT, 0L)
-
     companion object {
         private const val KEY_COUNT = "import_count"
-        private const val KEY_LAST_AT = "last_import_at"
     }
 }

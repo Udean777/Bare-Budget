@@ -7,6 +7,7 @@ import androidx.activity.result.PickVisualMediaRequest
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
+import androidx.core.net.toUri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Canvas
@@ -84,7 +85,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.ssajudn.bareuang.domain.model.TransactionCategory
 import com.ssajudn.bareuang.presentation.R
@@ -127,7 +128,7 @@ fun OcrScanScreen(
         context.startActivity(
             android.content.Intent(
                 android.content.Intent.ACTION_VIEW,
-                Uri.parse(PRIVACY_POLICY_URL)
+                PRIVACY_POLICY_URL.toUri()
             )
         )
     }

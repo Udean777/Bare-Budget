@@ -17,7 +17,7 @@ interface ThemePreferencesPort { val darkMode: StateFlow<AppThemeDarkMode>; fun 
 interface CurrencyPreferencesPort { val currency: StateFlow<AppCurrency>; fun setCurrency(currency: AppCurrency); fun getCurrency(): AppCurrency }
 interface WidgetPreferencesPort { val hideBalance: StateFlow<Boolean>; fun setHideBalance(hidden: Boolean) }
 interface TourPreferencesPort { val isTourCompleted: Boolean; fun markTourCompleted(); fun resetTour() }
-interface ImportPreferencesPort { val importCount: StateFlow<Int>; fun increment(count: Int); fun lastImportAt(): Long }
+interface ImportPreferencesPort { val importCount: StateFlow<Int>; fun increment(count: Int) }
 interface OcrConsentPort { val hasCurrentConsent: Boolean; fun grantCurrentConsent(); fun revokeConsent() }
 interface OnboardingStatePort {
     var isOnboardingCompleted: Boolean
@@ -25,7 +25,6 @@ interface OnboardingStatePort {
     fun resetOnboarding()
 }
 interface BackupRestorePort {
-    suspend fun createBackupJson(): String
     suspend fun exportBackup(uri: String): Result<Unit>
     suspend fun importBackup(uri: String): Result<Int>
 }

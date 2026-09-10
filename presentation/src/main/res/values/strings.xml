@@ -74,7 +74,7 @@
     <string name="runway_status_budget_not_set">Monthly budget not set yet. Tap here to set your target budget.</string>
     <string name="runway_status_exhausted">CRITICAL: You have exhausted your budget for this month! Stop all non-essential spending.</string>
     <string name="runway_status_no_spending">GREAT: No expenses recorded yet this month. Keep it up!</string>
-    <string name="runway_status_warning">WARNING: At your current burn rate, your money runs out on day %1$d (%2$d days left)!</string>
+    <plurals name="runway_status_warning"><item quantity="one">WARNING: At your current burn rate, your money runs out on day %1$d (%2$d day left)!</item><item quantity="other">WARNING: At your current burn rate, your money runs out on day %1$d (%2$d days left)!</item></plurals>
     <string name="runway_status_healthy">HEALTHY: Your financial runway is safe until the end of the month.</string>
     <string name="tx_transfer_label">Wallet Transfer</string>
     <!-- Analytics -->
@@ -90,7 +90,7 @@
     <string name="analytics_cashflow_trend">Cash Flow Trend (Last 6 Mos)</string>
     <string name="analytics_networth_current">Current Net Worth</string>
     <string name="analytics_networth_growth">Net Worth Growth</string>
-    <string name="analytics_savage_streak"><xliff:g id="days">%1$d</xliff:g> Days Savage Streak!</string>
+    <plurals name="analytics_savage_streak"><item quantity="one"><xliff:g id="days">%1$d</xliff:g> Day Savage Streak!</item><item quantity="other"><xliff:g id="days">%1$d</xliff:g> Days Savage Streak!</item></plurals>
     <string name="analytics_savage_desc">Disciplined &amp; controlled spending.</string>
     <string name="analytics_top_spending">Top Spending</string>
     <string name="analytics_no_expense">No expenses this month.</string>
@@ -222,9 +222,9 @@
     <string name="bills_delete_message">Are you sure you want to delete bill \'<xliff:g id="name">%1$s</xliff:g>\' of <xliff:g id="amount">%2$s</xliff:g>?</string>
     <string name="bills_delete_confirm">Delete</string>
     <string name="bills_badge_paid">Paid</string>
-    <string name="bills_badge_overdue">Overdue <xliff:g id="days">%1$d</xliff:g> Days</string>
+    <plurals name="bills_badge_overdue"><item quantity="one">Overdue <xliff:g id="days">%1$d</xliff:g> Day</item><item quantity="other">Overdue <xliff:g id="days">%1$d</xliff:g> Days</item></plurals>
     <string name="bills_badge_today">Due Today</string>
-    <string name="bills_badge_remaining">Remaining <xliff:g id="days">%1$d</xliff:g> Days</string>
+    <plurals name="bills_badge_remaining"><item quantity="one">Remaining <xliff:g id="days">%1$d</xliff:g> Day</item><item quantity="other">Remaining <xliff:g id="days">%1$d</xliff:g> Days</item></plurals>
     <string name="bills_badge_paid_desc">Already paid</string>
     <string name="bills_badge_unpaid_desc">Mark as paid</string>
     <string name="bills_form_edit">Edit Bill</string>
@@ -307,15 +307,15 @@
     <string name="import_pick_file">Choose CSV File</string>
     <string name="import_change_file">Change file (<xliff:g id="name">%1$s</xliff:g>)</string>
     <string name="import_parsing">Parsing CSV…</string>
-    <string name="import_rows_found"><xliff:g id="count">%1$d</xliff:g> rows found</string>
+    <plurals name="import_rows_found"><item quantity="one"><xliff:g id="count">%1$d</xliff:g> row found</item><item quantity="other"><xliff:g id="count">%1$d</xliff:g> rows found</item></plurals>
     <string name="import_select_all">Select all</string>
     <string name="import_deselect_all">Deselect all</string>
     <string name="import_duplicate_skip">Duplicate — auto skipped</string>
-    <string name="import_selected_count"><xliff:g id="count">%1$d</xliff:g> selected</string>
+    <plurals name="import_selected_count"><item quantity="one"><xliff:g id="count">%1$d</xliff:g> selected</item><item quantity="other"><xliff:g id="count">%1$d</xliff:g> selected</item></plurals>
     <string name="import_btn">Import</string>
     <string name="import_empty_csv">CSV empty or format not recognized</string>
-    <string name="import_duplicate_snack"><xliff:g id="count">%1$d</xliff:g> duplicates detected (auto-skipped)</string>
-    <string name="import_skipped_banner"><xliff:g id="count">%1$d</xliff:g> rows skipped (invalid format)</string>
+    <plurals name="import_duplicate_snack"><item quantity="one"><xliff:g id="count">%1$d</xliff:g> duplicate detected (auto-skipped)</item><item quantity="other"><xliff:g id="count">%1$d</xliff:g> duplicates detected (auto-skipped)</item></plurals>
+    <plurals name="import_skipped_banner"><item quantity="one"><xliff:g id="count">%1$d</xliff:g> row skipped (invalid format)</item><item quantity="other"><xliff:g id="count">%1$d</xliff:g> rows skipped (invalid format)</item></plurals>
     <string name="import_wallet_empty_title">No wallet yet</string>
     <string name="import_wallet_empty_desc">Create a wallet first to import into</string>
     <string name="import_wallet_create">Create Wallet</string>
@@ -508,13 +508,13 @@
     <string name="dashboard_daily_target">Target</string>
     <string name="dashboard_daily_spent">Spent</string>
     <string name="dashboard_daily_remaining_label">Remaining</string>
-    <string name="dashboard_daily_days_left">%1$d days left</string>
+    <plurals name="dashboard_daily_days_left"><item quantity="one">%1$d day left</item><item quantity="other">%1$d days left</item></plurals>
     <string name="bills_error_insufficient">Insufficient balance to pay this bill</string>
     <!-- Settings backup/restore -->
     <string name="settings_backup_success_msg">Backup successfully exported to file! Keep this file to restore anytime.</string>
     <string name="settings_backup_success_snack">Backup exported</string>
     <string name="settings_backup_failed">Failed to export backup: %1$s</string>
-    <string name="settings_restore_success_msg">Successfully restored %1$d items from backup file!</string>
+    <plurals name="settings_restore_success_msg"><item quantity="one">Successfully restored %1$d item from backup file!</item><item quantity="other">Successfully restored %1$d items from backup file!</item></plurals>
     <string name="settings_restore_success_snack">Restore successful</string>
     <string name="settings_restore_failed">Failed to restore backup. Please check file format: %1$s</string>
     <!-- Generic -->
@@ -568,7 +568,7 @@
     <string name="ocr_amount_label">Total (Rp)</string>
     <string name="ocr_receipt_original">— %1$s • original receipt —</string>
     <string name="ocr_preview_caption">Receipt preview • AI results can be edited above</string>
-    <string name="dashboard_daily_allowance">%1$d days left • %2$s/day</string>
+    <plurals name="dashboard_daily_allowance"><item quantity="one">%1$d day left • %2$s/day</item><item quantity="other">%1$d days left • %2$s/day</item></plurals>
     <string name="dashboard_load_error_message">Unable to load dashboard data.</string>
     <string name="analytics_error_message">Unable to load analytics data.</string>
     <!-- Settings granular -->

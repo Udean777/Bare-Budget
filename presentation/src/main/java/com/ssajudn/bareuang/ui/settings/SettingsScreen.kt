@@ -7,6 +7,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Switch
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.core.net.toUri
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -125,7 +126,7 @@ import com.ssajudn.bareuang.ui.theme.PriceDisplayStyle
 import com.ssajudn.bareuang.ui.theme.Spacing
 import com.ssajudn.bareuang.ui.theme.categoryColors
 import com.ssajudn.bareuang.ui.theme.crispBorder
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -137,6 +138,7 @@ import com.ssajudn.bareuang.ui.common.OperationState
 import com.ssajudn.bareuang.ui.common.UiEffect
 import com.ssajudn.bareuang.ui.common.asString
 import com.ssajudn.bareuang.ui.components.AppIconButton
+import com.ssajudn.bareuang.ui.components.FeatureTopAppBar
 import com.ssajudn.bareuang.ui.components.AppTextButton
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -205,23 +207,10 @@ fun SettingsScreen(
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(R.string.settings_title),
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-                },
-                navigationIcon = {
-                    AppIconButton(enabled = !isOperationLoading, onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back))
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
+            FeatureTopAppBar(
+                titleRes = R.string.settings_title,
+                onNavigateBack = onNavigateBack,
+                backEnabled = !isOperationLoading
             )
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -236,68 +225,20 @@ fun SettingsScreen(
         ) {
             Spacer(modifier = Modifier.height(4.dp))
 
-            // 1. OFFLINE BACKUP & RESTORE GROUP
-            com.ssajudn.bareuang.ui.components.Material3SettingsGroup(
-                title = stringResource(R.string.settings_backup_title),
-                items = listOf(
-                    com.ssajudn.bareuang.ui.components.Material3SettingsItem(
-                        title = stringResource(R.string.settings_import_mutasi_title),
-                        description = stringResource(R.string.settings_import_mutasi_desc),
-                        icon = Icons.Default.UploadFile,
-                        onClick = onNavigateToImport
-                    ),
-                    com.ssajudn.bareuang.ui.components.Material3SettingsItem(
-                        title = stringResource(R.string.settings_ocr_title),
-                        description = stringResource(R.string.settings_ocr_desc),
-                        icon = Icons.Default.DocumentScanner,
-                        value = stringResource(R.string.coming_soon),
-                        onClick = null
-                    ),
-                    com.ssajudn.bareuang.ui.components.Material3SettingsItem(
-                        title = stringResource(R.string.settings_export_title),
-                        description = stringResource(R.string.settings_export_desc),
-                        icon = Icons.Default.FileDownload,
-                        onClick = {
-                            val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
-                            exportBackupLauncher.launch("Bareuang_Backup_$timeStamp.json")
-                        }
-                    ),
-                    com.ssajudn.bareuang.ui.components.Material3SettingsItem(
-                        title = stringResource(R.string.settings_import_title),
-                        description = stringResource(R.string.settings_import_desc),
-                        icon = Icons.Default.FileUpload,
-                        onClick = {
-                            importBackupLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
-                        }
-                    )
-                )
-            )
-
-            AppearanceSettingsGroup(
+            SettingsBackupSection(
+                viewModel = viewModel,
                 darkMode = darkMode,
                 onDarkModeChange = viewModel::setDarkMode,
+                onNavigateToImport = onNavigateToImport,
+                onNavigateToOcr = onNavigateToOcr,
+                onExportBackup = {
+                    val timeStamp = java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.getDefault()).format(java.util.Date())
+                    exportBackupLauncher.launch("Bareuang_Backup_$timeStamp.json")
+                },
+                onImportBackup = {
+                    importBackupLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
+                }
             )
-
-            // 3b. WIDGET
-            val widgetHideBalance by viewModel.widgetHideBalance.collectAsStateWithLifecycle()
-            com.ssajudn.bareuang.ui.components.Material3SettingsGroup(
-                title = stringResource(R.string.settings_widget_title),
-                items = listOf(
-                    com.ssajudn.bareuang.ui.components.Material3SettingsItem(
-                        title = stringResource(R.string.settings_widget_hide_balance),
-                        description = stringResource(R.string.settings_widget_hide_balance_desc),
-                        icon = Icons.Default.VisibilityOff,
-                        onClick = { viewModel.setHideBalance(!widgetHideBalance) },
-                        trailingContent = {
-                            Switch(
-                                checked = widgetHideBalance,
-                                onCheckedChange = { viewModel.setHideBalance(it) }
-                            )
-                        }
-                    )
-                )
-            )
-
             // 3b. BILL REMINDER TIME
             var reminderHour by remember { mutableIntStateOf(viewModel.reminderHour) }
             var reminderMinute by remember { mutableIntStateOf(viewModel.reminderMinute) }
@@ -491,7 +432,7 @@ fun SettingsScreen(
                             context.startActivity(
                                 android.content.Intent(
                                     android.content.Intent.ACTION_VIEW,
-                                    android.net.Uri.parse("https://bareuang.vercel.app/privacy")
+                                    "https://bareuang.vercel.app/privacy".toUri()
                                 )
                             )
                         }
@@ -503,7 +444,7 @@ fun SettingsScreen(
                         onClick = {
                             val intent = android.content.Intent(
                                 android.content.Intent.ACTION_VIEW,
-                                android.net.Uri.parse("https://trakteer.id/ssajudn")
+                                    "https://trakteer.id/ssajudn".toUri()
                             )
                             context.startActivity(intent)
                         }
@@ -515,7 +456,7 @@ fun SettingsScreen(
                         onClick = {
                             val intent = android.content.Intent(
                                 android.content.Intent.ACTION_VIEW,
-                                android.net.Uri.parse("https://github.com/Udean777/Bare-Budget")
+                                    "https://github.com/Udean777/Bare-Budget".toUri()
                             )
                             context.startActivity(intent)
                         }

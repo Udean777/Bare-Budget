@@ -33,7 +33,7 @@ class DateUtilsTest {
 
     @Test
     fun `formatDisplayDate formats ISO date string to dd MMM yyyy`() {
-        val out = DateFormatter.formatDisplayDate("2026-08-19", java.util.Locale("id", "ID"))
+        val out = DateFormatter.formatDisplayDate("2026-08-19", java.util.Locale.forLanguageTag("id-ID"))
         // Indonesian month abbreviation "Agu" for August.
         assertTrue("Expected 'Agu' for August, got: $out", out.contains("Agu"))
         assertTrue("Expected day '19', got: $out", out.startsWith("19"))
@@ -42,7 +42,7 @@ class DateUtilsTest {
 
     @Test
     fun `formatDisplayDate formats ISO timestamp to dd MMM yyyy`() {
-        val out = DateFormatter.formatDisplayDate("2026-08-19T14:30:00Z", java.util.Locale("id", "ID"))
+        val out = DateFormatter.formatDisplayDate("2026-08-19T14:30:00Z", java.util.Locale.forLanguageTag("id-ID"))
         assertTrue("Expected 'Agu' for August, got: $out", out.contains("Agu"))
         assertTrue("Expected day '19', got: $out", out.startsWith("19"))
     }
@@ -50,7 +50,7 @@ class DateUtilsTest {
     @Test
     fun `formatDisplayDate returns raw input when unparseable`() {
         val raw = "not-a-date"
-        assertEquals(raw, DateFormatter.formatDisplayDate(raw, java.util.Locale("id", "ID")))
+        assertEquals(raw, DateFormatter.formatDisplayDate(raw, java.util.Locale.forLanguageTag("id-ID")))
     }
 
     @Test

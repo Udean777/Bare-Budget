@@ -14,6 +14,7 @@ import com.ssajudn.bareuang.domain.repository.WalletRepository
 import java.time.Clock
 import java.time.LocalDate
 import java.time.YearMonth
+import kotlinx.coroutines.CancellationException
 import javax.inject.Inject
 
 /** Orchestrates dashboard data retrieval and delegates each calculation to a focused use case. */
@@ -75,6 +76,8 @@ class GetDashboardSummaryUseCase @Inject constructor(
         )
     } catch (e: ArithmeticException) {
         Result.failure(AppException.DataException("Nominal transaksi terlalu besar untuk dihitung", e))
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Result.failure(AppException.UnknownError(cause = e))
     }
